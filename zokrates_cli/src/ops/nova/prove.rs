@@ -9,7 +9,7 @@ use std::path::Path;
 use zokrates_abi::{parse_value, Encode, Values};
 use zokrates_ast::ir::{self, ProgEnum};
 use zokrates_ast::typed::abi::Abi;
-use zokrates_bellperson::nova::{self, NovaField};
+use zokrates_bellpepper::nova::{self, NovaField};
 
 pub fn subcommand() -> App<'static, 'static> {
     SubCommand::with_name("prove")
@@ -88,12 +88,14 @@ pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
 
     match ProgEnum::deserialize(&mut reader)? {
         ProgEnum::PallasProgram(p) => cli_nova_prove_step(p, sub_matches),
-        ProgEnum::VestaProgram(p) => cli_nova_prove_step(p, sub_matches),
+        // ProgEnum::VestaProgram(p) => cli_nova_prove_step(p, sub_matches),
         _ => Err("Nova is only supported for the following curves: [\"pallas\", \"vesta\"]".into()),
     }
 }
 
-fn cli_nova_prove_step<'ast, T: NovaField, I: Iterator<Item = ir::Statement<'ast, T>>>(
+type T = zokrates_field::PallasField;
+
+fn cli_nova_prove_step<'ast, I: Iterator<Item = ir::Statement<'ast, T>>>(
     program: ir::ProgIterator<'ast, T, I>,
     sub_matches: &ArgMatches,
 ) -> Result<(), String> {

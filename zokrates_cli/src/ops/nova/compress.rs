@@ -7,7 +7,7 @@ use std::io::BufReader;
 use std::path::Path;
 use std::{fs::File, io::Write};
 
-use zokrates_bellperson::nova::{self, NovaField, RecursiveSNARKWithStepCount};
+use zokrates_bellpepper::nova::{self, NovaField, RecursiveSNARKWithStepCount};
 
 pub fn subcommand() -> App<'static, 'static> {
     SubCommand::with_name("compress")
@@ -51,20 +51,23 @@ pub fn subcommand() -> App<'static, 'static> {
         )
 }
 
+
 pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     let path = Path::new(sub_matches.value_of("input").unwrap());
     let file =
         File::open(path).map_err(|why| format!("Could not open {}: {}", path.display(), why))?;
 
     let reader = BufReader::new(file);
-    let instance: RecursiveSNARKWithStepCount<PallasField> =
+    let instance: RecursiveSNARKWithStepCount =
         serde_json::from_reader(reader).unwrap();
 
     cli_nova_compress::<PallasField>(instance, sub_matches)
 }
 
+type T = zokrates_field::PallasField;
+
 fn cli_nova_compress<T: NovaField>(
-    instance: RecursiveSNARKWithStepCount<T>,
+    instance: RecursiveSNARKWithStepCount,
     sub_matches: &ArgMatches,
 ) -> Result<(), String> {
     let params_path = Path::new(sub_matches.value_of("params-path").unwrap());

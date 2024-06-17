@@ -1,0 +1,31 @@
+[package]
+edition = "2021"
+name = "zokrates_bellpepper"
+version = "0.1.0"
+
+[features]
+
+[dependencies]
+zokrates_ast = {version = "0.1", path = "../zokrates_ast", features = ["bellpepper"]}
+zokrates_field = {version = "0.5", path = "../zokrates_field", features = ["bellpepper_extensions"]}
+# zokrates_proof_systems = { version = "0.1", path = "../zokrates_proof_systems", default-features = false }
+bellpepper = {version = "0.4.0", default-features = false}
+bellpepper-core = {version = "0.4.0", default-features = false}
+ff = {version = "0.13.0", default-features = false}
+getrandom = {version = "0.2", features = ["js", "wasm-bindgen"]}
+hex = "0.4.2"
+nova-snark = {version = "0.36.0"}
+pairing = "0.22"
+rand_0_4 = {version = "0.4", package = "rand"}#
+serde = {version = "1.0", features = ["derive"]}
+trait-set = "0.3.0"
+zokrates_interpreter = {version = "0.1", path = "../zokrates_interpreter"}
+
+[dev-dependencies]
+getrandom = {version = "0.2", features = ["js", "wasm-bindgen"]}
+hex = "0.4.2"
+pairing = "0.22"
+pasta_curves = {version = "0.5", features = ["repr-c", "serde"]}
+rand_0_4 = {version = "0.4", package = "rand"}
+typed-arena = "1.4.1"
+zokrates_core = {version = "0.7.3", path = "../zokrates_core"}

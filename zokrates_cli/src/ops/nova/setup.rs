@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 use zokrates_ast::ir::{self, ProgEnum};
-use zokrates_bellperson::nova::{self, NovaField};
+use zokrates_bellpepper::nova::{self, NovaField};
 
 pub fn subcommand() -> App<'static, 'static> {
     SubCommand::with_name("setup")
@@ -41,12 +41,14 @@ pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
 
     match ProgEnum::deserialize(&mut reader)? {
         ProgEnum::PallasProgram(p) => cli_nova_setup(p, sub_matches),
-        ProgEnum::VestaProgram(p) => cli_nova_setup(p, sub_matches),
+        // ProgEnum::VestaProgram(p) => cli_nova_setup(p, sub_matches),
         _ => Err("Nova is only supported for the following curves: [\"pallas\", \"vesta\"]".into()),
     }
 }
 
-fn cli_nova_setup<'ast, T: NovaField, I: Iterator<Item = ir::Statement<'ast, T>>>(
+type T = zokrates_field::PallasField;
+
+fn cli_nova_setup<'ast, I: Iterator<Item = ir::Statement<'ast, T>>>(
     program: ir::ProgIterator<'ast, T, I>,
     sub_matches: &ArgMatches,
 ) -> Result<(), String> {

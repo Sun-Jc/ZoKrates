@@ -5,7 +5,8 @@
 // @date 2017
 
 #[cfg(feature = "bellman_extensions")]
-use bellman_ce::pairing::{ff::ScalarEngine, Engine};
+use bellman_ce::pairing::ff::ScalarEngine;
+use bellman_ce::pairing::Engine;
 #[cfg(feature = "bellperson_extensions")]
 use nova_snark::provider::pedersen::CommitmentEngine;
 use num_bigint::BigUint;
@@ -19,6 +20,9 @@ use std::io::{Read, Write};
 use std::ops::{Add, Div, Mul, Sub};
 
 #[cfg(feature = "bellperson_extensions")]
+use nova_snark::traits::Group;
+
+#[cfg(feature = "bellpepper_extensions")]
 use nova_snark::traits::Group;
 
 pub trait Pow<RHS> {
@@ -53,6 +57,22 @@ pub trait BellpersonFieldExtensions {
     fn from_bellperson(e: Self::BellpersonField) -> Self;
     fn into_bellperson(self) -> Self::BellpersonField;
 }
+
+#[cfg(feature = "bellpepper_extensions")]
+pub trait Cycle {
+    type Other: Field + BellpepperFieldExtensions + Cycle<Other = Self>;
+    type Point: Group<Base = <<Self::Other as Cycle>::Point as Group>::Scalar>;
+}
+
+#[cfg(feature = "bellpepper_extensions")]
+pub trait BellpepperFieldExtensions {
+    /// An associated type to be able to operate with Bellperson ff traits
+    type BellpepperField: ff::PrimeField;
+
+    fn from_bellpepper(e: Self::BellpepperField) -> Self;
+    fn into_bellpepper(self) -> Self::BellpepperField;
+}
+
 pub trait ArkFieldExtensions {
     /// An associated type to be able to operate with ark ff traits
     type ArkEngine: ark_ec::PairingEngine;
@@ -668,6 +688,29 @@ mod prime_field {
                     use ff::PrimeField;
                     let bytes = self.to_byte_vector();
                     Self::BellpersonField::from_repr_vartime(bytes.try_into().unwrap()).unwrap()
+                }
+            }
+        };
+    }
+
+    #[cfg(feature = "bellpepper_extensions")]
+    macro_rules! bellpepper_extensions {
+        ($bellpepper_type:ty) => {
+            use crate::BellpepperFieldExtensions;
+
+            impl BellpepperFieldExtensions for FieldPrime {
+                type BellpepperField = $bellpepper_type;
+
+                fn from_bellpepper(e: Self::BellpepperField) -> Self {
+                    use ff::PrimeField;
+                    let res = e.to_repr().to_vec();
+                    Self::from_byte_vector(res)
+                }
+
+                fn into_bellpepper(self) -> Self::BellpepperField {
+                    use ff::PrimeField;
+                    let bytes = self.to_byte_vector();
+                    Self::BellpepperField::from_repr_vartime(bytes.try_into().unwrap()).unwrap()
                 }
             }
         };

@@ -8,7 +8,7 @@ pub mod generate_smtlib2;
 pub mod inspect;
 #[cfg(feature = "bellman")]
 pub mod mpc;
-#[cfg(feature = "bellperson")]
+#[cfg(feature = "bellpepper")]
 pub mod nova;
 pub mod print_proof;
 pub mod profile;

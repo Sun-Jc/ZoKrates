@@ -7,7 +7,7 @@ use std::path::Path;
 use zokrates_abi::{parse_value, Encode};
 
 use zokrates_ast::typed::abi::Abi;
-use zokrates_bellperson::nova::{
+use zokrates_bellpepper::nova::{
     self, CompressedSNARK, NovaField, RecursiveSNARKWithStepCount, VerifierKey,
 };
 use zokrates_field::PallasField;
@@ -78,15 +78,15 @@ pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
 
     let verification_key_reader = BufReader::new(verification_key_file);
 
-    let proof: CompressedSNARK<PallasField> = serde_json::from_reader(proof_reader).unwrap();
-    let vk: VerifierKey<PallasField> = serde_json::from_reader(verification_key_reader).unwrap();
+    let proof: CompressedSNARK = serde_json::from_reader(proof_reader).unwrap();
+    let vk: VerifierKey = serde_json::from_reader(verification_key_reader).unwrap();
 
     cli_nova_verify(proof, vk, sub_matches)
 }
 
-fn cli_nova_verify<'ast, T: NovaField>(
-    proof: CompressedSNARK<'ast, T>,
-    vk: VerifierKey<'ast, T>,
+fn cli_nova_verify<'ast>(
+    proof: CompressedSNARK<'ast>,
+    vk: VerifierKey<'ast>,
     sub_matches: &ArgMatches,
 ) -> Result<(), String> {
     let path = Path::new(sub_matches.value_of("abi-spec").unwrap());
@@ -111,7 +111,7 @@ fn cli_nova_verify<'ast, T: NovaField>(
     };
 
     let instance_path = Path::new(sub_matches.value_of("instance-path").unwrap());
-    let instance: RecursiveSNARKWithStepCount<'ast, T> =
+    let instance: RecursiveSNARKWithStepCount<'ast> =
         serde_json::from_reader(BufReader::new(File::open(instance_path).unwrap())).unwrap();
     let steps = instance.steps;
 

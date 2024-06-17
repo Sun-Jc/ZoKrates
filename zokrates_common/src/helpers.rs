@@ -34,6 +34,8 @@ pub enum BackendParameter {
     Ark,
     #[cfg(feature = "bellperson")]
     Bellperson,
+    #[cfg(feature = "bellpepper")]
+    Bellpepper,
 }
 
 impl std::fmt::Display for BackendParameter {
@@ -47,6 +49,8 @@ impl std::fmt::Display for BackendParameter {
             Ark => write!(f, "ark"),
             #[cfg(feature = "bellperson")]
             Bellperson => write!(f, "bellperson"),
+            #[cfg(feature = "bellpepper")]
+            &Bellpepper => write!(f, "bellpepper"),
         }
     }
 }
@@ -100,6 +104,8 @@ impl TryFrom<&str> for BackendParameter {
             ARK => Ok(BackendParameter::Ark),
             #[cfg(feature = "bellperson")]
             BELLPERSON => Ok(BackendParameter::Bellperson),
+            #[cfg(feature = "bellpepper")]
+            BELLPEPPER => Ok(BackendParameter::Bellpepper),
             _ => Err(format!("Unknown backend {}", s)),
         }
     }
@@ -167,6 +173,8 @@ impl TryFrom<(&str, &str, &str)> for Parameters {
             (BackendParameter::Bellperson, CurveParameter::Pallas, SchemeParameter::NOVA) => Ok(()),
             #[cfg(feature = "bellperson")]
             (BackendParameter::Bellperson, CurveParameter::Vesta, SchemeParameter::NOVA) => Ok(()),
+            #[cfg(feature = "bellpepper")]
+            (BackendParameter::Bellpepper, CurveParameter::Vesta, SchemeParameter::NOVA) => Ok(()),
             #[cfg(feature = "bellman")]
             _ => Err(format!(
                 "Unsupported combination of parameters (backend: {}, curve: {}, proving scheme: {})",

@@ -1,6 +1,7 @@
 pub const BELLMAN: &str = "bellman";
 pub const ARK: &str = "ark";
 pub const BELLPERSON: &str = "bellperson";
+pub const BELLPEPPER: &str = "bellpepper";
 
 pub const BN128: &str = "bn128";
 pub const BLS12_381: &str = "bls12_381";
