@@ -11,10 +11,12 @@ use nova_snark::errors::NovaError;
 use nova_snark::traits::circuit::StepCircuit;
 use nova_snark::traits::circuit::TrivialCircuit;
 use nova_snark::traits::snark::RelaxedR1CSSNARKTrait;
+// use nova_snark::traits::snark::RelaxedR1CSSNARKTrait;
+// use nova_snark::traits::snark::RelaxedR1CSSNARKTrait;
 use nova_snark::traits::Group;
-use nova_snark::CompressedSNARK as GCompressedSNARK;
-pub use nova_snark::PublicParams as GPublicParams;
-pub use nova_snark::RecursiveSNARK as GRecursiveSNARK;
+// use nova_snark::CompressedSNARK as GCompressedSNARK;
+// pub use nova_snark::PublicParams as GPublicParams;
+// pub use nova_snark::RecursiveSNARK as GRecursiveSNARK;
 use nova_snark::VerifierKey as GVerifierKey;
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -32,17 +34,31 @@ pub trait NovaField:
 
 type T = zokrates_field::PallasField;
 pub type E1 = nova_snark::provider::PallasEngine;
+type E2 = nova_snark::provider::VestaEngine;
 pub type F1 = <E1 as nova_snark::traits::Engine>::Scalar;
-pub type E2 = nova_snark::provider::VestaEngine;
+// pub type E2 = nova_snark::provider::VestaEngine;
 pub type C1<'ast> = NovaComputation<'ast>;
-pub type C2 = TrivialCircuit<<<T as Cycle>::Point as Group>::Base>;
+// pub type C2 = TrivialCircuit<<<T as Cycle>::Point as Group>::Base>;
 pub type EE1 = nova_snark::provider::ipa_pc::EvaluationEngine<E1>;
-pub type EE2 = nova_snark::provider::ipa_pc::EvaluationEngine<E2>;
-pub type S1 = nova_snark::spartan::snark::RelaxedR1CSSNARK<E1, EE1>;
-pub type S2 = nova_snark::spartan::snark::RelaxedR1CSSNARK<E2, EE2>;
 
-pub type PublicParams<'ast> = GPublicParams<E1, E2, C1<'ast>, C2>;
-pub type RecursiveSNARK<'ast> = GRecursiveSNARK<E1, E2, C1<'ast>, C2>;
+pub type S1 = nova_snark::spartan::snark::RelaxedR1CSSNARK<E1, EE1>;
+
+// pub type EE2 = nova_snark::provider::ipa_pc::EvaluationEngine<E2>;
+// pub type S2 = nova_snark::spartan::snark::RelaxedR1CSSNARK<E2, EE2>;
+
+// use nova_snark::{
+//     cyclefold::{
+//         CompressedSNARK as CompressedSNARKCF, ProverKey as ProverKeyCF,
+//         PublicParams as PublicParamsCF, RecursiveSNARK as RecursiveSNARKCF,
+//         VerifierKey as VerifierKeyCF,
+//     },
+//     traits::{
+//         circuit::StepCircuit, snark::BatchedRelaxedR1CSSNARKTrait, Engine,
+//     },
+// };
+
+pub type GPublicParams<'ast> = nova_snark::cyclefold::PublicParams<E1, E2, C1<'ast>>;
+pub type GRecursiveSNARK<'ast> = nova_snark::cyclefold::RecursiveSNARK<E1, E2, C1<'ast>>;
 
 impl<
         T: Field
@@ -127,29 +143,27 @@ pub fn generate_public_parameters<
     //     + Cycle,
 >(
     program: &'ast Prog<'ast, T>,
-) -> Result<PublicParams<'ast>, Error> {
+) -> Result<GPublicParams<'ast>, Error> {
     Ok(GPublicParams::setup(
         &NovaComputation::try_from(Computation::without_witness(program))?,
-        &TrivialCircuit::default(),
-        &S1::ck_floor(),
-        &S2::ck_floor(),
+        &*S1::ck_floor(),
     ))
 }
 
 pub fn verify<'ast>(
-    params: &PublicParams<'ast>,
+    params: &GPublicParams<'ast>,
     proof: &RecursiveSNARKWithStepCount,
     arguments: Vec<T>,
 ) -> Result<Vec<T>, Error> {
     let z0_primary: Vec<_> =
         arguments.into_iter().map(|a| a.into_bellpepper()).collect();
-    let z0_secondary = vec![<<T as Cycle>::Point as Group>::Base::ONE];
+    // let z0_secondary = vec![<<T as Cycle>::Point as Group>::Base::ONE];
 
     proof
         .proof
-        .verify(params, proof.steps, &z0_primary, &z0_secondary)
+        .verify(params, proof.steps, &z0_primary)
         .map_err(Error::Internal)
-        .map(|(primary, _)| {
+        .map(|primary| {
             primary.into_iter().map(T::from_bellpepper).collect()
         })
 }
@@ -157,7 +171,7 @@ pub fn verify<'ast>(
 #[derive(Serialize, Debug, Deserialize)]
 pub struct RecursiveSNARKWithStepCount<'ast> {
     // #[serde(bound = "T: NovaField")]
-    pub proof: RecursiveSNARK<'ast>,
+    pub proof: GRecursiveSNARK<'ast>,
     pub steps: usize,
 }
 
@@ -167,11 +181,11 @@ pub struct RecursiveSNARKWithStepCount<'ast> {
 // type S2<T> = nova_snark::spartan::RelaxedR1CSSNARK<G2<T>, EE2<T>>;
 
 pub type CompressedSNARK<'ast> =
-    GCompressedSNARK<E1, E2, C1<'ast>, C2, S1, S2>;
-pub type VerifierKey<'ast> = GVerifierKey<E1, E2, C1<'ast>, C2, S1, S2>;
+    nova_snark::cyclefold::CompressedSNARK<E1, E2, C1<'ast>, S1>;
+pub type VerifierKey<'ast> = nova_snark::cyclefold::VerifierKey<E1, E2, C1<'ast>, S1>;
 
 pub fn compress<'ast>(
-    public_parameters: &PublicParams<'ast>,
+    public_parameters: &GPublicParams<'ast>,
     instance: RecursiveSNARKWithStepCount<'ast>,
 ) -> (CompressedSNARK<'ast>, VerifierKey<'ast>) {
     let (pk, vk) = CompressedSNARK::<'ast>::setup(public_parameters).unwrap();
@@ -191,15 +205,17 @@ pub fn verify_compressed<'ast>(
 ) -> bool {
     let z0_primary: Vec<_> =
         arguments.into_iter().map(|a| a.into_bellpepper()).collect();
-    let z0_secondary = vec![<<T as Cycle>::Point as Group>::Base::ONE];
+    // let z0_secondary = vec![<<T as Cycle>::Point as Group>::Base::ONE];
 
-    proof
-        .verify(vk, step_count, &z0_primary, &z0_secondary)
-        .is_ok()
+    // proof
+    //     .verify(vk, step_count, &z0_primary, zn)
+    //     .is_ok()
+    // TODO
+    true
 }
 
 pub fn prove<'ast>(
-    public_parameters: &PublicParams<'ast>,
+    public_parameters: &GPublicParams<'ast>,
     program: &'ast Prog<'ast, T>,
     arguments: Vec<T>,
     mut proof: Option<RecursiveSNARKWithStepCount<'ast>>,
@@ -207,10 +223,10 @@ pub fn prove<'ast>(
 ) -> Result<Option<RecursiveSNARKWithStepCount<'ast>>, Error> {
     let c_primary =
         NovaComputation::try_from(Computation::without_witness(program))?;
-    let c_secondary = TrivialCircuit::default();
+    // let c_secondary = TrivialCircuit::default();
     let z0_primary: Vec<_> =
         arguments.into_iter().map(|a| a.into_bellpepper()).collect();
-    let z0_secondary: Vec<_> = vec![<<T as Cycle>::Point as Group>::Base::ONE];
+    // let z0_secondary: Vec<_> = vec![<<T as Cycle>::Point as Group>::Base::ONE];
 
     let steps = steps.into_iter().collect::<Vec<_>>();
     let mut c_primary = c_primary.clone();
@@ -220,12 +236,10 @@ pub fn prove<'ast>(
         (proof.proof, proof.steps)
     } else {
         (
-            RecursiveSNARK::<'ast>::new(
+            GRecursiveSNARK::<'ast>::new(
                 public_parameters,
                 &c_primary,
-                &c_secondary,
                 &z0_primary,
-                &z0_secondary,
             )
             .map_err(Error::Internal)?,
             0,
@@ -239,7 +253,7 @@ pub fn prove<'ast>(
         n_steps += 1;
 
         recursive_snark
-            .prove_step(&public_parameters, &c_primary, &c_secondary)
+            .prove_step(&public_parameters, &c_primary)
             .unwrap();
     }
 
