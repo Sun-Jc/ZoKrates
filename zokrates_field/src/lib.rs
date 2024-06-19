@@ -843,3 +843,52 @@ pub mod grumpkin {
     prime_field!("grumpkin", GrumpkinBaseField, G2Type::Fq2);
 }
 pub use grumpkin::FieldPrime as GrumpkinField;
+
+
+
+// pub mod secp256k1 {
+//     use ark_secp256k1::Fq as Secp256k1BaseField;
+
+//     #[cfg(feature = "bellpepper_extensions")]
+//     use crate::{Cycle, Secq256k1Field};
+//     #[cfg(feature = "bellpepper_extensions")]
+//     use halo2curves::secp256k1::Fq;
+
+//     use crate::G2Type;
+
+//     #[cfg(feature = "bellpepper_extensions")]
+//     impl Cycle for FieldPrime {
+//         type Other = Secq256k1Field;
+//         type Point = halo2curves::secp256k1::Secp256k1;
+//     }
+
+//     #[cfg(feature = "bellpepper_extensions")]
+//     bellpepper_extensions!(Fq);
+
+//     prime_field!("secp156k1", Secp256k1BaseField, G2Type::Fq2);
+// }
+
+// pub use secp256k1::FieldPrime as Secp256k1Field;
+
+// pub mod secq256k1 {
+//     use ark_secp256k1::Fr as Secq256k1BaseField;
+
+//     #[cfg(feature = "bellpepper_extensions")]
+//     use crate::{Secp256k1Field, Cycle};
+//     #[cfg(feature = "bellpepper_extensions")]
+//     use halo2curves::secq256k1::Fq;
+
+//     use crate::G2Type;
+
+//     #[cfg(feature = "bellpepper_extensions")]
+//     impl Cycle for FieldPrime {
+//         type Other = Secp256k1Field;
+//         type Point = halo2curves::secq256k1::Secq256k1;
+//     }
+
+//     #[cfg(feature = "bellpepper_extensions")]
+//     bellpepper_extensions!(Fq);
+
+//     prime_field!("secq256k1", Secq256k1BaseField, G2Type::Fq2);
+// }
+// pub use secq256k1::FieldPrime as Secq256k1Field;

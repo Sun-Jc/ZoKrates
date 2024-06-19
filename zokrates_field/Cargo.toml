@@ -40,11 +40,11 @@ ark-bw6-761 = {version = "^0.3.0", default-features = false}
 ark-ec = {version = "^0.3.0", default-features = false}
 ark-ff = {version = "^0.3.0", default-features = false}
 ark-pallas = {version = "^0.3.0", features = ["curve"]}
+ark-secp256k1 = {version = "0.4.0"}
+ark-secq256k1 = {version = "0.4.0"}
 ark-serialize = {version = "^0.3.0", default-features = false, features = ["std"]}
 ark-vesta = {version = "^0.3.0"}
 
-# ark-grumpkin = {git = "https://github.com/arkworks-rs/curves.git"}
-# ark-grumpkin = "^0.3.0"
 halo2curves = "0.6.1"
 
 # [target.'cfg(feature = "bellperson_extensions")'.dependencies]

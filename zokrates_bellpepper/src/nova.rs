@@ -6,18 +6,15 @@ use bellpepper_core::ConstraintSystem;
 use bellpepper_core::SynthesisError;
 // use bellperson::gadgets::num::AllocatedNum;
 // use bellperson::SynthesisError;
-use ff::Field as FFField;
 use nova_snark::errors::NovaError;
 use nova_snark::traits::circuit::StepCircuit;
-use nova_snark::traits::circuit::TrivialCircuit;
-use nova_snark::traits::snark::RelaxedR1CSSNARKTrait;
+use nova_snark::traits::snark::BatchedRelaxedR1CSSNARKTrait;
 // use nova_snark::traits::snark::RelaxedR1CSSNARKTrait;
 // use nova_snark::traits::snark::RelaxedR1CSSNARKTrait;
 use nova_snark::traits::Group;
 // use nova_snark::CompressedSNARK as GCompressedSNARK;
 // pub use nova_snark::PublicParams as GPublicParams;
 // pub use nova_snark::RecursiveSNARK as GRecursiveSNARK;
-use nova_snark::VerifierKey as GVerifierKey;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use zokrates_ast::ir::*;
@@ -49,7 +46,7 @@ pub type E1 = nova_snark::provider::hyperkzg::Bn256EngineKZG;
 pub type E2 = nova_snark::provider::GrumpkinEngine;
 pub type F1 = <E1 as nova_snark::traits::Engine>::Scalar;
 type EE1 = nova_snark::provider::hyperkzg::EvaluationEngine<E1>;
-pub type S1 = nova_snark::spartan::snark::RelaxedR1CSSNARK<E1, EE1>;
+pub type S1 = nova_snark::spartan::ppsnark::BatchedRelaxedR1CSSNARK<E1, EE1>;
 
 pub type C1<'ast> = NovaComputation<'ast>;
 
