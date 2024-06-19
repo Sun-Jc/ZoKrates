@@ -10,7 +10,9 @@ use std::path::Path;
 use zokrates_ark::Ark;
 use zokrates_common::constants;
 use zokrates_common::helpers::*;
-use zokrates_field::{Bls12_377Field, Bls12_381Field, Bn128Field, Bw6_761Field, Field};
+use zokrates_field::{
+    Bls12_377Field, Bls12_381Field, Bn128Field, Bw6_761Field, Field,
+};
 use zokrates_proof_systems::rng::get_rng_from_entropy;
 #[cfg(any(feature = "bellman", feature = "ark"))]
 use zokrates_proof_systems::*;
@@ -76,32 +78,45 @@ pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
 
     match parameters {
         #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, CurveParameter::Bn128, SchemeParameter::MARLIN) => {
-            cli_universal_setup::<Bn128Field, Marlin, Ark>(sub_matches)
-        }
+        Parameters(
+            BackendParameter::Ark,
+            CurveParameter::Bn128,
+            SchemeParameter::MARLIN,
+        ) => cli_universal_setup::<Bn128Field, Marlin, Ark>(sub_matches),
         #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, CurveParameter::Bls12_381, SchemeParameter::MARLIN) => {
-            cli_universal_setup::<Bls12_381Field, Marlin, Ark>(sub_matches)
-        }
+        Parameters(
+            BackendParameter::Ark,
+            CurveParameter::Bls12_381,
+            SchemeParameter::MARLIN,
+        ) => cli_universal_setup::<Bls12_381Field, Marlin, Ark>(sub_matches),
         #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, CurveParameter::Bls12_377, SchemeParameter::MARLIN) => {
-            cli_universal_setup::<Bls12_377Field, Marlin, Ark>(sub_matches)
-        }
+        Parameters(
+            BackendParameter::Ark,
+            CurveParameter::Bls12_377,
+            SchemeParameter::MARLIN,
+        ) => cli_universal_setup::<Bls12_377Field, Marlin, Ark>(sub_matches),
         #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, CurveParameter::Bw6_761, SchemeParameter::MARLIN) => {
-            cli_universal_setup::<Bw6_761Field, Marlin, Ark>(sub_matches)
-        }
+        Parameters(
+            BackendParameter::Ark,
+            CurveParameter::Bw6_761,
+            SchemeParameter::MARLIN,
+        ) => cli_universal_setup::<Bw6_761Field, Marlin, Ark>(sub_matches),
         _ => unreachable!(),
     }
 }
 
-fn cli_universal_setup<T: Field, S: UniversalScheme<T>, B: UniversalBackend<T, S>>(
+fn cli_universal_setup<
+    T: Field,
+    S: UniversalScheme<T>,
+    B: UniversalBackend<T, S>,
+>(
     sub_matches: &ArgMatches,
 ) -> Result<(), String> {
     println!("Performing setup...");
 
     // get paths for the universal setup
-    let u_path = Path::new(sub_matches.value_of("universal-setup-path").unwrap());
+    let u_path =
+        Path::new(sub_matches.value_of("universal-setup-path").unwrap());
 
     // get the size of the setup
     let size = sub_matches.value_of("size").unwrap();
@@ -118,11 +133,12 @@ fn cli_universal_setup<T: Field, S: UniversalScheme<T>, B: UniversalBackend<T, S
     let setup = B::universal_setup(size, &mut rng);
 
     // write proving key
-    let mut u_file = File::create(u_path)
-        .map_err(|why| format!("Could not create {}: {}", u_path.display(), why))?;
-    u_file
-        .write_all(setup.as_ref())
-        .map_err(|why| format!("Could not write to {}: {}", u_path.display(), why))?;
+    let mut u_file = File::create(u_path).map_err(|why| {
+        format!("Could not create {}: {}", u_path.display(), why)
+    })?;
+    u_file.write_all(setup.as_ref()).map_err(|why| {
+        format!("Could not write to {}: {}", u_path.display(), why)
+    })?;
 
     println!("Universal setup written to '{}'", u_path.display());
     println!("Universal setup completed");

@@ -3,14 +3,27 @@ use std::fmt;
 
 pub type MemberId = String;
 
-#[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]
+#[derive(
+    Clone, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord,
+)]
 pub enum Type {
     FieldElement,
     Boolean,
     Uint(UBitwidth),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Copy,
+)]
 pub enum UBitwidth {
     #[serde(rename = "8")]
     B8 = 8,
@@ -92,7 +105,17 @@ pub mod signature {
     use super::*;
     use std::fmt;
 
-    #[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Ord, PartialOrd, Default)]
+    #[derive(
+        Clone,
+        PartialEq,
+        Eq,
+        Hash,
+        Serialize,
+        Deserialize,
+        Ord,
+        PartialOrd,
+        Default,
+    )]
     pub struct Signature {
         pub inputs: Vec<Type>,
         pub outputs: Vec<Type>,

@@ -18,25 +18,36 @@ struct Propagator<T> {
 }
 
 impl<'ast, T: Field> Folder<'ast, T> for Propagator<T> {
-    fn fold_statement(&mut self, s: FlatStatement<'ast, T>) -> Vec<FlatStatement<'ast, T>> {
+    fn fold_statement(
+        &mut self,
+        s: FlatStatement<'ast, T>,
+    ) -> Vec<FlatStatement<'ast, T>> {
         match s {
-            FlatStatement::Definition(s) => match self.fold_expression(s.rhs) {
-                FlatExpression::Value(n) => {
-                    self.constants.insert(s.assignee, n.value);
-                    vec![]
+            FlatStatement::Definition(s) => {
+                match self.fold_expression(s.rhs) {
+                    FlatExpression::Value(n) => {
+                        self.constants.insert(s.assignee, n.value);
+                        vec![]
+                    }
+                    e => vec![FlatStatement::definition(s.assignee, e)],
                 }
-                e => vec![FlatStatement::definition(s.assignee, e)],
-            },
+            }
             s => fold_statement(self, s),
         }
     }
 
     fn fold_identifier_expression(
         &mut self,
-        e: zokrates_ast::common::expressions::IdentifierExpression<Variable, FlatExpression<T>>,
-    ) -> IdentifierOrExpression<Variable, FlatExpression<T>, FlatExpression<T>> {
+        e: zokrates_ast::common::expressions::IdentifierExpression<
+            Variable,
+            FlatExpression<T>,
+        >,
+    ) -> IdentifierOrExpression<Variable, FlatExpression<T>, FlatExpression<T>>
+    {
         match self.constants.get(&e.id) {
-            Some(c) => IdentifierOrExpression::Expression(FlatExpression::value(*c)),
+            Some(c) => {
+                IdentifierOrExpression::Expression(FlatExpression::value(*c))
+            }
             None => IdentifierOrExpression::Identifier(e),
         }
     }

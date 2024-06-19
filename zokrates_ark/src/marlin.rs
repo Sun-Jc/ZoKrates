@@ -1,6 +1,6 @@
 use ark_marlin::{
-    ahp::indexer::IndexInfo, ahp::prover::ProverMsg, rng::FiatShamirRng, IndexProverKey,
-    IndexVerifierKey, Proof as ArkProof,
+    ahp::indexer::IndexInfo, ahp::prover::ProverMsg, rng::FiatShamirRng,
+    IndexProverKey, IndexVerifierKey, Proof as ArkProof,
 };
 
 use ark_marlin::Marlin as ArkMarlin;
@@ -28,7 +28,9 @@ use crate::Ark;
 use crate::Computation;
 use crate::{parse_fr, parse_g1, parse_g2, serialization};
 use zokrates_ast::ir::{ProgIterator, Statement, Witness};
-use zokrates_proof_systems::marlin::{self, KZGVerifierKey, ProofPoints, VerificationKey};
+use zokrates_proof_systems::marlin::{
+    self, KZGVerifierKey, ProofPoints, VerificationKey,
+};
 use zokrates_proof_systems::Scheme;
 use zokrates_proof_systems::{Backend, Proof, SetupKeypair, UniversalBackend};
 
@@ -64,8 +66,9 @@ impl<D: Digest> RngCore for HashFiatShamirRng<D> {
             h.reverse(); // Switch to big endian representation for solidity translation
             let len = dest.len();
             if i * bytes_per_hash + bytes_per_hash >= len {
-                dest[i * bytes_per_hash..]
-                    .copy_from_slice(&h.as_slice()[..len - i * bytes_per_hash]);
+                dest[i * bytes_per_hash..].copy_from_slice(
+                    &h.as_slice()[..len - i * bytes_per_hash],
+                );
             } else {
                 dest[i * bytes_per_hash..i * bytes_per_hash + bytes_per_hash]
                     .copy_from_slice(h.as_slice());
@@ -87,7 +90,8 @@ impl<D: Digest> FiatShamirRng for HashFiatShamirRng<D> {
         initial_input
             .write(&mut bytes)
             .expect("failed to convert to bytes");
-        let seed = FromBytes::read(D::digest(&bytes).as_ref()).expect("failed to get [u8; 32]");
+        let seed = FromBytes::read(D::digest(&bytes).as_ref())
+            .expect("failed to get [u8; 32]");
         Self {
             seed,
             ctr: 0,
@@ -101,14 +105,17 @@ impl<D: Digest> FiatShamirRng for HashFiatShamirRng<D> {
             .write(&mut bytes)
             .expect("failed to convert to bytes");
         bytes.extend_from_slice(&self.seed);
-        self.seed = FromBytes::read(D::digest(&bytes).as_ref()).expect("failed to get [u8; 32]");
+        self.seed = FromBytes::read(D::digest(&bytes).as_ref())
+            .expect("failed to get [u8; 32]");
         self.ctr = 0;
     }
 }
 
 type PCInst<T> = MarlinKZG10<
     <T as ArkFieldExtensions>::ArkEngine,
-    DensePolynomial<<<T as ArkFieldExtensions>::ArkEngine as PairingEngine>::Fr>,
+    DensePolynomial<
+        <<T as ArkFieldExtensions>::ArkEngine as PairingEngine>::Fr,
+    >,
 >;
 type MarlinInst<T> = ArkMarlin<
     <<T as ArkFieldExtensions>::ArkEngine as PairingEngine>::Fr,
@@ -116,8 +123,13 @@ type MarlinInst<T> = ArkMarlin<
     HashFiatShamirRng<Keccak256>,
 >;
 
-impl<T: Field + ArkFieldExtensions> UniversalBackend<T, marlin::Marlin> for Ark {
-    fn universal_setup<R: RngCore + CryptoRng>(size: u32, rng: &mut R) -> Vec<u8> {
+impl<T: Field + ArkFieldExtensions> UniversalBackend<T, marlin::Marlin>
+    for Ark
+{
+    fn universal_setup<R: RngCore + CryptoRng>(
+        size: u32,
+        rng: &mut R,
+    ) -> Vec<u8> {
         let srs = MarlinInst::<T>::universal_setup(
             2usize.pow(size),
             2usize.pow(size),
@@ -193,13 +205,14 @@ impl<T: Field + ArkFieldExtensions> UniversalBackend<T, marlin::Marlin> for Ark 
                 },
                 max_degree: vk.verifier_key.max_degree,
                 supported_degree: vk.verifier_key.supported_degree,
-                degree_bounds_and_shift_powers: vk.verifier_key.degree_bounds_and_shift_powers.map(
-                    |vk| {
+                degree_bounds_and_shift_powers: vk
+                    .verifier_key
+                    .degree_bounds_and_shift_powers
+                    .map(|vk| {
                         vk.into_iter()
                             .map(|(bound, pow)| (bound, parse_g1::<T>(&pow)))
                             .collect()
-                    },
-                ),
+                    }),
             },
             serialized_pk,
         ))
@@ -230,7 +243,8 @@ impl<T: Field + ArkFieldExtensions> Backend<T, marlin::Marlin> for Ark {
         .unwrap();
 
         let public_inputs = computation.public_inputs_values();
-        let inputs = public_inputs.iter().map(parse_fr::<T>).collect::<Vec<_>>();
+        let inputs =
+            public_inputs.iter().map(parse_fr::<T>).collect::<Vec<_>>();
 
         let proof = MarlinInst::<T>::prove(&pk, computation, rng).unwrap();
 
@@ -246,8 +260,9 @@ impl<T: Field + ArkFieldExtensions> Backend<T, marlin::Marlin> for Ark {
                             .map(|c| {
                                 (
                                     parse_g1::<T>(&c.comm.0),
-                                    c.shifted_comm
-                                        .map(|shifted_comm| parse_g1::<T>(&shifted_comm.0)),
+                                    c.shifted_comm.map(|shifted_comm| {
+                                        parse_g1::<T>(&shifted_comm.0)
+                                    }),
                                 )
                             })
                             .collect()
@@ -259,7 +274,9 @@ impl<T: Field + ArkFieldExtensions> Backend<T, marlin::Marlin> for Ark {
                     .map(|e| parse_fr::<T>(&e))
                     .collect(),
                 pc_lc_opening_1: parse_g1::<T>(&proof.pc_proof.proof[0].w),
-                pc_lc_opening_1_degree: parse_fr::<T>(&proof.pc_proof.proof[0].random_v.unwrap()),
+                pc_lc_opening_1_degree: parse_fr::<T>(
+                    &proof.pc_proof.proof[0].random_v.unwrap(),
+                ),
                 pc_lc_opening_2: parse_g1::<T>(&proof.pc_proof.proof[1].w),
                 prover_messages_count: proof.prover_messages.len(),
             },
@@ -403,19 +420,33 @@ mod tests {
             return_count: 1,
             statements: vec![
                 Statement::constraint(
-                    QuadComb::new(Variable::new(0).into(), Variable::new(0).into()),
+                    QuadComb::new(
+                        Variable::new(0).into(),
+                        Variable::new(0).into(),
+                    ),
                     Variable::new(1),
                     None,
                 ),
-                Statement::constraint(Variable::new(1), Variable::public(0), None),
+                Statement::constraint(
+                    Variable::new(1),
+                    Variable::public(0),
+                    None,
+                ),
             ],
             solvers: vec![],
         };
 
         let rng = &mut StdRng::from_entropy();
-        let srs = <Ark as UniversalBackend<Bls12_377Field, Marlin>>::universal_setup(5, rng);
+        let srs =
+            <Ark as UniversalBackend<Bls12_377Field, Marlin>>::universal_setup(
+                5, rng,
+            );
         let keypair =
-            <Ark as UniversalBackend<Bls12_377Field, Marlin>>::setup(srs, program.clone()).unwrap();
+            <Ark as UniversalBackend<Bls12_377Field, Marlin>>::setup(
+                srs,
+                program.clone(),
+            )
+            .unwrap();
         let interpreter = Interpreter::default();
 
         let witness = interpreter
@@ -433,7 +464,9 @@ mod tests {
             keypair.pk.as_slice(),
             rng,
         );
-        let ans = <Ark as Backend<Bls12_377Field, Marlin>>::verify(keypair.vk, proof);
+        let ans = <Ark as Backend<Bls12_377Field, Marlin>>::verify(
+            keypair.vk, proof,
+        );
 
         assert!(ans);
     }
@@ -446,19 +479,32 @@ mod tests {
             return_count: 1,
             statements: vec![
                 Statement::constraint(
-                    QuadComb::new(Variable::new(0).into(), Variable::new(0).into()),
+                    QuadComb::new(
+                        Variable::new(0).into(),
+                        Variable::new(0).into(),
+                    ),
                     Variable::new(1),
                     None,
                 ),
-                Statement::constraint(Variable::new(1), Variable::public(0), None),
+                Statement::constraint(
+                    Variable::new(1),
+                    Variable::public(0),
+                    None,
+                ),
             ],
             solvers: vec![],
         };
 
         let rng = &mut StdRng::from_entropy();
-        let srs = <Ark as UniversalBackend<Bw6_761Field, Marlin>>::universal_setup(5, rng);
-        let keypair =
-            <Ark as UniversalBackend<Bw6_761Field, Marlin>>::setup(srs, program.clone()).unwrap();
+        let srs =
+            <Ark as UniversalBackend<Bw6_761Field, Marlin>>::universal_setup(
+                5, rng,
+            );
+        let keypair = <Ark as UniversalBackend<Bw6_761Field, Marlin>>::setup(
+            srs,
+            program.clone(),
+        )
+        .unwrap();
         let interpreter = Interpreter::default();
 
         let witness = interpreter
@@ -476,7 +522,8 @@ mod tests {
             keypair.pk.as_slice(),
             rng,
         );
-        let ans = <Ark as Backend<Bw6_761Field, Marlin>>::verify(keypair.vk, proof);
+        let ans =
+            <Ark as Backend<Bw6_761Field, Marlin>>::verify(keypair.vk, proof);
 
         assert!(ans);
     }

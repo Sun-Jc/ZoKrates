@@ -28,7 +28,9 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Error::Json(e) => write!(f, "Invalid JSON: {}", e),
-            Error::Conversion(e) => write!(f, "Invalid ZoKrates values: {}", e),
+            Error::Conversion(e) => {
+                write!(f, "Invalid ZoKrates values: {}", e)
+            }
             Error::Type(e) => write!(f, "Type error: {}", e),
         }
     }
@@ -114,9 +116,15 @@ impl<T: Field> Encode<T> for Value<T> {
             Value::U32(v) => vec![T::from(v)],
             Value::U64(v) => vec![T::from(v)],
             Value::Boolean(b) => vec![T::from(b)],
-            Value::Array(a) => a.into_iter().flat_map(|v| v.encode()).collect(),
-            Value::Tuple(t) => t.into_iter().flat_map(|v| v.encode()).collect(),
-            Value::Struct(s) => s.into_iter().flat_map(|(_, v)| v.encode()).collect(),
+            Value::Array(a) => {
+                a.into_iter().flat_map(|v| v.encode()).collect()
+            }
+            Value::Tuple(t) => {
+                t.into_iter().flat_map(|v| v.encode()).collect()
+            }
+            Value::Struct(s) => {
+                s.into_iter().flat_map(|(_, v)| v.encode()).collect()
+            }
         }
     }
 }
@@ -130,7 +138,8 @@ impl<T: Field> Decode<T> for Values<T> {
                 .into_iter()
                 .scan(0, |state, e| {
                     let new_state = *state + e.get_primitive_count();
-                    let res = Value::decode(raw[*state..new_state].to_vec(), e);
+                    let res =
+                        Value::decode(raw[*state..new_state].to_vec(), e);
                     *state = new_state;
                     Some(res)
                 })
@@ -179,8 +188,12 @@ impl<T: Field> Decode<T> for Value<T> {
                 members
                     .into_iter()
                     .scan(0, |state, member| {
-                        let new_state = *state + member.ty.get_primitive_count();
-                        let res = Value::decode(raw[*state..new_state].to_vec(), *member.ty);
+                        let new_state =
+                            *state + member.ty.get_primitive_count();
+                        let res = Value::decode(
+                            raw[*state..new_state].to_vec(),
+                            *member.ty,
+                        );
                         *state = new_state;
                         Some((member.id, res))
                     })
@@ -192,7 +205,8 @@ impl<T: Field> Decode<T> for Value<T> {
                     .into_iter()
                     .scan(0, |state, ty| {
                         let new_state = *state + ty.get_primitive_count();
-                        let res = Value::decode(raw[*state..new_state].to_vec(), ty);
+                        let res =
+                            Value::decode(raw[*state..new_state].to_vec(), ty);
                         *state = new_state;
                         Some(res)
                     })
@@ -217,12 +231,12 @@ impl<T: Field> Value<T> {
             Value::U32(u) => serde_json::Value::String(format!("{:#010x}", u)),
             Value::U64(u) => serde_json::Value::String(format!("{:#018x}", u)),
             Value::Boolean(b) => serde_json::Value::Bool(b),
-            Value::Array(a) => {
-                serde_json::Value::Array(a.into_iter().map(|e| e.into_serde_json()).collect())
-            }
-            Value::Tuple(t) => {
-                serde_json::Value::Array(t.into_iter().map(|e| e.into_serde_json()).collect())
-            }
+            Value::Array(a) => serde_json::Value::Array(
+                a.into_iter().map(|e| e.into_serde_json()).collect(),
+            ),
+            Value::Tuple(t) => serde_json::Value::Array(
+                t.into_iter().map(|e| e.into_serde_json()).collect(),
+            ),
             Value::Struct(s) => serde_json::Value::Object(
                 s.into_iter()
                     .map(|(k, v)| (k, v.into_serde_json()))
@@ -234,7 +248,9 @@ impl<T: Field> Value<T> {
 
 impl<T: Field> Values<T> {
     pub fn into_serde_json(self) -> serde_json::Value {
-        serde_json::Value::Array(self.0.into_iter().map(|e| e.into_serde_json()).collect())
+        serde_json::Value::Array(
+            self.0.into_iter().map(|e| e.into_serde_json()).collect(),
+        )
     }
 }
 
@@ -245,35 +261,72 @@ pub fn parse_value<T: Field>(
     match (&expected_type, value) {
         (ConcreteType::FieldElement, serde_json::Value::String(s)) => {
             T::try_from_dec_str(s.as_str())
-                .or_else(|_| T::try_from_str(s.as_str().trim_start_matches("0x"), 16))
+                .or_else(|_| {
+                    T::try_from_str(s.as_str().trim_start_matches("0x"), 16)
+                })
                 .map(Value::Field)
-                .map_err(|_| Error::Type(format!("Could not parse `{}` to field type", s)))
+                .map_err(|_| {
+                    Error::Type(format!(
+                        "Could not parse `{}` to field type",
+                        s
+                    ))
+                })
         }
         (ConcreteType::Uint(UBitwidth::B8), serde_json::Value::String(s)) => s
             .as_str()
             .parse::<u8>()
-            .or_else(|_| u8::from_str_radix(s.as_str().trim_start_matches("0x"), 16))
+            .or_else(|_| {
+                u8::from_str_radix(s.as_str().trim_start_matches("0x"), 16)
+            })
             .map(Value::U8)
-            .map_err(|_| Error::Type(format!("Could not parse `{}` to u8 type", s))),
-        (ConcreteType::Uint(UBitwidth::B16), serde_json::Value::String(s)) => s
-            .as_str()
-            .parse::<u16>()
-            .or_else(|_| u16::from_str_radix(s.as_str().trim_start_matches("0x"), 16))
-            .map(Value::U16)
-            .map_err(|_| Error::Type(format!("Could not parse `{}` to u16 type", s))),
-        (ConcreteType::Uint(UBitwidth::B32), serde_json::Value::String(s)) => s
-            .as_str()
-            .parse::<u32>()
-            .or_else(|_| u32::from_str_radix(s.as_str().trim_start_matches("0x"), 16))
-            .map(Value::U32)
-            .map_err(|_| Error::Type(format!("Could not parse `{}` to u32 type", s))),
-        (ConcreteType::Uint(UBitwidth::B64), serde_json::Value::String(s)) => s
-            .as_str()
-            .parse::<u64>()
-            .or_else(|_| u64::from_str_radix(s.as_str().trim_start_matches("0x"), 16))
-            .map(Value::U64)
-            .map_err(|_| Error::Type(format!("Could not parse `{}` to u64 type", s))),
-        (ConcreteType::Boolean, serde_json::Value::Bool(b)) => Ok(Value::Boolean(b)),
+            .map_err(|_| {
+                Error::Type(format!("Could not parse `{}` to u8 type", s))
+            }),
+        (ConcreteType::Uint(UBitwidth::B16), serde_json::Value::String(s)) => {
+            s.as_str()
+                .parse::<u16>()
+                .or_else(|_| {
+                    u16::from_str_radix(
+                        s.as_str().trim_start_matches("0x"),
+                        16,
+                    )
+                })
+                .map(Value::U16)
+                .map_err(|_| {
+                    Error::Type(format!("Could not parse `{}` to u16 type", s))
+                })
+        }
+        (ConcreteType::Uint(UBitwidth::B32), serde_json::Value::String(s)) => {
+            s.as_str()
+                .parse::<u32>()
+                .or_else(|_| {
+                    u32::from_str_radix(
+                        s.as_str().trim_start_matches("0x"),
+                        16,
+                    )
+                })
+                .map(Value::U32)
+                .map_err(|_| {
+                    Error::Type(format!("Could not parse `{}` to u32 type", s))
+                })
+        }
+        (ConcreteType::Uint(UBitwidth::B64), serde_json::Value::String(s)) => {
+            s.as_str()
+                .parse::<u64>()
+                .or_else(|_| {
+                    u64::from_str_radix(
+                        s.as_str().trim_start_matches("0x"),
+                        16,
+                    )
+                })
+                .map(Value::U64)
+                .map_err(|_| {
+                    Error::Type(format!("Could not parse `{}` to u64 type", s))
+                })
+        }
+        (ConcreteType::Boolean, serde_json::Value::Bool(b)) => {
+            Ok(Value::Boolean(b))
+        }
         (ConcreteType::Array(array_type), serde_json::Value::Array(a)) => {
             let size = *array_type.size;
             if a.len() != size as usize {
@@ -305,7 +358,10 @@ pub fn parse_value<T: Field>(
                     .map(Value::Tuple)
             }
         }
-        (ConcreteType::Struct(struct_type), serde_json::Value::Object(mut o)) => {
+        (
+            ConcreteType::Struct(struct_type),
+            serde_json::Value::Object(mut o),
+        ) => {
             if o.len() != struct_type.members_count() {
                 Err(Error::Type(format!(
                     "Expected {} member(s), found {}",
@@ -320,9 +376,15 @@ pub fn parse_value<T: Field>(
                         .map(|m| {
                             o.remove(&m.id)
                                 .ok_or_else(|| {
-                                    Error::Type(format!("Member with id `{}` not found", m.id))
+                                    Error::Type(format!(
+                                        "Member with id `{}` not found",
+                                        m.id
+                                    ))
                                 })
-                                .map(|v| parse_value(v, *m.ty.clone()).map(|v| (m.id.clone(), v)))
+                                .map(|v| {
+                                    parse_value(v, *m.ty.clone())
+                                        .map(|v| (m.id.clone(), v))
+                                })
                         })
                         .collect::<Result<Vec<_>, _>>()?
                         .into_iter()
@@ -341,7 +403,10 @@ pub fn parse_value<T: Field>(
     }
 }
 
-pub fn parse_strict<T: Field>(s: &str, types: Vec<ConcreteType>) -> Result<Values<T>, Error> {
+pub fn parse_strict<T: Field>(
+    s: &str,
+    types: Vec<ConcreteType>,
+) -> Result<Values<T>, Error> {
     let values: serde_json::Value =
         serde_json::from_str(s).map_err(|e| Error::Json(e.to_string()))?;
 
@@ -378,7 +443,9 @@ pub fn parse_strict_json<T: Field>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use zokrates_ast::typed::types::{ConcreteStructMember, ConcreteStructType, ConcreteType};
+    use zokrates_ast::typed::types::{
+        ConcreteStructMember, ConcreteStructType, ConcreteType,
+    };
     use zokrates_field::Bn128Field;
 
     #[test]
@@ -433,13 +500,21 @@ mod tests {
 
         let s = r#"["0x1234"]"#;
         assert_eq!(
-            parse_strict::<Bn128Field>(s, vec![ConcreteType::Uint(UBitwidth::B32)]).unwrap(),
+            parse_strict::<Bn128Field>(
+                s,
+                vec![ConcreteType::Uint(UBitwidth::B32)]
+            )
+            .unwrap(),
             Values(vec![Value::U32(4660u32)])
         );
 
         let s = r#"["0x1234"]"#;
         assert_eq!(
-            parse_strict::<Bn128Field>(s, vec![ConcreteType::Uint(UBitwidth::B8)]).unwrap_err(),
+            parse_strict::<Bn128Field>(
+                s,
+                vec![ConcreteType::Uint(UBitwidth::B8)]
+            )
+            .unwrap_err(),
             Error::Type("Could not parse `0x1234` to u8 type".into())
         );
     }
@@ -448,8 +523,11 @@ mod tests {
     fn bools() {
         let s = "[true, false]";
         assert_eq!(
-            parse_strict::<Bn128Field>(s, vec![ConcreteType::Boolean, ConcreteType::Boolean])
-                .unwrap(),
+            parse_strict::<Bn128Field>(
+                s,
+                vec![ConcreteType::Boolean, ConcreteType::Boolean]
+            )
+            .unwrap(),
             Values(vec![Value::Boolean(true), Value::Boolean(false)])
         );
     }
@@ -458,8 +536,11 @@ mod tests {
     fn array() {
         let s = "[[true, false]]";
         assert_eq!(
-            parse_strict::<Bn128Field>(s, vec![ConcreteType::array((ConcreteType::Boolean, 2u32))])
-                .unwrap(),
+            parse_strict::<Bn128Field>(
+                s,
+                vec![ConcreteType::array((ConcreteType::Boolean, 2u32))]
+            )
+            .unwrap(),
             Values(vec![Value::Array(vec![
                 Value::Boolean(true),
                 Value::Boolean(false)
@@ -542,7 +623,9 @@ mod tests {
                 ))]
             )
             .unwrap_err(),
-            Error::Type("Value `false` doesn't match expected type `field`".into())
+            Error::Type(
+                "Value `false` doesn't match expected type `field`".into()
+            )
         );
     }
 
@@ -587,7 +670,10 @@ mod tests {
 
         #[test]
         fn fields() {
-            let v = Values::<Bn128Field>(vec![Value::Field(1.into()), Value::Field(2.into())]);
+            let v = Values::<Bn128Field>(vec![
+                Value::Field(1.into()),
+                Value::Field(2.into()),
+            ]);
             assert_eq!(v.encode(), vec![1.into(), 2.into()]);
         }
 
@@ -599,7 +685,8 @@ mod tests {
 
         #[test]
         fn bools() {
-            let v: Values<Bn128Field> = Values(vec![Value::Boolean(true), Value::Boolean(false)]);
+            let v: Values<Bn128Field> =
+                Values(vec![Value::Boolean(true), Value::Boolean(false)]);
             assert_eq!(v.encode(), vec![1.into(), 0.into()]);
         }
 

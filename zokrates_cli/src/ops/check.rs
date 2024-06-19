@@ -8,7 +8,8 @@ use zokrates_common::constants::BN128;
 use zokrates_common::{helpers::CurveParameter, CompileConfig};
 use zokrates_core::compile::{check, CompileError};
 use zokrates_field::{
-    Bls12_377Field, Bls12_381Field, Bn128Field, Bw6_761Field, Field, PallasField, VestaField,
+    Bls12_377Field, Bls12_381Field, Bn128Field, Bw6_761Field, Field,
+    PallasField, VestaField,
 };
 use zokrates_fs_resolver::FileSystemResolver;
 
@@ -47,7 +48,8 @@ pub fn subcommand() -> App<'static, 'static> {
 }
 
 pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
-    let curve = CurveParameter::try_from(sub_matches.value_of("curve").unwrap())?;
+    let curve =
+        CurveParameter::try_from(sub_matches.value_of("curve").unwrap())?;
     match curve {
         CurveParameter::Bn128 => cli_check::<Bn128Field>(sub_matches),
         CurveParameter::Bls12_377 => cli_check::<Bls12_377Field>(sub_matches),
@@ -55,6 +57,8 @@ pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
         CurveParameter::Bw6_761 => cli_check::<Bw6_761Field>(sub_matches),
         CurveParameter::Pallas => cli_check::<PallasField>(sub_matches),
         CurveParameter::Vesta => cli_check::<VestaField>(sub_matches),
+
+        CurveParameter::Bn254 => cli_check::<zokrates_field::GrumpkinField>(sub_matches),
     }
 }
 
@@ -62,8 +66,9 @@ fn cli_check<T: Field>(sub_matches: &ArgMatches) -> Result<(), String> {
     println!("Checking {}\n", sub_matches.value_of("input").unwrap());
     let path = PathBuf::from(sub_matches.value_of("input").unwrap());
 
-    let file = File::open(path.clone())
-        .map_err(|why| format!("Could not open {}: {}", path.display(), why))?;
+    let file = File::open(path.clone()).map_err(|why| {
+        format!("Could not open {}: {}", path.display(), why)
+    })?;
 
     let mut reader = BufReader::new(file);
     let mut source = String::new();

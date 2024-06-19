@@ -1,6 +1,6 @@
 use ark_bls12_377::{
-    constraints::PairingVar as BLS12PairingVar, Bls12_377 as BLS12PairingEngine, Fq as BLS12Fq,
-    Fq2 as BLS12Fq2,
+    constraints::PairingVar as BLS12PairingVar,
+    Bls12_377 as BLS12PairingEngine, Fq as BLS12Fq, Fq2 as BLS12Fq2,
 };
 use ark_bw6_761::Fr as BW6Fr;
 use ark_ec::PairingEngine;
@@ -36,9 +36,16 @@ struct DefaultCircuit {
 }
 
 impl<F: PrimeField> ConstraintSynthesizer<F> for DefaultCircuit {
-    fn generate_constraints(self, cs: ConstraintSystemRef<F>) -> Result<(), SynthesisError> {
+    fn generate_constraints(
+        self,
+        cs: ConstraintSystemRef<F>,
+    ) -> Result<(), SynthesisError> {
         for _ in 0..self.public_input_size {
-            let _ = FpVar::<F>::new_input(ns!(cs, "alloc_input"), || Ok(F::one()))?;
+            let _ =
+                FpVar::<F>::new_input(
+                    ns!(cs, "alloc_input"),
+                    || Ok(F::one()),
+                )?;
         }
         Ok(())
     }
@@ -61,12 +68,15 @@ pub fn generate_verify_constraints(
     let mut rng = test_rng(); // has a fixed seed
     let circuit = DefaultCircuit { public_input_size };
 
-    let (pk, vk) = GM17Snark::circuit_specific_setup(circuit, &mut rng).unwrap();
+    let (pk, vk) =
+        GM17Snark::circuit_specific_setup(circuit, &mut rng).unwrap();
     let proof = GM17Snark::prove(&pk, circuit, &mut rng).unwrap();
 
     let mut fp_vars = Vec::new();
     for _ in 0..public_input_size {
-        let fp = FpVar::new_input(ns!(cs, "alloc_input"), || Ok(BLS12Fq::one())).unwrap();
+        let fp =
+            FpVar::new_input(ns!(cs, "alloc_input"), || Ok(BLS12Fq::one()))
+                .unwrap();
         fp_vars.push(fp);
     }
 
@@ -95,7 +105,9 @@ pub fn generate_verify_constraints(
         <BLS12PairingEngine as PairingEngine>::Fq,
         GM17Snark,
     >>::new_verification_key_unchecked(
-        ns!(cs, "alloc_vk"), || Ok(vk), AllocationMode::Witness
+        ns!(cs, "alloc_vk"),
+        || Ok(vk),
+        AllocationMode::Witness,
     )
     .unwrap();
 
@@ -178,7 +190,11 @@ pub fn generate_verify_constraints(
     )
 }
 
-pub fn generate_verify_witness<T: Field>(inputs: &[T], proof: &[T], vk: &[T]) -> Vec<T> {
+pub fn generate_verify_witness<T: Field>(
+    inputs: &[T],
+    proof: &[T],
+    vk: &[T],
+) -> Vec<T> {
     assert_eq!(proof.len(), 8);
     assert_eq!(vk.len(), 18 + (2 * inputs.len()));
 
@@ -187,8 +203,10 @@ pub fn generate_verify_witness<T: Field>(inputs: &[T], proof: &[T], vk: &[T]) ->
 
     let mut fp_vars = Vec::new();
     for input in inputs {
-        let input_field: BLS12Fq = BLS12Fq::from_str(input.to_dec_string().as_str()).unwrap();
-        let fp = FpVar::new_input(ns!(cs, "alloc_input"), || Ok(input_field)).unwrap();
+        let input_field: BLS12Fq =
+            BLS12Fq::from_str(input.to_dec_string().as_str()).unwrap();
+        let fp = FpVar::new_input(ns!(cs, "alloc_input"), || Ok(input_field))
+            .unwrap();
         fp_vars.push(fp);
     }
 
@@ -265,7 +283,10 @@ pub fn generate_verify_witness<T: Field>(inputs: &[T], proof: &[T], vk: &[T]) ->
 }
 
 #[inline]
-fn var_to_index<F: ark_ff::PrimeField>(var: &FpVar<F>, offset: usize) -> usize {
+fn var_to_index<F: ark_ff::PrimeField>(
+    var: &FpVar<F>,
+    offset: usize,
+) -> usize {
     match var {
         FpVar::Var(ref fp) => {
             let var = &fp.variable;
@@ -301,7 +322,9 @@ fn new_g2<T: Field>(flat: &[T]) -> G2 {
     )
 }
 
-pub fn from_ark<T: zokrates_field::Field, E: PairingEngine>(c: Constraint<E::Fq>) -> Constraint<T> {
+pub fn from_ark<T: zokrates_field::Field, E: PairingEngine>(
+    c: Constraint<E::Fq>,
+) -> Constraint<T> {
     Constraint {
         a: c.a
             .into_iter()

@@ -1,5 +1,5 @@
 use crate::constants::*;
-use std::convert::TryFrom;
+use std::{convert::TryFrom, fmt::write};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum CurveParameter {
@@ -9,6 +9,7 @@ pub enum CurveParameter {
     Bw6_761,
     Pallas,
     Vesta,
+    Bn254,
 }
 
 impl std::fmt::Display for CurveParameter {
@@ -16,12 +17,14 @@ impl std::fmt::Display for CurveParameter {
         use CurveParameter::*;
 
         match self {
-            Bn128 => write!(f, "bn128"),
+            Bn128 => write!(f, "bn128x"),
             Bls12_381 => write!(f, "bls12_381"),
             Bls12_377 => write!(f, "bls12_377"),
             Bw6_761 => write!(f, "bw6_761"),
             Pallas => write!(f, "pallas"),
             Vesta => write!(f, "vesta"),
+
+            Bn254 => write!(f, "bn254")
         }
     }
 }
@@ -88,6 +91,8 @@ impl TryFrom<&str> for CurveParameter {
             BW6_761 => Ok(CurveParameter::Bw6_761),
             PALLAS => Ok(CurveParameter::Pallas),
             VESTA => Ok(CurveParameter::Vesta),
+
+            BN254 => Ok(CurveParameter::Bn254),
             _ => Err(format!("Unknown curve {}", s)),
         }
     }
@@ -174,7 +179,8 @@ impl TryFrom<(&str, &str, &str)> for Parameters {
             #[cfg(feature = "bellperson")]
             (BackendParameter::Bellperson, CurveParameter::Vesta, SchemeParameter::NOVA) => Ok(()),
             #[cfg(feature = "bellpepper")]
-            (BackendParameter::Bellpepper, CurveParameter::Vesta, SchemeParameter::NOVA) => Ok(()),
+            // (BackendParameter::Bellpepper, CurveParameter::Vesta, SchemeParameter::NOVA) => Ok(()),
+            (BackendParameter::Bellpepper, CurveParameter::Bn254, SchemeParameter::NOVA) => Ok(()),
             #[cfg(feature = "bellman")]
             _ => Err(format!(
                 "Unsupported combination of parameters (backend: {}, curve: {}, proving scheme: {})",

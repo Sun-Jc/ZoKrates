@@ -31,8 +31,8 @@ mod tests {
             use std::fs;
             use std::io::Read;
             // Traverse all .zok files in examples dir
-            for entry in
-                glob("../zokrates_cli/examples/**/*.zok").expect("Failed to read glob pattern")
+            for entry in glob("../zokrates_cli/examples/**/*.zok")
+                .expect("Failed to read glob pattern")
             {
                 match entry {
                     Ok(path) => {
@@ -46,7 +46,9 @@ mod tests {
                         let mut data = String::new();
                         file.read_to_string(&mut data).unwrap();
 
-                        assert!(ZoKratesParser::parse(Rule::file, &data).is_ok());
+                        assert!(
+                            ZoKratesParser::parse(Rule::file, &data).is_ok()
+                        );
                     }
                     Err(e) => panic!("{:?}", e),
                 }
@@ -330,7 +332,8 @@ mod tests {
         fn parse_for_loop() {
             let input = "for u32 i in 0..3 { c = c + a[i]; }";
 
-            let parse = ZoKratesParser::parse(Rule::iteration_statement, input);
+            let parse =
+                ZoKratesParser::parse(Rule::iteration_statement, input);
             assert!(parse.is_ok());
         }
     }

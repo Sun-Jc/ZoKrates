@@ -10,8 +10,8 @@ mod tests {
 
     use bellman_ce::pairing::bn256::Bn256;
     use zkutil::circom_circuit::{
-        create_rng, generate_random_parameters, prove, r1cs_from_bin, witness_from_bin,
-        CircomCircuit,
+        create_rng, generate_random_parameters, prove, r1cs_from_bin,
+        witness_from_bin, CircomCircuit,
     };
     use zokrates_ast::{
         flat::{Parameter, Variable},
@@ -40,7 +40,8 @@ mod tests {
                     None,
                 ),
                 Statement::constraint(
-                    LinComb::from(Variable::new(0)) + LinComb::from(Variable::new(1)),
+                    LinComb::from(Variable::new(0))
+                        + LinComb::from(Variable::new(1)),
                     Variable::public(0),
                     None,
                 ),
@@ -52,7 +53,8 @@ mod tests {
 
         write_r1cs(&mut r1cs, prog).unwrap();
 
-        let public_inputs: PublicInputs = vec![Variable::new(1)].into_iter().collect();
+        let public_inputs: PublicInputs =
+            vec![Variable::new(1)].into_iter().collect();
 
         let witness: Witness<Bn128Field> = Witness(
             vec![

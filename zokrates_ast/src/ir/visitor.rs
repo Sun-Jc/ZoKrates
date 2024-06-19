@@ -76,19 +76,28 @@ pub fn visit_statement<T: Field, F: Visitor<T>>(f: &mut F, s: &Statement<T>) {
     }
 }
 
-pub fn visit_linear_combination<T: Field, F: Visitor<T>>(f: &mut F, e: &LinComb<T>) {
+pub fn visit_linear_combination<T: Field, F: Visitor<T>>(
+    f: &mut F,
+    e: &LinComb<T>,
+) {
     for expr in e.value.iter() {
         f.visit_variable(&expr.0);
         f.visit_value(&expr.1);
     }
 }
 
-pub fn visit_quadratic_combination<T: Field, F: Visitor<T>>(f: &mut F, e: &QuadComb<T>) {
+pub fn visit_quadratic_combination<T: Field, F: Visitor<T>>(
+    f: &mut F,
+    e: &QuadComb<T>,
+) {
     f.visit_linear_combination(&e.left);
     f.visit_linear_combination(&e.right);
 }
 
-pub fn visit_directive_statement<T: Field, F: Visitor<T>>(f: &mut F, ds: &DirectiveStatement<T>) {
+pub fn visit_directive_statement<T: Field, F: Visitor<T>>(
+    f: &mut F,
+    ds: &DirectiveStatement<T>,
+) {
     for expr in ds.inputs.iter() {
         f.visit_quadratic_combination(expr);
     }
@@ -105,4 +114,5 @@ pub fn visit_variable<T: Field, F: Visitor<T>>(_f: &mut F, _v: &Variable) {}
 
 pub fn visit_value<T: Field, F: Visitor<T>>(_f: &mut F, _v: &T) {}
 
-fn visit_runtime_error<T: Field, F: Visitor<T>>(_f: &mut F, _: &RuntimeError) {}
+fn visit_runtime_error<T: Field, F: Visitor<T>>(_f: &mut F, _: &RuntimeError) {
+}

@@ -2,8 +2,9 @@
 
 use crate::reducer::ConstantDefinitions;
 use zokrates_ast::typed::{
-    folder::*, identifier::FrameIdentifier, CoreIdentifier, DeclarationConstant, Expr, Id,
-    Identifier, IdentifierExpression, IdentifierOrExpression, TypedExpression, TypedProgram,
+    folder::*, identifier::FrameIdentifier, CoreIdentifier,
+    DeclarationConstant, Expr, Id, Identifier, IdentifierExpression,
+    IdentifierOrExpression, TypedExpression, TypedProgram,
     TypedSymbolDeclaration, UExpression, UExpressionInner,
 };
 use zokrates_field::Field;
@@ -13,11 +14,16 @@ pub struct ConstantsReader<'a, 'ast, T> {
 }
 
 impl<'a, 'ast, T: Field> ConstantsReader<'a, 'ast, T> {
-    pub fn with_constants(constants: &'a ConstantDefinitions<'ast, T>) -> Self {
+    pub fn with_constants(
+        constants: &'a ConstantDefinitions<'ast, T>,
+    ) -> Self {
         Self { constants }
     }
 
-    pub fn read_into_program(&mut self, p: TypedProgram<'ast, T>) -> TypedProgram<'ast, T> {
+    pub fn read_into_program(
+        &mut self,
+        p: TypedProgram<'ast, T>,
+    ) -> TypedProgram<'ast, T> {
         self.fold_program(p)
     }
 
@@ -40,7 +46,9 @@ impl<'a, 'ast, T: Field> Folder<'ast, T> for ConstantsReader<'a, 'ast, T> {
 
                 match self.constants.get(&c).cloned() {
                     Some(e) => match UExpression::from(e).into_inner() {
-                        UExpressionInner::Value(v) => DeclarationConstant::Concrete(v.value as u32),
+                        UExpressionInner::Value(v) => {
+                            DeclarationConstant::Concrete(v.value as u32)
+                        }
                         _ => unreachable!(),
                     },
                     None => DeclarationConstant::Constant(c),
@@ -68,10 +76,14 @@ impl<'a, 'ast, T: Field> Folder<'ast, T> for ConstantsReader<'a, 'ast, T> {
             } => {
                 assert_eq!(version, 0);
                 match self.constants.get(&c).cloned() {
-                    Some(v) => IdentifierOrExpression::Expression(E::from(v).into_inner()),
-                    None => IdentifierOrExpression::Identifier(IdentifierExpression::new(
-                        CoreIdentifier::Constant(c).into(),
-                    )),
+                    Some(v) => IdentifierOrExpression::Expression(
+                        E::from(v).into_inner(),
+                    ),
+                    None => IdentifierOrExpression::Identifier(
+                        IdentifierExpression::new(
+                            CoreIdentifier::Constant(c).into(),
+                        ),
+                    ),
                 }
             }
             _ => fold_identifier_expression(self, ty, e),

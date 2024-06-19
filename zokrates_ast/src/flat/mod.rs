@@ -35,12 +35,17 @@ use zokrates_field::Field;
 
 pub type FlatProg<'ast, T> = FlatFunction<'ast, T>;
 
-pub type FlatFunction<'ast, T> = FlatFunctionIterator<'ast, T, Vec<FlatStatement<'ast, T>>>;
+pub type FlatFunction<'ast, T> =
+    FlatFunctionIterator<'ast, T, Vec<FlatStatement<'ast, T>>>;
 
 pub type FlatProgIterator<'ast, T, I> = FlatFunctionIterator<'ast, T, I>;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub struct FlatFunctionIterator<'ast, T, I: IntoIterator<Item = FlatStatement<'ast, T>>> {
+pub struct FlatFunctionIterator<
+    'ast,
+    T,
+    I: IntoIterator<Item = FlatStatement<'ast, T>>,
+> {
     /// The map of the modules for sourcemaps
     pub module_map: ModuleMap,
     /// Arguments of the function
@@ -51,7 +56,9 @@ pub struct FlatFunctionIterator<'ast, T, I: IntoIterator<Item = FlatStatement<'a
     pub return_count: usize,
 }
 
-impl<'ast, T, I: IntoIterator<Item = FlatStatement<'ast, T>>> FlatFunctionIterator<'ast, T, I> {
+impl<'ast, T, I: IntoIterator<Item = FlatStatement<'ast, T>>>
+    FlatFunctionIterator<'ast, T, I>
+{
     pub fn collect(self) -> FlatFunction<'ast, T> {
         FlatFunction {
             statements: self.statements.into_iter().collect(),
@@ -84,9 +91,13 @@ impl<'ast, T: Field> fmt::Display for FlatFunction<'ast, T> {
 
 pub type DefinitionStatement<T> =
     common::expressions::DefinitionStatement<Variable, FlatExpression<T>>;
-pub type LogStatement<T> = common::statements::LogStatement<(ConcreteType, Vec<FlatExpression<T>>)>;
-pub type FlatDirective<'ast, T> =
-    common::statements::DirectiveStatement<FlatExpression<T>, Variable, Solver<'ast, T>>;
+pub type LogStatement<T> =
+    common::statements::LogStatement<(ConcreteType, Vec<FlatExpression<T>>)>;
+pub type FlatDirective<'ast, T> = common::statements::DirectiveStatement<
+    FlatExpression<T>,
+    Variable,
+    Solver<'ast, T>,
+>;
 
 #[derive(Derivative)]
 #[derivative(PartialEq, Hash)]
@@ -125,7 +136,11 @@ pub struct AssertionStatement<T> {
 }
 
 impl<T> AssertionStatement<T> {
-    pub fn new(lin: FlatExpression<T>, quad: FlatExpression<T>, error: RuntimeError) -> Self {
+    pub fn new(
+        lin: FlatExpression<T>,
+        quad: FlatExpression<T>,
+        error: RuntimeError,
+    ) -> Self {
         AssertionStatement {
             span: None,
             quad,
@@ -161,7 +176,11 @@ impl<'ast, T> FlatStatement<'ast, T> {
         Self::Definition(DefinitionStatement::new(assignee, rhs))
     }
 
-    pub fn condition(lin: FlatExpression<T>, quad: FlatExpression<T>, error: RuntimeError) -> Self {
+    pub fn condition(
+        lin: FlatExpression<T>,
+        quad: FlatExpression<T>,
+        error: RuntimeError,
+    ) -> Self {
         Self::Condition(AssertionStatement::new(lin, quad, error))
     }
 
@@ -342,8 +361,18 @@ impl<T> From<T> for FlatExpression<T> {
     }
 }
 
-impl<T, Op> BinaryExpression<Op, FlatExpression<T>, FlatExpression<T>, FlatExpression<T>> {
-    fn apply_substitution(self, substitution: &HashMap<Variable, Variable>) -> Self {
+impl<T, Op>
+    BinaryExpression<
+        Op,
+        FlatExpression<T>,
+        FlatExpression<T>,
+        FlatExpression<T>,
+    >
+{
+    fn apply_substitution(
+        self,
+        substitution: &HashMap<Variable, Variable>,
+    ) -> Self {
         let left = self.left.apply_substitution(substitution);
         let right = self.right.apply_substitution(substitution);
 
@@ -352,7 +381,10 @@ impl<T, Op> BinaryExpression<Op, FlatExpression<T>, FlatExpression<T>, FlatExpre
 }
 
 impl<T> IdentifierExpression<Variable, FlatExpression<T>> {
-    fn apply_substitution(self, substitution: &HashMap<Variable, Variable>) -> Self {
+    fn apply_substitution(
+        self,
+        substitution: &HashMap<Variable, Variable>,
+    ) -> Self {
         let id = *self.id.apply_substitution(substitution);
 
         IdentifierExpression { id, ..self }
@@ -368,28 +400,47 @@ impl<T> FlatExpression<T> {
         Self::Value(ValueExpression::new(t))
     }
 
-    pub fn apply_substitution(self, substitution: &HashMap<Variable, Variable>) -> Self {
+    pub fn apply_substitution(
+        self,
+        substitution: &HashMap<Variable, Variable>,
+    ) -> Self {
         match self {
             e @ FlatExpression::Value(_) => e,
             FlatExpression::Identifier(id) => {
                 FlatExpression::Identifier(id.apply_substitution(substitution))
             }
-            FlatExpression::Add(e) => FlatExpression::Add(e.apply_substitution(substitution)),
-            FlatExpression::Sub(e) => FlatExpression::Sub(e.apply_substitution(substitution)),
-            FlatExpression::Mult(e) => FlatExpression::Mult(e.apply_substitution(substitution)),
+            FlatExpression::Add(e) => {
+                FlatExpression::Add(e.apply_substitution(substitution))
+            }
+            FlatExpression::Sub(e) => {
+                FlatExpression::Sub(e.apply_substitution(substitution))
+            }
+            FlatExpression::Mult(e) => {
+                FlatExpression::Mult(e.apply_substitution(substitution))
+            }
         }
     }
 
     pub fn is_linear(&self) -> bool {
         match *self {
             FlatExpression::Value(_) | FlatExpression::Identifier(_) => true,
-            FlatExpression::Add(ref e) => e.left.is_linear() && e.right.is_linear(),
-            FlatExpression::Sub(ref e) => e.left.is_linear() && e.right.is_linear(),
+            FlatExpression::Add(ref e) => {
+                e.left.is_linear() && e.right.is_linear()
+            }
+            FlatExpression::Sub(ref e) => {
+                e.left.is_linear() && e.right.is_linear()
+            }
             FlatExpression::Mult(ref e) => matches!(
                 (&*e.left, &*e.right),
                 (FlatExpression::Value(_), FlatExpression::Value(_))
-                    | (FlatExpression::Value(_), FlatExpression::Identifier(_))
-                    | (FlatExpression::Identifier(_), FlatExpression::Value(_))
+                    | (
+                        FlatExpression::Value(_),
+                        FlatExpression::Identifier(_)
+                    )
+                    | (
+                        FlatExpression::Identifier(_),
+                        FlatExpression::Value(_)
+                    )
             ),
         }
     }

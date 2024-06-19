@@ -11,7 +11,9 @@ use zokrates_ast::typed::ConcreteType;
 use zokrates_common::CompileConfig;
 use zokrates_core::compile::compile;
 
-use zokrates_field::{Bls12_377Field, Bls12_381Field, Bn128Field, Bw6_761Field, Field};
+use zokrates_field::{
+    Bls12_377Field, Bls12_381Field, Bn128Field, Bw6_761Field, Field,
+};
 use zokrates_fs_resolver::FileSystemResolver;
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -55,7 +57,9 @@ type Val = serde_json::Value;
 
 fn try_parse_raw_val<T: Field>(s: serde_json::Value) -> Result<T, ()> {
     match s {
-        serde_json::Value::String(s) => T::try_from_dec_str(&s).map_err(|_| ()),
+        serde_json::Value::String(s) => {
+            T::try_from_dec_str(&s).map_err(|_| ())
+        }
         _ => Err(()),
     }
 }
@@ -79,16 +83,17 @@ fn compare(
 }
 
 pub fn test_inner(test_path: &str) {
-    let t: Tests =
-        serde_json::from_reader(BufReader::new(File::open(Path::new(test_path)).unwrap())).unwrap();
+    let t: Tests = serde_json::from_reader(BufReader::new(
+        File::open(Path::new(test_path)).unwrap(),
+    ))
+    .unwrap();
 
     let curves = t.curves.clone().unwrap_or_else(|| vec![Curve::Bn128]);
 
     let t = Tests {
-        entry_point: Some(
-            t.entry_point
-                .unwrap_or_else(|| PathBuf::from(String::from(test_path)).with_extension("zok")),
-        ),
+        entry_point: Some(t.entry_point.unwrap_or_else(|| {
+            PathBuf::from(String::from(test_path)).with_extension("zok")
+        })),
         ..t
     };
 
@@ -101,9 +106,15 @@ pub fn test_inner(test_path: &str) {
             for c in &curves {
                 match c {
                     Curve::Bn128 => compile_and_run::<Bn128Field>(t.clone()),
-                    Curve::Bls12_381 => compile_and_run::<Bls12_381Field>(t.clone()),
-                    Curve::Bls12_377 => compile_and_run::<Bls12_377Field>(t.clone()),
-                    Curve::Bw6_761 => compile_and_run::<Bw6_761Field>(t.clone()),
+                    Curve::Bls12_381 => {
+                        compile_and_run::<Bls12_381Field>(t.clone())
+                    }
+                    Curve::Bls12_377 => {
+                        compile_and_run::<Bls12_377Field>(t.clone())
+                    }
+                    Curve::Bw6_761 => {
+                        compile_and_run::<Bw6_761Field>(t.clone())
+                    }
                 }
             }
         })
@@ -120,7 +131,8 @@ fn compile_and_run<T: Field>(t: Tests) {
     let code = std::fs::read_to_string(&entry_point).unwrap();
 
     let stdlib = std::fs::canonicalize("../zokrates_stdlib/stdlib").unwrap();
-    let resolver = FileSystemResolver::with_stdlib_root(stdlib.to_str().unwrap());
+    let resolver =
+        FileSystemResolver::with_stdlib_root(stdlib.to_str().unwrap());
 
     let arena = typed_arena::Arena::new();
 
@@ -167,7 +179,8 @@ fn compile_and_run<T: Field>(t: Tests) {
         };
 
         let input = if with_abi {
-            try_parse_abi_val(test.input.values, signature.inputs.clone()).unwrap()
+            try_parse_abi_val(test.input.values, signature.inputs.clone())
+                .unwrap()
         } else {
             test.input
                 .values
@@ -178,15 +191,23 @@ fn compile_and_run<T: Field>(t: Tests) {
                 .unwrap()
         };
 
-        let output =
-            interpreter.execute(&input, bin.statements.iter(), &bin.arguments, &bin.solvers);
+        let output = interpreter.execute(
+            &input,
+            bin.statements.iter(),
+            &bin.arguments,
+            &bin.solvers,
+        );
 
         use zokrates_abi::Decode;
 
-        let output: Result<Output, zokrates_interpreter::Error> = output.map(|witness| Output {
-            value: zokrates_abi::Value::decode(witness.return_values(), *signature.output.clone())
+        let output: Result<Output, zokrates_interpreter::Error> =
+            output.map(|witness| Output {
+                value: zokrates_abi::Value::decode(
+                    witness.return_values(),
+                    *signature.output.clone(),
+                )
                 .into_serde_json(),
-        });
+            });
 
         if let Err(e) = compare(output, test.output) {
             let context = format!(

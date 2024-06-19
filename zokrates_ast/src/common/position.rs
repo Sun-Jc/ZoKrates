@@ -8,7 +8,18 @@ use serde::{Deserialize, Serialize};
 
 use super::FlatEmbed;
 
-#[derive(Clone, PartialEq, Eq, Copy, Hash, Default, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(
+    Clone,
+    PartialEq,
+    Eq,
+    Copy,
+    Hash,
+    Default,
+    PartialOrd,
+    Ord,
+    Deserialize,
+    Serialize,
+)]
 pub struct LocalSourceSpan {
     pub from: Position,
     pub to: Position,
@@ -20,7 +31,18 @@ pub type ModuleId = Path;
 
 pub type OwnedModuleId = PathBuf;
 
-#[derive(Clone, PartialEq, Debug, Eq, Hash, Default, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(
+    Clone,
+    PartialEq,
+    Debug,
+    Eq,
+    Hash,
+    Default,
+    PartialOrd,
+    Ord,
+    Deserialize,
+    Serialize,
+)]
 pub struct ModuleMap {
     modules: BTreeMap<ModuleIdHash, OwnedModuleId>,
 }
@@ -50,13 +72,35 @@ impl ModuleMap {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Copy, Hash, Default, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(
+    Clone,
+    PartialEq,
+    Eq,
+    Copy,
+    Hash,
+    Default,
+    PartialOrd,
+    Ord,
+    Deserialize,
+    Serialize,
+)]
 pub struct Position {
     pub line: usize,
     pub col: usize,
 }
 
-#[derive(Clone, PartialEq, Eq, Copy, Hash, PartialOrd, Ord, Deserialize, Serialize, Debug)]
+#[derive(
+    Clone,
+    PartialEq,
+    Eq,
+    Copy,
+    Hash,
+    PartialOrd,
+    Ord,
+    Deserialize,
+    Serialize,
+    Debug,
+)]
 pub enum Span {
     Source(SourceSpan),
     Embed(FlatEmbed),
@@ -99,7 +143,18 @@ impl Span {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Copy, Hash, Default, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(
+    Clone,
+    PartialEq,
+    Eq,
+    Copy,
+    Hash,
+    Default,
+    PartialOrd,
+    Ord,
+    Deserialize,
+    Serialize,
+)]
 pub struct SourceSpan {
     pub module: ModuleIdHash,
     pub from: Position,

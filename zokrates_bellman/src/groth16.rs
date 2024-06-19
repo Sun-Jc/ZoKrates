@@ -1,12 +1,14 @@
 use bellman::groth16::{
-    prepare_verifying_key, verify_proof, Parameters, PreparedVerifyingKey, Proof as BellmanProof,
-    VerifyingKey,
+    prepare_verifying_key, verify_proof, Parameters, PreparedVerifyingKey,
+    Proof as BellmanProof, VerifyingKey,
 };
 use pairing::{ff::to_hex, CurveAffine, Engine};
 
 use zokrates_field::BellmanFieldExtensions;
 use zokrates_field::Field;
-use zokrates_proof_systems::{Backend, MpcBackend, NonUniversalBackend, Proof, SetupKeypair};
+use zokrates_proof_systems::{
+    Backend, MpcBackend, NonUniversalBackend, Proof, SetupKeypair,
+};
 
 use crate::Computation;
 use crate::{get_random_seed, Bellman};
@@ -50,7 +52,10 @@ impl<T: Field + BellmanFieldExtensions> Backend<T, G16> for Bellman {
         Proof::new(proof_points, public_inputs)
     }
 
-    fn verify(vk: <G16 as Scheme<T>>::VerificationKey, proof: Proof<T, G16>) -> bool {
+    fn verify(
+        vk: <G16 as Scheme<T>>::VerificationKey,
+        proof: Proof<T, G16>,
+    ) -> bool {
         let vk = VerifyingKey {
             alpha_g1: serialization::to_g1::<T>(vk.alpha),
             beta_g1: <T::BellmanEngine as Engine>::G1Affine::one(), // not used during verification
@@ -65,7 +70,8 @@ impl<T: Field + BellmanFieldExtensions> Backend<T, G16> for Bellman {
                 .collect(),
         };
 
-        let pvk: PreparedVerifyingKey<T::BellmanEngine> = prepare_verifying_key(&vk);
+        let pvk: PreparedVerifyingKey<T::BellmanEngine> =
+            prepare_verifying_key(&vk);
         let bellman_proof = BellmanProof {
             a: serialization::to_g1::<T>(proof.proof.a),
             b: serialization::to_g2::<T>(proof.proof.b),
@@ -86,8 +92,14 @@ impl<T: Field + BellmanFieldExtensions> Backend<T, G16> for Bellman {
     }
 }
 
-impl<T: Field + BellmanFieldExtensions> NonUniversalBackend<T, G16> for Bellman {
-    fn setup<'a, I: IntoIterator<Item = Statement<'a, T>>, R: RngCore + CryptoRng>(
+impl<T: Field + BellmanFieldExtensions> NonUniversalBackend<T, G16>
+    for Bellman
+{
+    fn setup<
+        'a,
+        I: IntoIterator<Item = Statement<'a, T>>,
+        R: RngCore + CryptoRng,
+    >(
         program: ProgIterator<'a, T, I>,
         rng: &mut R,
     ) -> SetupKeypair<T, G16> {
@@ -95,19 +107,26 @@ impl<T: Field + BellmanFieldExtensions> NonUniversalBackend<T, G16> for Bellman 
         let mut pk: Vec<u8> = Vec::new();
         parameters.write(&mut pk).unwrap();
 
-        let vk = serialization::parameters_to_verification_key::<T>(&parameters);
+        let vk =
+            serialization::parameters_to_verification_key::<T>(&parameters);
         SetupKeypair::new(vk, pk)
     }
 }
 
 impl<T: Field + BellmanFieldExtensions> MpcBackend<T, G16> for Bellman {
-    fn initialize<'a, R: Read, W: Write, I: IntoIterator<Item = Statement<'a, T>>>(
+    fn initialize<
+        'a,
+        R: Read,
+        W: Write,
+        I: IntoIterator<Item = Statement<'a, T>>,
+    >(
         program: ProgIterator<'a, T, I>,
         phase1_radix: &mut R,
         output: &mut W,
     ) -> Result<(), String> {
         let circuit = Computation::without_witness(program);
-        let params = MPCParameters::new(circuit, phase1_radix).map_err(|e| e.to_string())?;
+        let params = MPCParameters::new(circuit, phase1_radix)
+            .map_err(|e| e.to_string())?;
         params.write(output).map_err(|e| e.to_string())?;
         Ok(())
     }
@@ -117,8 +136,8 @@ impl<T: Field + BellmanFieldExtensions> MpcBackend<T, G16> for Bellman {
         rng: &mut G,
         output: &mut W,
     ) -> Result<[u8; 64], String> {
-        let mut params =
-            MPCParameters::<T::BellmanEngine>::read(params, true).map_err(|e| e.to_string())?;
+        let mut params = MPCParameters::<T::BellmanEngine>::read(params, true)
+            .map_err(|e| e.to_string())?;
 
         let seed = get_random_seed(rng);
         let rng = &mut ChaChaRng::from_seed(seed.as_ref());
@@ -134,8 +153,8 @@ impl<T: Field + BellmanFieldExtensions> MpcBackend<T, G16> for Bellman {
         program: ProgIterator<'a, T, I>,
         phase1_radix: &mut R,
     ) -> Result<Vec<[u8; 64]>, String> {
-        let params =
-            MPCParameters::<T::BellmanEngine>::read(params, true).map_err(|e| e.to_string())?;
+        let params = MPCParameters::<T::BellmanEngine>::read(params, true)
+            .map_err(|e| e.to_string())?;
 
         let circuit = Computation::without_witness(program);
         let hashes = params
@@ -145,9 +164,11 @@ impl<T: Field + BellmanFieldExtensions> MpcBackend<T, G16> for Bellman {
         Ok(hashes)
     }
 
-    fn export_keypair<R: Read>(params: R) -> Result<SetupKeypair<T, G16>, String> {
-        let params =
-            MPCParameters::<T::BellmanEngine>::read(params, true).map_err(|e| e.to_string())?;
+    fn export_keypair<R: Read>(
+        params: R,
+    ) -> Result<SetupKeypair<T, G16>, String> {
+        let params = MPCParameters::<T::BellmanEngine>::read(params, true)
+            .map_err(|e| e.to_string())?;
 
         let params = params.get_params();
         let mut pk: Vec<u8> = Vec::new();
@@ -163,7 +184,9 @@ pub mod serialization {
     use pairing::from_hex;
     use zokrates_proof_systems::{G1Affine, G2Affine};
 
-    pub fn parameters_to_verification_key<T: Field + BellmanFieldExtensions>(
+    pub fn parameters_to_verification_key<
+        T: Field + BellmanFieldExtensions,
+    >(
         parameters: &Parameters<T::BellmanEngine>,
     ) -> VerificationKey<G1Affine, G2Affine> {
         VerificationKey {
@@ -228,8 +251,10 @@ mod tests {
         };
 
         let rng = &mut StdRng::from_entropy();
-        let keypair =
-            <Bellman as NonUniversalBackend<Bn128Field, G16>>::setup(program.clone(), rng);
+        let keypair = <Bellman as NonUniversalBackend<Bn128Field, G16>>::setup(
+            program.clone(),
+            rng,
+        );
         let interpreter = Interpreter::default();
 
         let witness = interpreter
@@ -247,7 +272,8 @@ mod tests {
             keypair.pk.as_slice(),
             rng,
         );
-        let ans = <Bellman as Backend<Bn128Field, G16>>::verify(keypair.vk, proof);
+        let ans =
+            <Bellman as Backend<Bn128Field, G16>>::verify(keypair.vk, proof);
 
         assert!(ans);
     }

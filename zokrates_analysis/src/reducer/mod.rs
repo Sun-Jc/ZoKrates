@@ -31,10 +31,10 @@ use zokrates_ast::typed::{CanonicalConstantIdentifier, EmbedCall, Variable};
 
 use zokrates_ast::typed::TypedAssignee;
 use zokrates_ast::typed::{
-    BlockExpression, CoreIdentifier, Expr, FunctionCall, FunctionCallExpression,
-    FunctionCallOrExpression, Id, TypedExpression, TypedFunction, TypedFunctionSymbol,
-    TypedFunctionSymbolDeclaration, TypedModule, TypedProgram, TypedStatement, UExpression,
-    UExpressionInner,
+    BlockExpression, CoreIdentifier, Expr, FunctionCall,
+    FunctionCallExpression, FunctionCallOrExpression, Id, TypedExpression,
+    TypedFunction, TypedFunctionSymbol, TypedFunctionSymbolDeclaration,
+    TypedModule, TypedProgram, TypedStatement, UExpression, UExpressionInner,
 };
 
 use zokrates_ast::untyped::OwnedModuleId;
@@ -128,7 +128,10 @@ impl<'ast, 'a, T: Field> ResultFolder<'ast, T> for Reducer<'ast, 'a, T> {
     }
 
     fn fold_function_call_expression<
-        E: Id<'ast, T> + From<TypedExpression<'ast, T>> + Expr<'ast, T> + FunctionCall<'ast, T>,
+        E: Id<'ast, T>
+            + From<TypedExpression<'ast, T>>
+            + Expr<'ast, T>
+            + FunctionCall<'ast, T>,
     >(
         &mut self,
         ty: &E::Ty,
@@ -170,7 +173,13 @@ impl<'ast, 'a, T: Field> ResultFolder<'ast, T> for Reducer<'ast, 'a, T> {
 
         self.push_call_frame();
 
-        let res = inline_call::<_, E>(&e.function_key, &generics, &arguments, ty, self.program);
+        let res = inline_call::<_, E>(
+            &e.function_key,
+            &generics,
+            &arguments,
+            ty,
+            self.program,
+        );
 
         let res = match res {
             Ok(InlineValue {
@@ -183,7 +192,11 @@ impl<'ast, 'a, T: Field> ResultFolder<'ast, T> for Reducer<'ast, 'a, T> {
                     .into_iter()
                     .zip(arguments)
                     .map(|(v, a)| {
-                        TypedStatement::definition(self.ssa.fold_assignee(v.into()), a).span(span)
+                        TypedStatement::definition(
+                            self.ssa.fold_assignee(v.into()),
+                            a,
+                        )
+                        .span(span)
                     })
                     .collect();
 
@@ -209,26 +222,35 @@ impl<'ast, 'a, T: Field> ResultFolder<'ast, T> for Reducer<'ast, 'a, T> {
 
                 let return_value = self.ssa.fold_expression(return_value);
 
-                let return_value = self.propagator.fold_expression(return_value)?;
+                let return_value =
+                    self.propagator.fold_expression(return_value)?;
 
                 let return_value = self.fold_expression(return_value)?;
 
-                let return_value = self.propagator.fold_expression(return_value)?;
+                let return_value =
+                    self.propagator.fold_expression(return_value)?;
 
                 Ok(FunctionCallOrExpression::Expression(
                     E::from(return_value).into_inner(),
                 ))
             }
-            Err(InlineError::Generic(decl, conc)) => Err(Error::Incompatible(format!(
-                "Call site `{}` incompatible with declaration `{}`",
-                conc, decl
-            ))),
+            Err(InlineError::Generic(decl, conc)) => {
+                Err(Error::Incompatible(format!(
+                    "Call site `{}` incompatible with declaration `{}`",
+                    conc, decl
+                )))
+            }
             Err(InlineError::NonConstant) => Err(Error::NonConstant(format!(
                 "Generic parameters must be compile-time constants, found {}",
-                FunctionCallExpression::<_, E>::new(e.function_key, generics, arguments)
+                FunctionCallExpression::<_, E>::new(
+                    e.function_key,
+                    generics,
+                    arguments
+                )
             ))),
             Err(InlineError::Flat(embed, generics, output_type)) => {
-                let identifier = self.ssa.issue_next_identifier(CoreIdentifier::Call);
+                let identifier =
+                    self.ssa.issue_next_identifier(CoreIdentifier::Call);
 
                 let var = Variable::new(identifier.clone(), output_type);
 
@@ -268,7 +290,8 @@ impl<'ast, 'a, T: Field> ResultFolder<'ast, T> for Reducer<'ast, 'a, T> {
         let block = fold_block_expression(self, b)?;
 
         // put the original statements back and extract the statements created by visiting the block
-        let extra_statements = std::mem::replace(&mut self.statement_buffer, statement_buffer);
+        let extra_statements =
+            std::mem::replace(&mut self.statement_buffer, statement_buffer);
 
         // return the visited block, augmented with the statements created while visiting it
         Ok(BlockExpression {
@@ -308,13 +331,18 @@ impl<'ast, 'a, T: Field> ResultFolder<'ast, T> for Reducer<'ast, 'a, T> {
                 let to = self.propagator.fold_uint_expression(to)?;
 
                 match (from.as_inner(), to.as_inner()) {
-                    (UExpressionInner::Value(from), UExpressionInner::Value(to))
-                        if to.value - from.value > MAX_FOR_LOOP_SIZE =>
-                    {
-                        Err(Error::LoopTooLarge(to.value.saturating_sub(from.value)))
+                    (
+                        UExpressionInner::Value(from),
+                        UExpressionInner::Value(to),
+                    ) if to.value - from.value > MAX_FOR_LOOP_SIZE => {
+                        Err(Error::LoopTooLarge(
+                            to.value.saturating_sub(from.value),
+                        ))
                     }
-                    (UExpressionInner::Value(from), UExpressionInner::Value(to)) => Ok((from.value
-                        ..to.value)
+                    (
+                        UExpressionInner::Value(from),
+                        UExpressionInner::Value(to),
+                    ) => Ok((from.value..to.value)
                         .flat_map(|index| {
                             std::iter::once(TypedStatement::definition(
                                 s.var.clone().into(),
@@ -366,7 +394,8 @@ impl<'ast, 'a, T: Field> ResultFolder<'ast, T> for Reducer<'ast, 'a, T> {
     fn fold_slice_expression(
         &mut self,
         e: zokrates_ast::typed::SliceExpression<'ast, T>,
-    ) -> Result<zokrates_ast::typed::SliceOrExpression<'ast, T>, Self::Error> {
+    ) -> Result<zokrates_ast::typed::SliceOrExpression<'ast, T>, Self::Error>
+    {
         let array = self.ssa.fold_array_expression(*e.array);
         let array = self.propagator.fold_array_expression(array)?;
         let array = self.fold_array_expression(array)?;
@@ -383,9 +412,11 @@ impl<'ast, 'a, T: Field> ResultFolder<'ast, T> for Reducer<'ast, 'a, T> {
         let to = self.propagator.fold_uint_expression(to)?;
 
         match (from.as_inner(), to.as_inner()) {
-            (UExpressionInner::Value(..), UExpressionInner::Value(..)) => Ok(
-                SliceOrExpression::Slice(SliceExpression::new(array, from, to)),
-            ),
+            (UExpressionInner::Value(..), UExpressionInner::Value(..)) => {
+                Ok(SliceOrExpression::Slice(SliceExpression::new(
+                    array, from, to,
+                )))
+            }
             _ => Err(Error::NonConstant(format!(
                 "Slice bounds must be compile time constants, found {}",
                 ArrayExpression::slice(array, from, to)
@@ -394,7 +425,9 @@ impl<'ast, 'a, T: Field> ResultFolder<'ast, T> for Reducer<'ast, 'a, T> {
     }
 }
 
-pub fn reduce_program<T: Field>(p: TypedProgram<T>) -> Result<TypedProgram<T>, Error> {
+pub fn reduce_program<T: Field>(
+    p: TypedProgram<T>,
+) -> Result<TypedProgram<T>, Error> {
     // inline all constants and replace them in the program
 
     let mut constants_writer = ConstantsWriter::with_program(p.clone());
@@ -416,7 +449,8 @@ pub fn reduce_program<T: Field>(p: TypedProgram<T>) -> Result<TypedProgram<T>, E
 
     match main_function.signature.generics.len() {
         0 => {
-            let main_function = Reducer::new(&p).fold_function(main_function)?;
+            let main_function =
+                Reducer::new(&p).fold_function(main_function)?;
 
             Ok(TypedProgram {
                 main: p.main.clone(),
@@ -454,9 +488,10 @@ mod tests {
     use zokrates_ast::typed::types::DeclarationSignature;
     use zokrates_ast::typed::types::{DeclarationConstant, GTupleType};
     use zokrates_ast::typed::{
-        ArrayExpression, ArrayType, DeclarationFunctionKey, DeclarationType, DeclarationVariable,
-        FieldElementExpression, GenericIdentifier, Identifier, Select, TupleExpression, TupleType,
-        Type, TypedExpression, TypedExpressionOrSpread, UBitwidth, Variable,
+        ArrayExpression, ArrayType, DeclarationFunctionKey, DeclarationType,
+        DeclarationVariable, FieldElementExpression, GenericIdentifier,
+        Identifier, Select, TupleExpression, TupleType, Type, TypedExpression,
+        TypedExpressionOrSpread, UBitwidth, Variable,
     };
     use zokrates_field::Bn128Field;
 
@@ -518,13 +553,17 @@ mod tests {
                 TypedStatement::definition(
                     Variable::field_element("a").into(),
                     FieldElementExpression::function_call(
-                        DeclarationFunctionKey::with_location("main", "foo").signature(
-                            DeclarationSignature::new()
-                                .inputs(vec![DeclarationType::FieldElement])
-                                .output(DeclarationType::FieldElement),
-                        ),
+                        DeclarationFunctionKey::with_location("main", "foo")
+                            .signature(
+                                DeclarationSignature::new()
+                                    .inputs(vec![
+                                        DeclarationType::FieldElement,
+                                    ])
+                                    .output(DeclarationType::FieldElement),
+                            ),
                         vec![],
-                        vec![FieldElementExpression::identifier("a".into()).into()],
+                        vec![FieldElementExpression::identifier("a".into())
+                            .into()],
                     )
                     .into(),
                 ),
@@ -534,7 +573,9 @@ mod tests {
                         .annotate(UBitwidth::B32)
                         .into(),
                 ),
-                TypedStatement::ret(FieldElementExpression::identifier("a".into()).into()),
+                TypedStatement::ret(
+                    FieldElementExpression::identifier("a".into()).into(),
+                ),
             ],
             signature: DeclarationSignature::new()
                 .inputs(vec![DeclarationType::FieldElement])
@@ -549,18 +590,28 @@ mod tests {
                 TypedModule {
                     symbols: vec![
                         TypedFunctionSymbolDeclaration::new(
-                            DeclarationFunctionKey::with_location("main", "foo").signature(
+                            DeclarationFunctionKey::with_location(
+                                "main", "foo",
+                            )
+                            .signature(
                                 DeclarationSignature::new()
-                                    .inputs(vec![DeclarationType::FieldElement])
+                                    .inputs(vec![
+                                        DeclarationType::FieldElement,
+                                    ])
                                     .output(DeclarationType::FieldElement),
                             ),
                             TypedFunctionSymbol::Here(foo),
                         )
                         .into(),
                         TypedFunctionSymbolDeclaration::new(
-                            DeclarationFunctionKey::with_location("main", "main").signature(
+                            DeclarationFunctionKey::with_location(
+                                "main", "main",
+                            )
+                            .signature(
                                 DeclarationSignature::new()
-                                    .inputs(vec![DeclarationType::FieldElement])
+                                    .inputs(vec![
+                                        DeclarationType::FieldElement,
+                                    ])
                                     .output(DeclarationType::FieldElement),
                             ),
                             TypedFunctionSymbol::Here(main),
@@ -579,19 +630,31 @@ mod tests {
             arguments: vec![DeclarationVariable::field_element("a").into()],
             statements: vec![
                 TypedStatement::definition(
-                    Variable::field_element(Identifier::from("a").version(1)).into(),
+                    Variable::field_element(Identifier::from("a").version(1))
+                        .into(),
                     FieldElementExpression::identifier("a".into()).into(),
                 ),
                 TypedStatement::definition(
-                    Variable::field_element(Identifier::from("a").in_frame(1)).into(),
-                    FieldElementExpression::identifier(Identifier::from("a").version(1)).into(),
+                    Variable::field_element(Identifier::from("a").in_frame(1))
+                        .into(),
+                    FieldElementExpression::identifier(
+                        Identifier::from("a").version(1),
+                    )
+                    .into(),
                 ),
                 TypedStatement::definition(
-                    Variable::field_element(Identifier::from("a").version(2)).into(),
-                    FieldElementExpression::identifier(Identifier::from("a").in_frame(1)).into(),
+                    Variable::field_element(Identifier::from("a").version(2))
+                        .into(),
+                    FieldElementExpression::identifier(
+                        Identifier::from("a").in_frame(1),
+                    )
+                    .into(),
                 ),
                 TypedStatement::ret(
-                    FieldElementExpression::identifier(Identifier::from("a").version(2)).into(),
+                    FieldElementExpression::identifier(
+                        Identifier::from("a").version(2),
+                    )
+                    .into(),
                 ),
             ],
             signature: DeclarationSignature::new()
@@ -606,11 +669,14 @@ mod tests {
                 "main".into(),
                 TypedModule {
                     symbols: vec![TypedFunctionSymbolDeclaration::new(
-                        DeclarationFunctionKey::with_location("main", "main").signature(
-                            DeclarationSignature::new()
-                                .inputs(vec![DeclarationType::FieldElement])
-                                .output(DeclarationType::FieldElement),
-                        ),
+                        DeclarationFunctionKey::with_location("main", "main")
+                            .signature(
+                                DeclarationSignature::new()
+                                    .inputs(vec![
+                                        DeclarationType::FieldElement,
+                                    ])
+                                    .output(DeclarationType::FieldElement),
+                            ),
                         TypedFunctionSymbol::Here(expected_main),
                     )
                     .into()],
@@ -651,11 +717,15 @@ mod tests {
             )])
             .inputs(vec![DeclarationType::array((
                 DeclarationType::FieldElement,
-                DeclarationConstant::Generic(GenericIdentifier::with_name("K").with_index(0)),
+                DeclarationConstant::Generic(
+                    GenericIdentifier::with_name("K").with_index(0),
+                ),
             ))])
             .output(DeclarationType::array((
                 DeclarationType::FieldElement,
-                DeclarationConstant::Generic(GenericIdentifier::with_name("K").with_index(0)),
+                DeclarationConstant::Generic(
+                    GenericIdentifier::with_name("K").with_index(0),
+                ),
             )));
 
         let foo: TypedFunction<Bn128Field> = TypedFunction {
@@ -689,7 +759,7 @@ mod tests {
                 TypedStatement::definition(
                     Variable::array("b", Type::FieldElement, 1u32).into(),
                     ArrayExpression::value(vec![
-                        FieldElementExpression::identifier("a".into()).into()
+                        FieldElementExpression::identifier("a".into()).into(),
                     ])
                     .annotate(ArrayType::new(Type::FieldElement, 1u32))
                     .into(),
@@ -716,8 +786,9 @@ mod tests {
                 TypedStatement::ret(
                     (FieldElementExpression::identifier("a".into())
                         + FieldElementExpression::select(
-                            ArrayExpression::identifier("b".into())
-                                .annotate(ArrayType::new(Type::FieldElement, 1u32)),
+                            ArrayExpression::identifier("b".into()).annotate(
+                                ArrayType::new(Type::FieldElement, 1u32),
+                            ),
                             0u32,
                         ))
                     .into(),
@@ -736,15 +807,22 @@ mod tests {
                 TypedModule {
                     symbols: vec![
                         TypedFunctionSymbolDeclaration::new(
-                            DeclarationFunctionKey::with_location("main", "foo")
-                                .signature(foo_signature.clone()),
+                            DeclarationFunctionKey::with_location(
+                                "main", "foo",
+                            )
+                            .signature(foo_signature.clone()),
                             TypedFunctionSymbol::Here(foo),
                         )
                         .into(),
                         TypedFunctionSymbolDeclaration::new(
-                            DeclarationFunctionKey::with_location("main", "main").signature(
+                            DeclarationFunctionKey::with_location(
+                                "main", "main",
+                            )
+                            .signature(
                                 DeclarationSignature::new()
-                                    .inputs(vec![DeclarationType::FieldElement])
+                                    .inputs(vec![
+                                        DeclarationType::FieldElement,
+                                    ])
                                     .output(DeclarationType::FieldElement),
                             ),
                             TypedFunctionSymbol::Here(main),
@@ -765,30 +843,44 @@ mod tests {
                 TypedStatement::definition(
                     Variable::array("b", Type::FieldElement, 1u32).into(),
                     ArrayExpression::value(vec![
-                        FieldElementExpression::identifier("a".into()).into()
+                        FieldElementExpression::identifier("a".into()).into(),
                     ])
                     .annotate(ArrayType::new(Type::FieldElement, 1u32))
                     .into(),
                 ),
                 TypedStatement::definition(
-                    Variable::array(Identifier::from("a").in_frame(1), Type::FieldElement, 1u32)
-                        .into(),
+                    Variable::array(
+                        Identifier::from("a").in_frame(1),
+                        Type::FieldElement,
+                        1u32,
+                    )
+                    .into(),
                     ArrayExpression::identifier("b".into())
                         .annotate(ArrayType::new(Type::FieldElement, 1u32))
                         .into(),
                 ),
                 TypedStatement::definition(
-                    Variable::array(Identifier::from("b").version(1), Type::FieldElement, 1u32)
-                        .into(),
-                    ArrayExpression::identifier(Identifier::from("a").in_frame(1))
-                        .annotate(ArrayType::new(Type::FieldElement, 1u32))
-                        .into(),
+                    Variable::array(
+                        Identifier::from("b").version(1),
+                        Type::FieldElement,
+                        1u32,
+                    )
+                    .into(),
+                    ArrayExpression::identifier(
+                        Identifier::from("a").in_frame(1),
+                    )
+                    .annotate(ArrayType::new(Type::FieldElement, 1u32))
+                    .into(),
                 ),
                 TypedStatement::ret(
                     (FieldElementExpression::identifier("a".into())
                         + FieldElementExpression::select(
-                            ArrayExpression::identifier(Identifier::from("b").version(1))
-                                .annotate(ArrayType::new(Type::FieldElement, 1u32)),
+                            ArrayExpression::identifier(
+                                Identifier::from("b").version(1),
+                            )
+                            .annotate(
+                                ArrayType::new(Type::FieldElement, 1u32),
+                            ),
                             0u32,
                         ))
                     .into(),
@@ -806,11 +898,14 @@ mod tests {
                 "main".into(),
                 TypedModule {
                     symbols: vec![TypedFunctionSymbolDeclaration::new(
-                        DeclarationFunctionKey::with_location("main", "main").signature(
-                            DeclarationSignature::new()
-                                .inputs(vec![DeclarationType::FieldElement])
-                                .output(DeclarationType::FieldElement),
-                        ),
+                        DeclarationFunctionKey::with_location("main", "main")
+                            .signature(
+                                DeclarationSignature::new()
+                                    .inputs(vec![
+                                        DeclarationType::FieldElement,
+                                    ])
+                                    .output(DeclarationType::FieldElement),
+                            ),
                         TypedFunctionSymbol::Here(expected_main),
                     )
                     .into()],
@@ -851,11 +946,15 @@ mod tests {
             )])
             .inputs(vec![DeclarationType::array((
                 DeclarationType::FieldElement,
-                DeclarationConstant::Generic(GenericIdentifier::with_name("K").with_index(0)),
+                DeclarationConstant::Generic(
+                    GenericIdentifier::with_name("K").with_index(0),
+                ),
             ))])
             .output(DeclarationType::array((
                 DeclarationType::FieldElement,
-                DeclarationConstant::Generic(GenericIdentifier::with_name("K").with_index(0)),
+                DeclarationConstant::Generic(
+                    GenericIdentifier::with_name("K").with_index(0),
+                ),
             )));
 
         let foo: TypedFunction<Bn128Field> = TypedFunction {
@@ -893,13 +992,14 @@ mod tests {
                         "b",
                         Type::FieldElement,
                         UExpression::sub(
-                            UExpression::identifier("n".into()).annotate(UBitwidth::B32),
+                            UExpression::identifier("n".into())
+                                .annotate(UBitwidth::B32),
                             1u32.into(),
                         ),
                     )
                     .into(),
                     ArrayExpression::value(vec![
-                        FieldElementExpression::identifier("a".into()).into()
+                        FieldElementExpression::identifier("a".into()).into(),
                     ])
                     .annotate(ArrayType::new(Type::FieldElement, 1u32))
                     .into(),
@@ -926,8 +1026,9 @@ mod tests {
                 TypedStatement::ret(
                     (FieldElementExpression::identifier("a".into())
                         + FieldElementExpression::select(
-                            ArrayExpression::identifier("b".into())
-                                .annotate(ArrayType::new(Type::FieldElement, 1u32)),
+                            ArrayExpression::identifier("b".into()).annotate(
+                                ArrayType::new(Type::FieldElement, 1u32),
+                            ),
                             0u32,
                         ))
                     .into(),
@@ -946,15 +1047,22 @@ mod tests {
                 TypedModule {
                     symbols: vec![
                         TypedFunctionSymbolDeclaration::new(
-                            DeclarationFunctionKey::with_location("main", "foo")
-                                .signature(foo_signature.clone()),
+                            DeclarationFunctionKey::with_location(
+                                "main", "foo",
+                            )
+                            .signature(foo_signature.clone()),
                             TypedFunctionSymbol::Here(foo),
                         )
                         .into(),
                         TypedFunctionSymbolDeclaration::new(
-                            DeclarationFunctionKey::with_location("main", "main").signature(
+                            DeclarationFunctionKey::with_location(
+                                "main", "main",
+                            )
+                            .signature(
                                 DeclarationSignature::new()
-                                    .inputs(vec![DeclarationType::FieldElement])
+                                    .inputs(vec![
+                                        DeclarationType::FieldElement,
+                                    ])
                                     .output(DeclarationType::FieldElement),
                             ),
                             TypedFunctionSymbol::Here(main),
@@ -975,30 +1083,44 @@ mod tests {
                 TypedStatement::definition(
                     Variable::array("b", Type::FieldElement, 1u32).into(),
                     ArrayExpression::value(vec![
-                        FieldElementExpression::identifier("a".into()).into()
+                        FieldElementExpression::identifier("a".into()).into(),
                     ])
                     .annotate(ArrayType::new(Type::FieldElement, 1u32))
                     .into(),
                 ),
                 TypedStatement::definition(
-                    Variable::array(Identifier::from("a").in_frame(1), Type::FieldElement, 1u32)
-                        .into(),
+                    Variable::array(
+                        Identifier::from("a").in_frame(1),
+                        Type::FieldElement,
+                        1u32,
+                    )
+                    .into(),
                     ArrayExpression::identifier("b".into())
                         .annotate(ArrayType::new(Type::FieldElement, 1u32))
                         .into(),
                 ),
                 TypedStatement::definition(
-                    Variable::array(Identifier::from("b").version(1), Type::FieldElement, 1u32)
-                        .into(),
-                    ArrayExpression::identifier(Identifier::from("a").in_frame(1))
-                        .annotate(ArrayType::new(Type::FieldElement, 1u32))
-                        .into(),
+                    Variable::array(
+                        Identifier::from("b").version(1),
+                        Type::FieldElement,
+                        1u32,
+                    )
+                    .into(),
+                    ArrayExpression::identifier(
+                        Identifier::from("a").in_frame(1),
+                    )
+                    .annotate(ArrayType::new(Type::FieldElement, 1u32))
+                    .into(),
                 ),
                 TypedStatement::ret(
                     (FieldElementExpression::identifier("a".into())
                         + FieldElementExpression::select(
-                            ArrayExpression::identifier(Identifier::from("b").version(1))
-                                .annotate(ArrayType::new(Type::FieldElement, 1u32)),
+                            ArrayExpression::identifier(
+                                Identifier::from("b").version(1),
+                            )
+                            .annotate(
+                                ArrayType::new(Type::FieldElement, 1u32),
+                            ),
                             0u32,
                         ))
                     .into(),
@@ -1016,11 +1138,14 @@ mod tests {
                 "main".into(),
                 TypedModule {
                     symbols: vec![TypedFunctionSymbolDeclaration::new(
-                        DeclarationFunctionKey::with_location("main", "main").signature(
-                            DeclarationSignature::new()
-                                .inputs(vec![DeclarationType::FieldElement])
-                                .output(DeclarationType::FieldElement),
-                        ),
+                        DeclarationFunctionKey::with_location("main", "main")
+                            .signature(
+                                DeclarationSignature::new()
+                                    .inputs(vec![
+                                        DeclarationType::FieldElement,
+                                    ])
+                                    .output(DeclarationType::FieldElement),
+                            ),
                         TypedFunctionSymbol::Here(expected_main),
                     )
                     .into()],
@@ -1060,11 +1185,15 @@ mod tests {
         let foo_signature = DeclarationSignature::new()
             .inputs(vec![DeclarationType::array((
                 DeclarationType::FieldElement,
-                DeclarationConstant::Generic(GenericIdentifier::with_name("K").with_index(0)),
+                DeclarationConstant::Generic(
+                    GenericIdentifier::with_name("K").with_index(0),
+                ),
             ))])
             .output(DeclarationType::array((
                 DeclarationType::FieldElement,
-                DeclarationConstant::Generic(GenericIdentifier::with_name("K").with_index(0)),
+                DeclarationConstant::Generic(
+                    GenericIdentifier::with_name("K").with_index(0),
+                ),
             )))
             .generics(vec![Some(
                 GenericIdentifier::with_name("K").with_index(0).into(),
@@ -1074,7 +1203,9 @@ mod tests {
             arguments: vec![DeclarationVariable::array(
                 "a",
                 DeclarationType::FieldElement,
-                DeclarationConstant::Generic(GenericIdentifier::with_name("K").with_index(0)),
+                DeclarationConstant::Generic(
+                    GenericIdentifier::with_name("K").with_index(0),
+                ),
             )
             .into()],
             statements: vec![
@@ -1082,36 +1213,48 @@ mod tests {
                     Variable::array(
                         "ret",
                         Type::FieldElement,
-                        UExpression::identifier("K".into()).annotate(UBitwidth::B32),
+                        UExpression::identifier("K".into())
+                            .annotate(UBitwidth::B32),
                     )
                     .into(),
                     ArrayExpression::slice(
                         ArrayExpression::function_call(
-                            DeclarationFunctionKey::with_location("main", "bar")
-                                .signature(foo_signature.clone()),
+                            DeclarationFunctionKey::with_location(
+                                "main", "bar",
+                            )
+                            .signature(foo_signature.clone()),
                             vec![None],
                             vec![ArrayExpression::value(vec![
                                 TypedExpressionOrSpread::Spread(
                                     ArrayExpression::identifier("a".into())
-                                        .annotate(ArrayType::new(Type::FieldElement, 1u32))
+                                        .annotate(ArrayType::new(
+                                            Type::FieldElement,
+                                            1u32,
+                                        ))
                                         .into(),
                                 ),
-                                FieldElementExpression::value(Bn128Field::from(0)).into(),
+                                FieldElementExpression::value(
+                                    Bn128Field::from(0),
+                                )
+                                .into(),
                             ])
                             .annotate(ArrayType::new(
                                 Type::FieldElement,
-                                UExpression::identifier("K".into()).annotate(UBitwidth::B32)
+                                UExpression::identifier("K".into())
+                                    .annotate(UBitwidth::B32)
                                     + 1u32.into(),
                             ))
                             .into()],
                         )
                         .annotate(ArrayType::new(
                             Type::FieldElement,
-                            UExpression::identifier("K".into()).annotate(UBitwidth::B32)
+                            UExpression::identifier("K".into())
+                                .annotate(UBitwidth::B32)
                                 + 1u32.into(),
                         )),
                         0u32.into(),
-                        UExpression::identifier("K".into()).annotate(UBitwidth::B32),
+                        UExpression::identifier("K".into())
+                            .annotate(UBitwidth::B32),
                     )
                     .into(),
                 ),
@@ -1119,7 +1262,8 @@ mod tests {
                     ArrayExpression::identifier("ret".into())
                         .annotate(ArrayType::new(
                             Type::FieldElement,
-                            UExpression::identifier("K".into()).annotate(UBitwidth::B32),
+                            UExpression::identifier("K".into())
+                                .annotate(UBitwidth::B32),
                         ))
                         .into(),
                 ),
@@ -1133,14 +1277,17 @@ mod tests {
             arguments: vec![DeclarationVariable::array(
                 "a",
                 DeclarationType::FieldElement,
-                DeclarationConstant::Generic(GenericIdentifier::with_name("K").with_index(0)),
+                DeclarationConstant::Generic(
+                    GenericIdentifier::with_name("K").with_index(0),
+                ),
             )
             .into()],
             statements: vec![TypedStatement::ret(
                 ArrayExpression::identifier("a".into())
                     .annotate(ArrayType::new(
                         Type::FieldElement,
-                        UExpression::identifier("K".into()).annotate(UBitwidth::B32),
+                        UExpression::identifier("K".into())
+                            .annotate(UBitwidth::B32),
                     ))
                     .into(),
             )],
@@ -1156,10 +1303,10 @@ mod tests {
                         DeclarationFunctionKey::with_location("main", "foo")
                             .signature(foo_signature.clone()),
                         vec![None],
-                        vec![ArrayExpression::value(vec![FieldElementExpression::value(
-                            Bn128Field::from(1),
-                        )
-                        .into()])
+                        vec![ArrayExpression::value(vec![
+                            FieldElementExpression::value(Bn128Field::from(1))
+                                .into(),
+                        ])
                         .annotate(ArrayType::new(Type::FieldElement, 1u32))
                         .into()],
                     )
@@ -1182,19 +1329,25 @@ mod tests {
                 TypedModule {
                     symbols: vec![
                         TypedFunctionSymbolDeclaration::new(
-                            DeclarationFunctionKey::with_location("main", "bar")
-                                .signature(bar_signature.clone()),
+                            DeclarationFunctionKey::with_location(
+                                "main", "bar",
+                            )
+                            .signature(bar_signature.clone()),
                             TypedFunctionSymbol::Here(bar),
                         )
                         .into(),
                         TypedFunctionSymbolDeclaration::new(
-                            DeclarationFunctionKey::with_location("main", "foo")
-                                .signature(foo_signature.clone()),
+                            DeclarationFunctionKey::with_location(
+                                "main", "foo",
+                            )
+                            .signature(foo_signature.clone()),
                             TypedFunctionSymbol::Here(foo),
                         )
                         .into(),
                         TypedFunctionSymbolDeclaration::new(
-                            DeclarationFunctionKey::with_location("main", "main"),
+                            DeclarationFunctionKey::with_location(
+                                "main", "main",
+                            ),
                             TypedFunctionSymbol::Here(main),
                         )
                         .into(),
@@ -1314,16 +1467,23 @@ mod tests {
                 TypedModule {
                     symbols: vec![
                         TypedFunctionSymbolDeclaration::new(
-                            DeclarationFunctionKey::with_location("main", "foo")
-                                .signature(foo_signature.clone()),
+                            DeclarationFunctionKey::with_location(
+                                "main", "foo",
+                            )
+                            .signature(foo_signature.clone()),
                             TypedFunctionSymbol::Here(foo),
                         )
                         .into(),
                         TypedFunctionSymbolDeclaration::new(
-                            DeclarationFunctionKey::with_location("main", "main").signature(
+                            DeclarationFunctionKey::with_location(
+                                "main", "main",
+                            )
+                            .signature(
                                 DeclarationSignature::new()
                                     .inputs(vec![])
-                                    .output(DeclarationType::Tuple(GTupleType::new(vec![]))),
+                                    .output(DeclarationType::Tuple(
+                                        GTupleType::new(vec![]),
+                                    )),
                             ),
                             TypedFunctionSymbol::Here(main),
                         )

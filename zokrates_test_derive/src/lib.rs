@@ -17,7 +17,11 @@ pub fn write_tests(base: &str) {
     }
 }
 
-fn write_test<W: Write>(test_file: &mut W, test_path: &Path, base_path: &Path) {
+fn write_test<W: Write>(
+    test_file: &mut W,
+    test_path: &Path,
+    base_path: &Path,
+) {
     println!("{:?}", test_path);
     println!("{:?}", base_path);
 

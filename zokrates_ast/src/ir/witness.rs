@@ -30,7 +30,9 @@ impl<T: Field> Witness<T> {
         self.0
             .iter()
             .filter_map(|(variable, value)| match variable {
-                variable if variable.is_output() => Some(format!("{} {}", variable, value)),
+                variable if variable.is_output() => {
+                    Some(format!("{} {}", variable, value))
+                }
                 _ => None,
             })
             .collect::<Vec<String>>()
@@ -74,7 +76,9 @@ impl<T: Field> Witness<T> {
         let map = self
             .0
             .iter()
-            .map(|(k, v)| (k.to_string(), serde_json::json!(v.to_dec_string())))
+            .map(|(k, v)| {
+                (k.to_string(), serde_json::json!(v.to_dec_string()))
+            })
             .collect::<serde_json::Map<String, serde_json::Value>>();
 
         serde_json::to_writer_pretty(writer, &map)?;

@@ -4,7 +4,9 @@ use std::fmt;
 
 pub type SourceIdentifier<'ast> = std::borrow::Cow<'ast, str>;
 
-#[derive(Debug, PartialEq, Clone, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, PartialEq, Clone, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize,
+)]
 pub enum CoreIdentifier<'ast> {
     #[serde(borrow)]
     Source(ShadowedIdentifier<'ast>),
@@ -18,7 +20,9 @@ impl<'ast> fmt::Display for CoreIdentifier<'ast> {
         match self {
             CoreIdentifier::Source(s) => write!(f, "{}", s),
             CoreIdentifier::Call => write!(f, "#CALL_RETURN"),
-            CoreIdentifier::Constant(c) => write!(f, "{}/{}", c.module.display(), c.id),
+            CoreIdentifier::Constant(c) => {
+                write!(f, "{}/{}", c.module.display(), c.id)
+            }
             CoreIdentifier::Condition(i) => write!(f, "#CONDITION_{}", i),
         }
     }
@@ -52,7 +56,9 @@ impl<'ast> From<CanonicalConstantIdentifier<'ast>> for FrameIdentifier<'ast> {
 }
 
 /// A identifier for a variable in a given call frame
-#[derive(Debug, PartialEq, Clone, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, PartialEq, Clone, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize,
+)]
 pub struct FrameIdentifier<'ast> {
     /// the id of the variable
     #[serde(borrow)]
@@ -62,7 +68,9 @@ pub struct FrameIdentifier<'ast> {
 }
 
 /// A identifier for a variable
-#[derive(Debug, PartialEq, Clone, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, PartialEq, Clone, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize,
+)]
 pub struct Identifier<'ast> {
     /// the id of the variable
     #[serde(borrow)]
@@ -71,7 +79,9 @@ pub struct Identifier<'ast> {
     pub version: usize,
 }
 
-#[derive(Debug, PartialEq, Clone, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, PartialEq, Clone, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize,
+)]
 pub struct ShadowedIdentifier<'ast> {
     #[serde(borrow)]
     pub id: SourceIdentifier<'ast>,
@@ -157,7 +167,10 @@ impl<'ast> Identifier<'ast> {
 // these two From implementations are only used in tests but somehow cfg(test) doesn't work
 impl<'ast> From<&'ast str> for CoreIdentifier<'ast> {
     fn from(s: &str) -> CoreIdentifier {
-        CoreIdentifier::Source(ShadowedIdentifier::shadow(std::borrow::Cow::Borrowed(s), 0))
+        CoreIdentifier::Source(ShadowedIdentifier::shadow(
+            std::borrow::Cow::Borrowed(s),
+            0,
+        ))
     }
 }
 

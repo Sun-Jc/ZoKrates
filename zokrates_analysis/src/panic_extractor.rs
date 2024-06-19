@@ -2,8 +2,9 @@ use std::ops::*;
 use zokrates_ast::{
     common::{Fold, WithSpan},
     zir::{
-        folder::*, BooleanExpression, Conditional, ConditionalExpression, ConditionalOrExpression,
-        Expr, FieldElementExpression, IfElseStatement, RuntimeError, UBitwidth, UExpression,
+        folder::*, BooleanExpression, Conditional, ConditionalExpression,
+        ConditionalOrExpression, Expr, FieldElementExpression,
+        IfElseStatement, RuntimeError, UBitwidth, UExpression,
         UExpressionInner, ZirProgram, ZirStatement,
     },
 };
@@ -53,7 +54,10 @@ impl<'ast, T: Field> Folder<'ast, T> for PanicExtractor<'ast, T> {
             .collect()
     }
 
-    fn fold_statement_cases(&mut self, s: ZirStatement<'ast, T>) -> Vec<ZirStatement<'ast, T>> {
+    fn fold_statement_cases(
+        &mut self,
+        s: ZirStatement<'ast, T>,
+    ) -> Vec<ZirStatement<'ast, T>> {
         match s {
             ZirStatement::IfElse(s) => self.fold_if_else_statement(s),
             s => {
@@ -78,7 +82,8 @@ impl<'ast, T: Field> Folder<'ast, T> for PanicExtractor<'ast, T> {
                         BooleanExpression::not(
                             BooleanExpression::field_eq(
                                 d.clone().span(span),
-                                FieldElementExpression::value(T::zero()).span(span),
+                                FieldElementExpression::value(T::zero())
+                                    .span(span),
                             )
                             .span(span),
                         )
@@ -108,18 +113,25 @@ impl<'ast, T: Field> Folder<'ast, T> for PanicExtractor<'ast, T> {
         let mut alternative_extractor = Self::default();
         let alternative = e.alternative.fold(&mut alternative_extractor);
 
-        let consequence_panics: Vec<_> = consequence_extractor.panic_buffer.drain(..).collect();
-        let alternative_panics: Vec<_> = alternative_extractor.panic_buffer.drain(..).collect();
+        let consequence_panics: Vec<_> =
+            consequence_extractor.panic_buffer.drain(..).collect();
+        let alternative_panics: Vec<_> =
+            alternative_extractor.panic_buffer.drain(..).collect();
 
         if !(consequence_panics.is_empty() && alternative_panics.is_empty()) {
             self.panic_buffer.push(
-                ZirStatement::if_else(condition.clone(), consequence_panics, alternative_panics)
-                    .span(span),
+                ZirStatement::if_else(
+                    condition.clone(),
+                    consequence_panics,
+                    alternative_panics,
+                )
+                .span(span),
             );
         }
 
         ConditionalOrExpression::Conditional(
-            ConditionalExpression::new(condition, consequence, alternative).span(span),
+            ConditionalExpression::new(condition, consequence, alternative)
+                .span(span),
         )
     }
 
@@ -161,10 +173,18 @@ impl<'ast, T: Field> Folder<'ast, T> for PanicExtractor<'ast, T> {
         match e {
             // constant range checks are complete, so no panic needs to be extracted
             BooleanExpression::FieldLt(b)
-                if matches!(b.left.as_ref(), FieldElementExpression::Value(_))
-                    || matches!(b.right.as_ref(), FieldElementExpression::Value(_)) =>
+                if matches!(
+                    b.left.as_ref(),
+                    FieldElementExpression::Value(_)
+                ) || matches!(
+                    b.right.as_ref(),
+                    FieldElementExpression::Value(_)
+                ) =>
             {
-                fold_boolean_expression_cases(self, BooleanExpression::FieldLt(b))
+                fold_boolean_expression_cases(
+                    self,
+                    BooleanExpression::FieldLt(b),
+                )
             }
             BooleanExpression::FieldLt(e) => {
                 let span = e.get_span();
@@ -176,8 +196,11 @@ impl<'ast, T: Field> Folder<'ast, T> for PanicExtractor<'ast, T> {
 
                 let safe_width = bit_width - 2; // dynamic comparison is not complete, it only applies to field elements whose difference is strictly smaller than 2**(bitwidth - 2)
 
-                let offset = FieldElementExpression::number(T::from(2).pow(safe_width));
-                let max = FieldElementExpression::number(T::from(2).pow(safe_width + 1));
+                let offset =
+                    FieldElementExpression::number(T::from(2).pow(safe_width));
+                let max = FieldElementExpression::number(
+                    T::from(2).pow(safe_width + 1),
+                );
 
                 // `|left - right|` must be of bitwidth at most `safe_bitwidth`
                 // this means we need to guarantee the following: `-2**(safe_width) < left - right < 2**(safe_width)`
@@ -190,8 +213,11 @@ impl<'ast, T: Field> Folder<'ast, T> for PanicExtractor<'ast, T> {
                     ZirStatement::assertion(
                         BooleanExpression::field_lt(
                             offset.clone().span(span)
-                                + FieldElementExpression::sub(left.clone(), right.clone())
-                                    .span(span),
+                                + FieldElementExpression::sub(
+                                    left.clone(),
+                                    right.clone(),
+                                )
+                                .span(span),
                             max,
                         )
                         .span(span),

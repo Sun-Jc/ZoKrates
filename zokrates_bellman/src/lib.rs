@@ -2,12 +2,13 @@ pub mod groth16;
 
 use bellman::groth16::Proof;
 use bellman::groth16::{
-    create_random_proof, generate_random_parameters, prepare_verifying_key, verify_proof,
-    Parameters,
+    create_random_proof, generate_random_parameters, prepare_verifying_key,
+    verify_proof, Parameters,
 };
 use bellman::pairing::ff::ScalarEngine;
 use bellman::{
-    Circuit, ConstraintSystem, LinearCombination, SynthesisError, Variable as BellmanVariable,
+    Circuit, ConstraintSystem, LinearCombination, SynthesisError,
+    Variable as BellmanVariable,
 };
 use std::collections::BTreeMap;
 use zokrates_ast::common::flat::Variable;
@@ -28,8 +29,13 @@ pub struct Computation<'a, T, I: IntoIterator<Item = Statement<'a, T>>> {
     witness: Option<Witness<T>>,
 }
 
-impl<'a, T: Field, I: IntoIterator<Item = Statement<'a, T>>> Computation<'a, T, I> {
-    pub fn with_witness(program: ProgIterator<'a, T, I>, witness: Witness<T>) -> Self {
+impl<'a, T: Field, I: IntoIterator<Item = Statement<'a, T>>>
+    Computation<'a, T, I>
+{
+    pub fn with_witness(
+        program: ProgIterator<'a, T, I>,
+        witness: Witness<T>,
+    ) -> Self {
         Computation {
             program,
             witness: Some(witness),
@@ -44,7 +50,10 @@ impl<'a, T: Field, I: IntoIterator<Item = Statement<'a, T>>> Computation<'a, T, 
     }
 }
 
-fn bellman_combination<T: BellmanFieldExtensions, CS: ConstraintSystem<T::BellmanEngine>>(
+fn bellman_combination<
+    T: BellmanFieldExtensions,
+    CS: ConstraintSystem<T::BellmanEngine>,
+>(
     l: LinComb<T>,
     cs: &mut CS,
     symbols: &mut BTreeMap<Variable, BellmanVariable>,
@@ -85,8 +94,11 @@ fn bellman_combination<T: BellmanFieldExtensions, CS: ConstraintSystem<T::Bellma
         .fold(LinearCombination::zero(), |acc, e| acc + e)
 }
 
-impl<'a, T: BellmanFieldExtensions + Field, I: IntoIterator<Item = Statement<'a, T>>>
-    Circuit<T::BellmanEngine> for Computation<'a, T, I>
+impl<
+        'a,
+        T: BellmanFieldExtensions + Field,
+        I: IntoIterator<Item = Statement<'a, T>>,
+    > Circuit<T::BellmanEngine> for Computation<'a, T, I>
 {
     fn synthesize<CS: ConstraintSystem<T::BellmanEngine>>(
         self,
@@ -99,40 +111,62 @@ impl<'a, T: BellmanFieldExtensions + Field, I: IntoIterator<Item = Statement<'a,
 
         assert!(symbols.insert(Variable::one(), CS::one()).is_none());
 
-        symbols.extend(self.program.arguments.iter().enumerate().map(|(index, p)| {
-            let wire = match p.private {
-                true => cs.alloc(
-                    || format!("PRIVATE_INPUT_{}", index),
-                    || {
-                        Ok(witness
-                            .0
-                            .remove(&p.id)
-                            .ok_or(SynthesisError::AssignmentMissing)?
-                            .into_bellman())
-                    },
-                ),
-                false => cs.alloc_input(
-                    || format!("PUBLIC_INPUT_{}", index),
-                    || {
-                        Ok(witness
-                            .0
-                            .remove(&p.id)
-                            .ok_or(SynthesisError::AssignmentMissing)?
-                            .into_bellman())
-                    },
-                ),
-            }
-            .unwrap();
-            (p.id, wire)
-        }));
+        symbols.extend(self.program.arguments.iter().enumerate().map(
+            |(index, p)| {
+                let wire = match p.private {
+                    true => cs.alloc(
+                        || format!("PRIVATE_INPUT_{}", index),
+                        || {
+                            Ok(witness
+                                .0
+                                .remove(&p.id)
+                                .ok_or(SynthesisError::AssignmentMissing)?
+                                .into_bellman())
+                        },
+                    ),
+                    false => cs.alloc_input(
+                        || format!("PUBLIC_INPUT_{}", index),
+                        || {
+                            Ok(witness
+                                .0
+                                .remove(&p.id)
+                                .ok_or(SynthesisError::AssignmentMissing)?
+                                .into_bellman())
+                        },
+                    ),
+                }
+                .unwrap();
+                (p.id, wire)
+            },
+        ));
 
         for statement in self.program.statements {
             if let Statement::Constraint(s) = statement {
-                let a = &bellman_combination(s.quad.left, cs, &mut symbols, &mut witness);
-                let b = &bellman_combination(s.quad.right, cs, &mut symbols, &mut witness);
-                let c = &bellman_combination(s.lin, cs, &mut symbols, &mut witness);
+                let a = &bellman_combination(
+                    s.quad.left,
+                    cs,
+                    &mut symbols,
+                    &mut witness,
+                );
+                let b = &bellman_combination(
+                    s.quad.right,
+                    cs,
+                    &mut symbols,
+                    &mut witness,
+                );
+                let c = &bellman_combination(
+                    s.lin,
+                    cs,
+                    &mut symbols,
+                    &mut witness,
+                );
 
-                cs.enforce(|| "Constraint", |lc| lc + a, |lc| lc + b, |lc| lc + c);
+                cs.enforce(
+                    || "Constraint",
+                    |lc| lc + a,
+                    |lc| lc + b,
+                    |lc| lc + c,
+                );
             }
         }
 
@@ -152,8 +186,11 @@ pub fn get_random_seed<R: RngCore + CryptoRng>(rng: &mut R) -> [u32; 8] {
     seed
 }
 
-impl<'a, T: BellmanFieldExtensions + Field, I: IntoIterator<Item = Statement<'a, T>>>
-    Computation<'a, T, I>
+impl<
+        'a,
+        T: BellmanFieldExtensions + Field,
+        I: IntoIterator<Item = Statement<'a, T>>,
+    > Computation<'a, T, I>
 {
     pub fn prove<R: RngCore + CryptoRng>(
         self,
@@ -176,7 +213,9 @@ impl<'a, T: BellmanFieldExtensions + Field, I: IntoIterator<Item = Statement<'a,
         proof
     }
 
-    pub fn public_inputs_values(&self) -> Vec<<T::BellmanEngine as ScalarEngine>::Fr> {
+    pub fn public_inputs_values(
+        &self,
+    ) -> Vec<<T::BellmanEngine as ScalarEngine>::Fr> {
         self.program
             .public_inputs_values(self.witness.as_ref().unwrap())
             .iter()
@@ -184,7 +223,10 @@ impl<'a, T: BellmanFieldExtensions + Field, I: IntoIterator<Item = Statement<'a,
             .collect()
     }
 
-    pub fn setup<R: RngCore + CryptoRng>(self, rng: &mut R) -> Parameters<T::BellmanEngine> {
+    pub fn setup<R: RngCore + CryptoRng>(
+        self,
+        rng: &mut R,
+    ) -> Parameters<T::BellmanEngine> {
         use rand_0_4::SeedableRng;
         let seed = get_random_seed(rng);
         let rng = &mut ChaChaRng::from_seed(seed.as_ref());
@@ -375,12 +417,14 @@ mod tests {
                 return_count: 2,
                 statements: vec![
                     Statement::constraint(
-                        LinComb::from(Variable::new(42)) + LinComb::from(Variable::new(51)),
+                        LinComb::from(Variable::new(42))
+                            + LinComb::from(Variable::new(51)),
                         Variable::public(0),
                         None,
                     ),
                     Statement::constraint(
-                        LinComb::from(Variable::one()) + LinComb::from(Variable::new(42)),
+                        LinComb::from(Variable::one())
+                            + LinComb::from(Variable::new(42)),
                         Variable::public(1),
                         None,
                     ),
@@ -447,7 +491,8 @@ mod tests {
                 ],
                 return_count: 1,
                 statements: vec![Statement::constraint(
-                    LinComb::from(Variable::new(42)) + LinComb::from(Variable::new(51)),
+                    LinComb::from(Variable::new(42))
+                        + LinComb::from(Variable::new(51)),
                     Variable::public(0),
                     None,
                 )],

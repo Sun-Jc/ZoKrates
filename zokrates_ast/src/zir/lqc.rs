@@ -104,10 +104,14 @@ impl<'ast, T: Field> LinQuadComb<'ast, T> {
     }
 }
 
-impl<'ast, T: Field> TryFrom<FieldElementExpression<'ast, T>> for LinQuadComb<'ast, T> {
+impl<'ast, T: Field> TryFrom<FieldElementExpression<'ast, T>>
+    for LinQuadComb<'ast, T>
+{
     type Error = ();
 
-    fn try_from(e: FieldElementExpression<'ast, T>) -> Result<Self, Self::Error> {
+    fn try_from(
+        e: FieldElementExpression<'ast, T>,
+    ) -> Result<Self, Self::Error> {
         match e {
             FieldElementExpression::Value(v) => Ok(Self {
                 constant: v.value,

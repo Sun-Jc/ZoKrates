@@ -1,18 +1,24 @@
 // Generic walk through ZIR. Not mutating in place
 
-use crate::common::expressions::{BinaryOrExpression, IdentifierOrExpression, UnaryOrExpression};
+use crate::common::expressions::{
+    BinaryOrExpression, IdentifierOrExpression, UnaryOrExpression,
+};
 use crate::common::{Fold, WithSpan};
 use crate::zir::types::UBitwidth;
 use crate::zir::*;
 use zokrates_field::Field;
 
-impl<'ast, T: Field, F: Folder<'ast, T>> Fold<F> for FieldElementExpression<'ast, T> {
+impl<'ast, T: Field, F: Folder<'ast, T>> Fold<F>
+    for FieldElementExpression<'ast, T>
+{
     fn fold(self, f: &mut F) -> Self {
         f.fold_field_expression(self)
     }
 }
 
-impl<'ast, T: Field, F: Folder<'ast, T>> Fold<F> for BooleanExpression<'ast, T> {
+impl<'ast, T: Field, F: Folder<'ast, T>> Fold<F>
+    for BooleanExpression<'ast, T>
+{
     fn fold(self, f: &mut F) -> Self {
         f.fold_boolean_expression(self)
     }
@@ -28,7 +34,10 @@ pub trait Folder<'ast, T: Field>: Sized {
         fold_program(self, p)
     }
 
-    fn fold_function(&mut self, f: ZirFunction<'ast, T>) -> ZirFunction<'ast, T> {
+    fn fold_function(
+        &mut self,
+        f: ZirFunction<'ast, T>,
+    ) -> ZirFunction<'ast, T> {
         fold_function(self, f)
     }
 
@@ -82,11 +91,17 @@ pub trait Folder<'ast, T: Field>: Sized {
         fold_assembly_statement_cases(self, s)
     }
 
-    fn fold_statement(&mut self, s: ZirStatement<'ast, T>) -> Vec<ZirStatement<'ast, T>> {
+    fn fold_statement(
+        &mut self,
+        s: ZirStatement<'ast, T>,
+    ) -> Vec<ZirStatement<'ast, T>> {
         fold_statement(self, s)
     }
 
-    fn fold_statement_cases(&mut self, s: ZirStatement<'ast, T>) -> Vec<ZirStatement<'ast, T>> {
+    fn fold_statement_cases(
+        &mut self,
+        s: ZirStatement<'ast, T>,
+    ) -> Vec<ZirStatement<'ast, T>> {
         fold_statement_cases(self, s)
     }
 
@@ -118,11 +133,17 @@ pub trait Folder<'ast, T: Field>: Sized {
         fold_assertion_statement(self, s)
     }
 
-    fn fold_return_statement(&mut self, s: ReturnStatement<'ast, T>) -> Vec<ZirStatement<'ast, T>> {
+    fn fold_return_statement(
+        &mut self,
+        s: ReturnStatement<'ast, T>,
+    ) -> Vec<ZirStatement<'ast, T>> {
         fold_return_statement(self, s)
     }
 
-    fn fold_log_statement(&mut self, s: LogStatement<'ast, T>) -> Vec<ZirStatement<'ast, T>> {
+    fn fold_log_statement(
+        &mut self,
+        s: LogStatement<'ast, T>,
+    ) -> Vec<ZirStatement<'ast, T>> {
         fold_log_statement(self, s)
     }
 
@@ -141,7 +162,9 @@ pub trait Folder<'ast, T: Field>: Sized {
         fold_identifier_expression(self, ty, e)
     }
 
-    fn fold_conditional_expression<E: Expr<'ast, T> + Fold<Self> + Conditional<'ast, T>>(
+    fn fold_conditional_expression<
+        E: Expr<'ast, T> + Fold<Self> + Conditional<'ast, T>,
+    >(
         &mut self,
         ty: &E::Ty,
         e: ConditionalExpression<'ast, T, E>,
@@ -149,7 +172,9 @@ pub trait Folder<'ast, T: Field>: Sized {
         fold_conditional_expression(self, ty, e)
     }
 
-    fn fold_select_expression<E: Expr<'ast, T> + Fold<Self> + Select<'ast, T>>(
+    fn fold_select_expression<
+        E: Expr<'ast, T> + Fold<Self> + Select<'ast, T>,
+    >(
         &mut self,
         ty: &E::Ty,
         e: SelectExpression<'ast, T, E>,
@@ -170,7 +195,11 @@ pub trait Folder<'ast, T: Field>: Sized {
         fold_binary_expression(self, ty, e)
     }
 
-    fn fold_unary_expression<In: Expr<'ast, T> + Fold<Self>, E: Expr<'ast, T> + Fold<Self>, Op>(
+    fn fold_unary_expression<
+        In: Expr<'ast, T> + Fold<Self>,
+        E: Expr<'ast, T> + Fold<Self>,
+        Op,
+    >(
         &mut self,
         ty: &E::Ty,
         e: UnaryExpression<Op, In, E>,
@@ -178,10 +207,17 @@ pub trait Folder<'ast, T: Field>: Sized {
         fold_unary_expression(self, ty, e)
     }
 
-    fn fold_expression(&mut self, e: ZirExpression<'ast, T>) -> ZirExpression<'ast, T> {
+    fn fold_expression(
+        &mut self,
+        e: ZirExpression<'ast, T>,
+    ) -> ZirExpression<'ast, T> {
         match e {
-            ZirExpression::FieldElement(e) => self.fold_field_expression(e).into(),
-            ZirExpression::Boolean(e) => self.fold_boolean_expression(e).into(),
+            ZirExpression::FieldElement(e) => {
+                self.fold_field_expression(e).into()
+            }
+            ZirExpression::Boolean(e) => {
+                self.fold_boolean_expression(e).into()
+            }
             ZirExpression::Uint(e) => self.fold_uint_expression(e).into(),
         }
     }
@@ -216,7 +252,10 @@ pub trait Folder<'ast, T: Field>: Sized {
     ) -> BooleanExpression<'ast, T> {
         fold_boolean_expression(self, e)
     }
-    fn fold_uint_expression(&mut self, e: UExpression<'ast, T>) -> UExpression<'ast, T> {
+    fn fold_uint_expression(
+        &mut self,
+        e: UExpression<'ast, T>,
+    ) -> UExpression<'ast, T> {
         fold_uint_expression(self, e)
     }
 
@@ -255,7 +294,8 @@ pub fn fold_assembly_assignment<'ast, T: Field, F: Folder<'ast, T>>(
     f: &mut F,
     s: AssemblyAssignment<'ast, T>,
 ) -> Vec<ZirAssemblyStatement<'ast, T>> {
-    let assignees = s.assignee.into_iter().map(|a| f.fold_assignee(a)).collect();
+    let assignees =
+        s.assignee.into_iter().map(|a| f.fold_assignee(a)).collect();
     let expression = f.fold_function(s.expression);
     vec![ZirAssemblyStatement::assignment(assignees, expression)]
 }
@@ -312,7 +352,9 @@ pub fn fold_statement_cases<'ast, T: Field, F: Folder<'ast, T>>(
         ZirStatement::Definition(s) => f.fold_definition_statement(s),
         ZirStatement::IfElse(s) => f.fold_if_else_statement(s),
         ZirStatement::Assertion(s) => f.fold_assertion_statement(s),
-        ZirStatement::MultipleDefinition(s) => f.fold_multiple_definition_statement(s),
+        ZirStatement::MultipleDefinition(s) => {
+            f.fold_multiple_definition_statement(s)
+        }
         ZirStatement::Log(s) => f.fold_log_statement(s),
         ZirStatement::Assembly(s) => f.fold_assembly_block(s),
     }
@@ -321,7 +363,11 @@ pub fn fold_statement_cases<'ast, T: Field, F: Folder<'ast, T>>(
     .collect()
 }
 
-pub fn fold_multiple_definition_statement<'ast, T: Field, F: Folder<'ast, T>>(
+pub fn fold_multiple_definition_statement<
+    'ast,
+    T: Field,
+    F: Folder<'ast, T>,
+>(
     f: &mut F,
     s: MultipleDefinitionStatement<'ast, T>,
 ) -> Vec<ZirStatement<'ast, T>> {
@@ -392,7 +438,9 @@ pub fn fold_log_statement<'ast, T: Field, F: Folder<'ast, T>>(
         s.format_string,
         s.expressions
             .into_iter()
-            .map(|(t, e)| (t, e.into_iter().map(|e| f.fold_expression(e)).collect()))
+            .map(|(t, e)| {
+                (t, e.into_iter().map(|e| f.fold_expression(e)).collect())
+            })
             .collect(),
     ))]
 }
@@ -419,7 +467,9 @@ pub fn fold_identifier_expression<
     _: &E::Ty,
     e: IdentifierExpression<'ast, E>,
 ) -> IdentifierOrExpression<Identifier<'ast>, E, E::Inner> {
-    IdentifierOrExpression::Identifier(IdentifierExpression::new(f.fold_name(e.id)))
+    IdentifierOrExpression::Identifier(IdentifierExpression::new(
+        f.fold_name(e.id),
+    ))
 }
 
 fn fold_field_expression<'ast, T: Field, F: Folder<'ast, T>>(
@@ -438,63 +488,89 @@ pub fn fold_field_expression_cases<'ast, T: Field, F: Folder<'ast, T>>(
         FieldElementExpression::Value(n) => FieldElementExpression::Value(n),
         FieldElementExpression::Identifier(id) => {
             match f.fold_identifier_expression(&Type::FieldElement, id) {
-                IdentifierOrExpression::Identifier(i) => FieldElementExpression::Identifier(i),
+                IdentifierOrExpression::Identifier(i) => {
+                    FieldElementExpression::Identifier(i)
+                }
                 IdentifierOrExpression::Expression(e) => e,
             }
         }
         FieldElementExpression::Select(e) => {
             match f.fold_select_expression(&Type::FieldElement, e) {
-                SelectOrExpression::Select(s) => FieldElementExpression::Select(s),
+                SelectOrExpression::Select(s) => {
+                    FieldElementExpression::Select(s)
+                }
                 SelectOrExpression::Expression(u) => u,
             }
         }
-        FieldElementExpression::Add(e) => match f.fold_binary_expression(&Type::FieldElement, e) {
+        FieldElementExpression::Add(e) => match f
+            .fold_binary_expression(&Type::FieldElement, e)
+        {
             BinaryOrExpression::Binary(e) => FieldElementExpression::Add(e),
             BinaryOrExpression::Expression(e) => e,
         },
-        FieldElementExpression::Sub(e) => match f.fold_binary_expression(&Type::FieldElement, e) {
+        FieldElementExpression::Sub(e) => match f
+            .fold_binary_expression(&Type::FieldElement, e)
+        {
             BinaryOrExpression::Binary(e) => FieldElementExpression::Sub(e),
             BinaryOrExpression::Expression(e) => e,
         },
-        FieldElementExpression::Mult(e) => match f.fold_binary_expression(&Type::FieldElement, e) {
+        FieldElementExpression::Mult(e) => match f
+            .fold_binary_expression(&Type::FieldElement, e)
+        {
             BinaryOrExpression::Binary(e) => FieldElementExpression::Mult(e),
             BinaryOrExpression::Expression(e) => e,
         },
-        FieldElementExpression::Div(e) => match f.fold_binary_expression(&Type::FieldElement, e) {
+        FieldElementExpression::Div(e) => match f
+            .fold_binary_expression(&Type::FieldElement, e)
+        {
             BinaryOrExpression::Binary(e) => FieldElementExpression::Div(e),
             BinaryOrExpression::Expression(e) => e,
         },
-        FieldElementExpression::Pow(e) => match f.fold_binary_expression(&Type::FieldElement, e) {
+        FieldElementExpression::Pow(e) => match f
+            .fold_binary_expression(&Type::FieldElement, e)
+        {
             BinaryOrExpression::Binary(e) => FieldElementExpression::Pow(e),
             BinaryOrExpression::Expression(e) => e,
         },
-        FieldElementExpression::And(e) => match f.fold_binary_expression(&Type::FieldElement, e) {
+        FieldElementExpression::And(e) => match f
+            .fold_binary_expression(&Type::FieldElement, e)
+        {
             BinaryOrExpression::Binary(e) => FieldElementExpression::And(e),
             BinaryOrExpression::Expression(e) => e,
         },
-        FieldElementExpression::Or(e) => match f.fold_binary_expression(&Type::FieldElement, e) {
-            BinaryOrExpression::Binary(e) => FieldElementExpression::Or(e),
-            BinaryOrExpression::Expression(e) => e,
-        },
-        FieldElementExpression::Xor(e) => match f.fold_binary_expression(&Type::FieldElement, e) {
+        FieldElementExpression::Or(e) => {
+            match f.fold_binary_expression(&Type::FieldElement, e) {
+                BinaryOrExpression::Binary(e) => FieldElementExpression::Or(e),
+                BinaryOrExpression::Expression(e) => e,
+            }
+        }
+        FieldElementExpression::Xor(e) => match f
+            .fold_binary_expression(&Type::FieldElement, e)
+        {
             BinaryOrExpression::Binary(e) => FieldElementExpression::Xor(e),
             BinaryOrExpression::Expression(e) => e,
         },
         FieldElementExpression::LeftShift(e) => {
             match f.fold_binary_expression(&Type::FieldElement, e) {
-                BinaryOrExpression::Binary(e) => FieldElementExpression::LeftShift(e),
+                BinaryOrExpression::Binary(e) => {
+                    FieldElementExpression::LeftShift(e)
+                }
                 BinaryOrExpression::Expression(e) => e,
             }
         }
         FieldElementExpression::RightShift(e) => {
             match f.fold_binary_expression(&Type::FieldElement, e) {
-                BinaryOrExpression::Binary(e) => FieldElementExpression::RightShift(e),
+                BinaryOrExpression::Binary(e) => {
+                    FieldElementExpression::RightShift(e)
+                }
                 BinaryOrExpression::Expression(e) => e,
             }
         }
         FieldElementExpression::Conditional(c) => {
             match f.fold_conditional_expression(&Type::FieldElement, c) {
-                ConditionalOrExpression::Conditional(s) => FieldElementExpression::Conditional(s),
+                ConditionalOrExpression::Conditional(s) => {
+                    FieldElementExpression::Conditional(s)
+                }
                 ConditionalOrExpression::Expression(u) => u,
             }
         }
@@ -517,15 +593,20 @@ pub fn fold_boolean_expression_cases<'ast, T: Field, F: Folder<'ast, T>>(
 
     match e {
         BooleanExpression::Value(v) => BooleanExpression::Value(v),
-        BooleanExpression::Identifier(id) => match f.fold_identifier_expression(&Type::Boolean, id)
-        {
-            IdentifierOrExpression::Identifier(i) => BooleanExpression::Identifier(i),
-            IdentifierOrExpression::Expression(e) => e,
-        },
-        BooleanExpression::Select(e) => match f.fold_select_expression(&Type::Boolean, e) {
-            SelectOrExpression::Select(s) => BooleanExpression::Select(s),
-            SelectOrExpression::Expression(u) => u,
-        },
+        BooleanExpression::Identifier(id) => {
+            match f.fold_identifier_expression(&Type::Boolean, id) {
+                IdentifierOrExpression::Identifier(i) => {
+                    BooleanExpression::Identifier(i)
+                }
+                IdentifierOrExpression::Expression(e) => e,
+            }
+        }
+        BooleanExpression::Select(e) => {
+            match f.fold_select_expression(&Type::Boolean, e) {
+                SelectOrExpression::Select(s) => BooleanExpression::Select(s),
+                SelectOrExpression::Expression(u) => u,
+            }
+        }
         FieldEq(e) => match f.fold_binary_expression(&Type::Boolean, e) {
             BinaryOrExpression::Binary(e) => FieldEq(e),
             BinaryOrExpression::Expression(u) => u,
@@ -566,11 +647,14 @@ pub fn fold_boolean_expression_cases<'ast, T: Field, F: Folder<'ast, T>>(
             UnaryOrExpression::Unary(e) => Not(e),
             UnaryOrExpression::Expression(u) => u,
         },
-        BooleanExpression::Conditional(c) => match f.fold_conditional_expression(&Type::Boolean, c)
-        {
-            ConditionalOrExpression::Conditional(s) => BooleanExpression::Conditional(s),
-            ConditionalOrExpression::Expression(u) => u,
-        },
+        BooleanExpression::Conditional(c) => {
+            match f.fold_conditional_expression(&Type::Boolean, c) {
+                ConditionalOrExpression::Conditional(s) => {
+                    BooleanExpression::Conditional(s)
+                }
+                ConditionalOrExpression::Expression(u) => u,
+            }
+        }
     }
 }
 
@@ -603,7 +687,9 @@ pub fn fold_uint_expression_cases<'ast, T: Field, F: Folder<'ast, T>>(
     match e {
         Value(v) => UExpressionInner::Value(v),
         Identifier(id) => match f.fold_identifier_expression(&ty, id) {
-            IdentifierOrExpression::Identifier(i) => UExpressionInner::Identifier(i),
+            IdentifierOrExpression::Identifier(i) => {
+                UExpressionInner::Identifier(i)
+            }
             IdentifierOrExpression::Expression(e) => e,
         },
         Select(e) => match f.fold_select_expression(&ty, e) {
@@ -654,10 +740,12 @@ pub fn fold_uint_expression_cases<'ast, T: Field, F: Folder<'ast, T>>(
             UnaryOrExpression::Unary(e) => Not(e),
             UnaryOrExpression::Expression(u) => u,
         },
-        UExpressionInner::Conditional(c) => match f.fold_conditional_expression(&ty, c) {
-            ConditionalOrExpression::Conditional(s) => Conditional(s),
-            ConditionalOrExpression::Expression(u) => u,
-        },
+        UExpressionInner::Conditional(c) => {
+            match f.fold_conditional_expression(&ty, c) {
+                ConditionalOrExpression::Conditional(s) => Conditional(s),
+                ConditionalOrExpression::Expression(u) => u,
+            }
+        }
     }
 }
 
@@ -736,7 +824,9 @@ pub fn fold_binary_expression<
     _: &E::Ty,
     e: BinaryExpression<Op, L, R, E>,
 ) -> BinaryOrExpression<Op, L, R, E, E::Inner> {
-    BinaryOrExpression::Binary(BinaryExpression::new(e.left.fold(f), e.right.fold(f)).span(e.span))
+    BinaryOrExpression::Binary(
+        BinaryExpression::new(e.left.fold(f), e.right.fold(f)).span(e.span),
+    )
 }
 
 pub fn fold_unary_expression<
@@ -751,5 +841,7 @@ pub fn fold_unary_expression<
     _: &E::Ty,
     e: UnaryExpression<Op, In, E>,
 ) -> UnaryOrExpression<Op, In, E, E::Inner> {
-    UnaryOrExpression::Unary(UnaryExpression::new(e.inner.fold(f)).span(e.span))
+    UnaryOrExpression::Unary(
+        UnaryExpression::new(e.inner.fold(f)).span(e.span),
+    )
 }

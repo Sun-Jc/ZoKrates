@@ -1,4 +1,6 @@
-use nova_snark::traits::{circuit::TrivialCircuit, snark::RelaxedR1CSSNARKTrait};
+use nova_snark::traits::{
+    circuit::TrivialCircuit, snark::RelaxedR1CSSNARKTrait,
+};
 use nova_snark::RecursiveSNARK;
 use pasta_curves::{Fp, Fq};
 use std::io;
@@ -12,7 +14,7 @@ use zokrates_field::PallasField;
 // type G1 = pasta_curves::pallas::Point;
 // type G2 = pasta_curves::vesta::Point;
 
-use zokrates_bellpepper::nova::{F1, PublicParams, S1, S2};
+use zokrates_bellpepper::nova::{PublicParams, F1, S1, S2};
 
 fn main() {
     // create a circuit for the incremental computation
@@ -36,13 +38,20 @@ fn main() {
 
     let prog = artifacts.prog().collect();
 
-    let circuit_primary = NovaComputation::try_from(Computation::without_witness(&prog)).unwrap();
+    let circuit_primary =
+        NovaComputation::try_from(Computation::without_witness(&prog))
+            .unwrap();
     let circuit_secondary = TrivialCircuit::default();
 
     // produce public parameters
     println!("Producing public parameters...");
-    let pp =
-        PublicParams::setup(&circuit_primary, & circuit_secondary, &S1::ck_floor(), &S2::ck_floor()).unwrap();
+    let pp = PublicParams::setup(
+        &circuit_primary,
+        &circuit_secondary,
+        &S1::ck_floor(),
+        &S2::ck_floor(),
+    )
+    .unwrap();
 
     // produce a recursive SNARK
     println!("Generating a RecursiveSNARK...");
@@ -52,7 +61,14 @@ fn main() {
     let z0_primary = vec![Fq::one() + Fq::one()];
     let z0_secondary = vec![Fp::one()];
 
-    let mut recursive_snark = RecursiveSNARK::new(&pp, &circuit_primary, &circuit_secondary, &z0_primary, &z0_secondary).unwrap();
+    let mut recursive_snark = RecursiveSNARK::new(
+        &pp,
+        &circuit_primary,
+        &circuit_secondary,
+        &z0_primary,
+        &z0_secondary,
+    )
+    .unwrap();
 
     for i in 0..num_steps {
         let start = Instant::now();
@@ -73,7 +89,8 @@ fn main() {
     // verify the recursive SNARK
     println!("Verifying a RecursiveSNARK...");
     let start = Instant::now();
-    let res = recursive_snark.verify(&pp, num_steps, &z0_primary, &z0_secondary);
+    let res =
+        recursive_snark.verify(&pp, num_steps, &z0_primary, &z0_secondary);
 
     println!("{:#?}", res);
 
@@ -106,7 +123,8 @@ fn main() {
     // verify the compressed SNARK
     println!("Verifying a CompressedSNARK...");
     let start = Instant::now();
-    let res = compressed_snark.verify(&vk, num_steps, &z0_primary, &z0_secondary);
+    let res =
+        compressed_snark.verify(&vk, num_steps, &z0_primary, &z0_secondary);
     println!(
         "CompressedSNARK::verify: {:?}, took {:?}",
         res.is_ok(),

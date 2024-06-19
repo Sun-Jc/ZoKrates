@@ -38,8 +38,8 @@ impl<'ast, T: Field> Folder<'ast, T> for ZirCanonicalizer<'ast> {
 #[cfg(test)]
 mod tests {
     use crate::zir::{
-        FieldElementExpression, IdentifierExpression, Signature, Type, ZirAssignee, ZirFunction,
-        ZirStatement,
+        FieldElementExpression, IdentifierExpression, Signature, Type,
+        ZirAssignee, ZirFunction, ZirStatement,
     };
 
     use super::*;
@@ -48,12 +48,17 @@ mod tests {
     #[test]
     fn canonicalize() {
         let func = ZirFunction::<Bn128Field> {
-            arguments: vec![Parameter::new(Variable::field_element("a"), true)],
+            arguments: vec![Parameter::new(
+                Variable::field_element("a"),
+                true,
+            )],
             statements: vec![
                 ZirStatement::definition(
                     ZirAssignee::field_element("b"),
-                    FieldElementExpression::Identifier(IdentifierExpression::new("a".into()))
-                        .into(),
+                    FieldElementExpression::Identifier(
+                        IdentifierExpression::new("a".into()),
+                    )
+                    .into(),
                 ),
                 ZirStatement::ret(vec![FieldElementExpression::Identifier(
                     IdentifierExpression::new("b".into()),
@@ -76,9 +81,11 @@ mod tests {
             statements: vec![
                 ZirStatement::definition(
                     ZirAssignee::field_element(Identifier::internal(1usize)),
-                    FieldElementExpression::Identifier(IdentifierExpression::new(
-                        Identifier::internal(0usize),
-                    ))
+                    FieldElementExpression::Identifier(
+                        IdentifierExpression::new(Identifier::internal(
+                            0usize,
+                        )),
+                    )
                     .into(),
                 ),
                 ZirStatement::ret(vec![FieldElementExpression::Identifier(

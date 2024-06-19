@@ -17,15 +17,24 @@ pub trait Folder<'ast, T: Field>: Sized {
         fold_variable(self, v)
     }
 
-    fn fold_statement(&mut self, s: Statement<'ast, T>) -> Vec<Statement<'ast, T>> {
+    fn fold_statement(
+        &mut self,
+        s: Statement<'ast, T>,
+    ) -> Vec<Statement<'ast, T>> {
         fold_statement(self, s)
     }
 
-    fn fold_statement_cases(&mut self, s: Statement<'ast, T>) -> Vec<Statement<'ast, T>> {
+    fn fold_statement_cases(
+        &mut self,
+        s: Statement<'ast, T>,
+    ) -> Vec<Statement<'ast, T>> {
         fold_statement_cases(self, s)
     }
 
-    fn fold_constraint_statement(&mut self, s: ConstraintStatement<T>) -> Vec<Statement<'ast, T>> {
+    fn fold_constraint_statement(
+        &mut self,
+        s: ConstraintStatement<T>,
+    ) -> Vec<Statement<'ast, T>> {
         fold_constraint_statement(self, s)
     }
 
@@ -36,11 +45,17 @@ pub trait Folder<'ast, T: Field>: Sized {
         fold_directive_statement(self, s)
     }
 
-    fn fold_log_statement(&mut self, s: LogStatement<T>) -> Vec<Statement<'ast, T>> {
+    fn fold_log_statement(
+        &mut self,
+        s: LogStatement<T>,
+    ) -> Vec<Statement<'ast, T>> {
         fold_log_statement(self, s)
     }
 
-    fn fold_block_statement(&mut self, s: BlockStatement<'ast, T>) -> Vec<Statement<'ast, T>> {
+    fn fold_block_statement(
+        &mut self,
+        s: BlockStatement<'ast, T>,
+    ) -> Vec<Statement<'ast, T>> {
         fold_block_statement(self, s)
     }
 
@@ -145,7 +160,9 @@ pub fn fold_linear_combination<'ast, T: Field, F: Folder<'ast, T>>(
     LinComb::new(
         e.value
             .into_iter()
-            .map(|(variable, coefficient)| (f.fold_variable(variable), coefficient))
+            .map(|(variable, coefficient)| {
+                (f.fold_variable(variable), coefficient)
+            })
             .collect(),
     )
     .span(e.span)
@@ -177,13 +194,19 @@ pub fn fold_directive_statement<'ast, T: Field, F: Folder<'ast, T>>(
     })]
 }
 
-pub fn fold_argument<'ast, T: Field, F: Folder<'ast, T>>(f: &mut F, a: Parameter) -> Parameter {
+pub fn fold_argument<'ast, T: Field, F: Folder<'ast, T>>(
+    f: &mut F,
+    a: Parameter,
+) -> Parameter {
     Parameter {
         id: f.fold_variable(a.id),
         ..a
     }
 }
 
-pub fn fold_variable<'ast, T: Field, F: Folder<'ast, T>>(_f: &mut F, v: Variable) -> Variable {
+pub fn fold_variable<'ast, T: Field, F: Folder<'ast, T>>(
+    _f: &mut F,
+    v: Variable,
+) -> Variable {
     v
 }

@@ -6,7 +6,9 @@ use std::io::{BufReader, BufWriter};
 use std::path::Path;
 use zokrates_bellman::Bellman;
 use zokrates_common::constants::{BLS12_381, BN128};
-use zokrates_field::{BellmanFieldExtensions, Bls12_381Field, Bn128Field, Field};
+use zokrates_field::{
+    BellmanFieldExtensions, Bls12_381Field, Bn128Field, Field,
+};
 use zokrates_proof_systems::rng::get_rng_from_entropy;
 use zokrates_proof_systems::{MpcBackend, MpcScheme, G16};
 
@@ -56,7 +58,9 @@ pub fn subcommand() -> App<'static, 'static> {
 pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     match sub_matches.value_of("curve").unwrap() {
         BN128 => cli_mpc_contribute::<Bn128Field, G16, Bellman>(sub_matches),
-        BLS12_381 => cli_mpc_contribute::<Bls12_381Field, G16, Bellman>(sub_matches),
+        BLS12_381 => {
+            cli_mpc_contribute::<Bls12_381Field, G16, Bellman>(sub_matches)
+        }
         _ => unreachable!(),
     }
 }
@@ -69,14 +73,16 @@ pub fn cli_mpc_contribute<
     sub_matches: &ArgMatches,
 ) -> Result<(), String> {
     let path = Path::new(sub_matches.value_of("input").unwrap());
-    let file =
-        File::open(path).map_err(|why| format!("Could not open `{}`: {}", path.display(), why))?;
+    let file = File::open(path).map_err(|why| {
+        format!("Could not open `{}`: {}", path.display(), why)
+    })?;
 
     let mut reader = BufReader::new(file);
 
     let output_path = Path::new(sub_matches.value_of("output").unwrap());
-    let output_file = File::create(output_path)
-        .map_err(|why| format!("Could not create `{}`: {}", output_path.display(), why))?;
+    let output_file = File::create(output_path).map_err(|why| {
+        format!("Could not create `{}`: {}", output_path.display(), why)
+    })?;
 
     let mut writer = BufWriter::new(output_file);
 

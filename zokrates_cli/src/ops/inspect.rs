@@ -30,8 +30,9 @@ pub fn subcommand() -> App<'static, 'static> {
 pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     // read compiled program
     let path = Path::new(sub_matches.value_of("input").unwrap());
-    let file =
-        File::open(path).map_err(|why| format!("Could not open `{}`: {}", path.display(), why))?;
+    let file = File::open(path).map_err(|why| {
+        format!("Could not open `{}`: {}", path.display(), why)
+    })?;
 
     let mut reader = BufReader::new(file);
 
@@ -42,6 +43,8 @@ pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
         ProgEnum::Bw6_761Program(p) => cli_inspect(p, sub_matches),
         ProgEnum::PallasProgram(p) => cli_inspect(p, sub_matches),
         ProgEnum::VestaProgram(p) => cli_inspect(p, sub_matches),
+
+        ProgEnum::GrumpkinProgram(p) => cli_inspect(p, sub_matches),
     }
 }
 
@@ -52,14 +55,16 @@ fn cli_inspect<'a, T: Field, I: Iterator<Item = ir::Statement<'a, T>>>(
     let ir_prog: ir::Prog<T> = ir_prog.collect();
 
     let curve = format!("{:<17} {}", "curve:", T::name());
-    let constraint_count = format!("{:<17} {}", "constraint_count:", ir_prog.constraint_count());
+    let constraint_count =
+        format!("{:<17} {}", "constraint_count:", ir_prog.constraint_count());
 
     println!("{}", curve);
     println!("{}", constraint_count);
 
     if sub_matches.is_present("ztf") {
         let output_path =
-            PathBuf::from(sub_matches.value_of("input").unwrap()).with_extension("ztf");
+            PathBuf::from(sub_matches.value_of("input").unwrap())
+                .with_extension("ztf");
 
         let output_file = File::create(&output_path).unwrap();
         let mut w = BufWriter::new(output_file);
@@ -67,7 +72,13 @@ fn cli_inspect<'a, T: Field, I: Iterator<Item = ir::Statement<'a, T>>>(
         writeln!(w, "# {}", curve)
             .and(writeln!(w, "# {}", constraint_count))
             .and(write!(w, "{}", ir_prog))
-            .map_err(|why| format!("Could not write to `{}`: {}", output_path.display(), why))?;
+            .map_err(|why| {
+                format!(
+                    "Could not write to `{}`: {}",
+                    output_path.display(),
+                    why
+                )
+            })?;
 
         w.flush()
             .map_err(|why| format!("Failed to flush the buffer: {}", why))?;

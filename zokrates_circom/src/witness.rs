@@ -29,7 +29,8 @@ pub fn write_witness<T: Field, W: Write>(
     w: Witness<T>,
     public_inputs: PublicInputs,
 ) -> Result<()> {
-    let modulo_byte_count = T::max_value().to_biguint().add(1u32).to_bytes_le().len() as u32;
+    let modulo_byte_count =
+        T::max_value().to_biguint().add(1u32).to_bytes_le().len() as u32;
     let witness_size = w.0.len() as u32;
 
     let header = Header {
@@ -66,9 +67,15 @@ pub fn write_witness<T: Field, W: Write>(
     Ok(())
 }
 
-fn write_val<T: Field, W: Write>(writer: &mut W, v: &T, modulo_byte_count: usize) -> Result<()> {
+fn write_val<T: Field, W: Write>(
+    writer: &mut W,
+    v: &T,
+    modulo_byte_count: usize,
+) -> Result<()> {
     let mut res = vec![0u8; modulo_byte_count];
-    for (value, padded) in v.to_biguint().to_bytes_le().iter().zip(res.iter_mut()) {
+    for (value, padded) in
+        v.to_biguint().to_bytes_le().iter().zip(res.iter_mut())
+    {
         *padded = *value;
     }
     writer.write_all(&res)?;
@@ -80,7 +87,8 @@ fn write_witness_values<T: Field, W: Write>(
     mut w: Witness<T>,
     public_inputs: PublicInputs,
 ) -> Result<()> {
-    let modulo_byte_count = T::max_value().to_biguint().add(1u32).to_bytes_le().len();
+    let modulo_byte_count =
+        T::max_value().to_biguint().add(1u32).to_bytes_le().len();
 
     if let Some(value) = w.0.remove(&Variable::one()) {
         write_val(writer, &value, modulo_byte_count)?;
@@ -88,7 +96,9 @@ fn write_witness_values<T: Field, W: Write>(
 
     let output_count = w.0.iter().filter(|(var, _)| var.is_output()).count();
 
-    for value in (0..output_count).map(|id| w.0.remove(&Variable::public(id)).unwrap()) {
+    for value in
+        (0..output_count).map(|id| w.0.remove(&Variable::public(id)).unwrap())
+    {
         write_val(writer, &value, modulo_byte_count)?;
     }
 
@@ -178,7 +188,8 @@ mod tests {
     #[test]
     fn one_and_pub_and_priv() {
         let mut w: Witness<Bn128Field> = Witness::default();
-        let public_inputs: PublicInputs = vec![Variable::new(1)].into_iter().collect();
+        let public_inputs: PublicInputs =
+            vec![Variable::new(1)].into_iter().collect();
         w.0.extend(vec![
             (Variable::public(0), 42.into()),
             (Variable::one(), 1.into()),

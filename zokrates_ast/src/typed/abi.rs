@@ -31,14 +31,14 @@ impl Abi {
 mod tests {
     use super::*;
     use crate::typed::types::{
-        ConcreteArrayType, ConcreteFunctionKey, ConcreteStructMember, ConcreteStructType,
-        GTupleType, UBitwidth,
+        ConcreteArrayType, ConcreteFunctionKey, ConcreteStructMember,
+        ConcreteStructType, GTupleType, UBitwidth,
     };
     use crate::typed::DeclarationType;
     use crate::typed::{
-        parameter::DeclarationParameter, variable::DeclarationVariable, ConcreteTupleType,
-        ConcreteType, TypedFunction, TypedFunctionSymbol, TypedFunctionSymbolDeclaration,
-        TypedModule, TypedProgram,
+        parameter::DeclarationParameter, variable::DeclarationVariable,
+        ConcreteTupleType, ConcreteType, TypedFunction, TypedFunctionSymbol,
+        TypedFunctionSymbolDeclaration, TypedModule, TypedProgram,
     };
     use std::collections::BTreeMap;
     use zokrates_field::Bn128Field;
@@ -60,7 +60,10 @@ mod tests {
                 ],
                 statements: vec![],
                 signature: ConcreteSignature::new()
-                    .inputs(vec![ConcreteType::FieldElement, ConcreteType::Boolean])
+                    .inputs(vec![
+                        ConcreteType::FieldElement,
+                        ConcreteType::Boolean,
+                    ])
                     .output(ConcreteType::FieldElement)
                     .into(),
             }),
@@ -250,8 +253,14 @@ mod tests {
                 "Foo".into(),
                 vec![],
                 vec![
-                    ConcreteStructMember::new(String::from("a"), ConcreteType::FieldElement),
-                    ConcreteStructMember::new(String::from("b"), ConcreteType::Boolean),
+                    ConcreteStructMember::new(
+                        String::from("a"),
+                        ConcreteType::FieldElement,
+                    ),
+                    ConcreteStructMember::new(
+                        String::from("b"),
+                        ConcreteType::Boolean,
+                    ),
                 ],
             )),
         };
@@ -404,7 +413,10 @@ mod tests {
                                 String::from("b"),
                                 ConcreteType::FieldElement,
                             ),
-                            ConcreteStructMember::new(String::from("c"), ConcreteType::Boolean),
+                            ConcreteStructMember::new(
+                                String::from("c"),
+                                ConcreteType::Boolean,
+                            ),
                         ],
                     )),
                     2u32,
@@ -459,7 +471,10 @@ mod tests {
                 name: String::from("a"),
                 public: false,
                 ty: ConcreteType::Array(ConcreteArrayType::new(
-                    ConcreteType::Array(ConcreteArrayType::new(ConcreteType::FieldElement, 2u32)),
+                    ConcreteType::Array(ConcreteArrayType::new(
+                        ConcreteType::FieldElement,
+                        2u32,
+                    )),
                     2u32,
                 )),
             }],
@@ -506,7 +521,9 @@ mod tests {
                     ConcreteType::Boolean,
                 ])),
             }],
-            output: ConcreteType::Tuple(ConcreteTupleType::new(vec![ConcreteType::FieldElement])),
+            output: ConcreteType::Tuple(ConcreteTupleType::new(vec![
+                ConcreteType::FieldElement,
+            ])),
         };
 
         let json = serde_json::to_string_pretty(&abi).unwrap();

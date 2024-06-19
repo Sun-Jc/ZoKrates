@@ -45,15 +45,23 @@ pub fn subcommand() -> App<'static, 'static> {
 pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     // read compiled program
     let path = Path::new(sub_matches.value_of("input").unwrap());
-    let file =
-        File::open(path).map_err(|why| format!("Could not open `{}`: {}", path.display(), why))?;
+    let file = File::open(path).map_err(|why| {
+        format!("Could not open `{}`: {}", path.display(), why)
+    })?;
 
     let mut reader = BufReader::new(file);
 
     match ProgEnum::deserialize(&mut reader)? {
-        ProgEnum::Bn128Program(p) => cli_mpc_init::<_, _, G16, Bellman>(p, sub_matches),
-        ProgEnum::Bls12_381Program(p) => cli_mpc_init::<_, _, G16, Bellman>(p, sub_matches),
-        _ => Err("Current protocol only supports bn128/bls12_381 programs".into()),
+        ProgEnum::Bn128Program(p) => {
+            cli_mpc_init::<_, _, G16, Bellman>(p, sub_matches)
+        }
+        ProgEnum::Bls12_381Program(p) => {
+            cli_mpc_init::<_, _, G16, Bellman>(p, sub_matches)
+        }
+        _ => {
+            Err("Current protocol only supports bn128/bls12_381 programs"
+                .into())
+        }
     }
 }
 
@@ -70,14 +78,16 @@ fn cli_mpc_init<
     println!("Initializing MPC...");
 
     let radix_path = Path::new(sub_matches.value_of("radix-path").unwrap());
-    let radix_file = File::open(radix_path)
-        .map_err(|why| format!("Could not open `{}`: {}", radix_path.display(), why))?;
+    let radix_file = File::open(radix_path).map_err(|why| {
+        format!("Could not open `{}`: {}", radix_path.display(), why)
+    })?;
 
     let mut radix_reader = BufReader::new(radix_file);
 
     let output_path = Path::new(sub_matches.value_of("output").unwrap());
-    let output_file = File::create(output_path)
-        .map_err(|why| format!("Could not create `{}`: {}", output_path.display(), why))?;
+    let output_file = File::create(output_path).map_err(|why| {
+        format!("Could not create `{}`: {}", output_path.display(), why)
+    })?;
 
     let mut writer = BufWriter::new(output_file);
     B::initialize(program, &mut radix_reader, &mut writer)

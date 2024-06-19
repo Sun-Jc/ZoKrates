@@ -4,8 +4,8 @@ pub mod marlin;
 
 use ark_ec::PairingEngine;
 use ark_relations::r1cs::{
-    ConstraintSynthesizer, ConstraintSystem, ConstraintSystemRef, LinearCombination,
-    SynthesisError, Variable as ArkVariable,
+    ConstraintSynthesizer, ConstraintSystem, ConstraintSystemRef,
+    LinearCombination, SynthesisError, Variable as ArkVariable,
 };
 use std::collections::BTreeMap;
 use zokrates_ast::common::flat::Variable;
@@ -23,7 +23,10 @@ pub struct Computation<'a, T, I: IntoIterator<Item = Statement<'a, T>>> {
 }
 
 impl<'a, T, I: IntoIterator<Item = Statement<'a, T>>> Computation<'a, T, I> {
-    pub fn with_witness(program: ProgIterator<'a, T, I>, witness: Witness<T>) -> Self {
+    pub fn with_witness(
+        program: ProgIterator<'a, T, I>,
+        witness: Witness<T>,
+    ) -> Self {
         Computation {
             program,
             witness: Some(witness),
@@ -40,10 +43,14 @@ impl<'a, T, I: IntoIterator<Item = Statement<'a, T>>> Computation<'a, T, I> {
 
 fn ark_combination<T: Field + ArkFieldExtensions>(
     l: LinComb<T>,
-    cs: &mut ConstraintSystem<<<T as ArkFieldExtensions>::ArkEngine as PairingEngine>::Fr>,
+    cs: &mut ConstraintSystem<
+        <<T as ArkFieldExtensions>::ArkEngine as PairingEngine>::Fr,
+    >,
     symbols: &mut BTreeMap<Variable, ArkVariable>,
     witness: &mut Witness<T>,
-) -> LinearCombination<<<T as ArkFieldExtensions>::ArkEngine as PairingEngine>::Fr> {
+) -> LinearCombination<
+    <<T as ArkFieldExtensions>::ArkEngine as PairingEngine>::Fr,
+> {
     l.value
         .into_iter()
         .map(|(k, v)| {
@@ -73,13 +80,20 @@ fn ark_combination<T: Field + ArkFieldExtensions>(
         .fold(LinearCombination::zero(), |acc, e| acc + e)
 }
 
-impl<'a, T: Field + ArkFieldExtensions, I: IntoIterator<Item = Statement<'a, T>>>
-    ConstraintSynthesizer<<<T as ArkFieldExtensions>::ArkEngine as PairingEngine>::Fr>
-    for Computation<'a, T, I>
+impl<
+        'a,
+        T: Field + ArkFieldExtensions,
+        I: IntoIterator<Item = Statement<'a, T>>,
+    >
+    ConstraintSynthesizer<
+        <<T as ArkFieldExtensions>::ArkEngine as PairingEngine>::Fr,
+    > for Computation<'a, T, I>
 {
     fn generate_constraints(
         self,
-        cs: ConstraintSystemRef<<<T as ArkFieldExtensions>::ArkEngine as PairingEngine>::Fr>,
+        cs: ConstraintSystemRef<
+            <<T as ArkFieldExtensions>::ArkEngine as PairingEngine>::Fr,
+        >,
     ) -> Result<(), SynthesisError> {
         // mapping from IR variables
         let mut symbols = BTreeMap::new();
@@ -91,32 +105,49 @@ impl<'a, T: Field + ArkFieldExtensions, I: IntoIterator<Item = Statement<'a, T>>
         match cs {
             ConstraintSystemRef::CS(rc) => {
                 let mut cs = rc.borrow_mut();
-                symbols.extend(self.program.arguments.iter().enumerate().map(|(_, p)| {
-                    let wire = match p.private {
-                        true => cs.new_witness_variable(|| {
-                            Ok(witness
-                                .0
-                                .remove(&p.id)
-                                .ok_or(SynthesisError::AssignmentMissing)?
-                                .into_ark())
-                        }),
-                        false => cs.new_input_variable(|| {
-                            Ok(witness
-                                .0
-                                .remove(&p.id)
-                                .ok_or(SynthesisError::AssignmentMissing)?
-                                .into_ark())
-                        }),
-                    }
-                    .unwrap();
-                    (p.id, wire)
-                }));
+                symbols.extend(self.program.arguments.iter().enumerate().map(
+                    |(_, p)| {
+                        let wire = match p.private {
+                            true => cs.new_witness_variable(|| {
+                                Ok(witness
+                                    .0
+                                    .remove(&p.id)
+                                    .ok_or(SynthesisError::AssignmentMissing)?
+                                    .into_ark())
+                            }),
+                            false => cs.new_input_variable(|| {
+                                Ok(witness
+                                    .0
+                                    .remove(&p.id)
+                                    .ok_or(SynthesisError::AssignmentMissing)?
+                                    .into_ark())
+                            }),
+                        }
+                        .unwrap();
+                        (p.id, wire)
+                    },
+                ));
 
                 for statement in self.program.statements {
                     if let Statement::Constraint(s) = statement {
-                        let a = ark_combination(s.quad.left, &mut cs, &mut symbols, &mut witness);
-                        let b = ark_combination(s.quad.right, &mut cs, &mut symbols, &mut witness);
-                        let c = ark_combination(s.lin, &mut cs, &mut symbols, &mut witness);
+                        let a = ark_combination(
+                            s.quad.left,
+                            &mut cs,
+                            &mut symbols,
+                            &mut witness,
+                        );
+                        let b = ark_combination(
+                            s.quad.right,
+                            &mut cs,
+                            &mut symbols,
+                            &mut witness,
+                        );
+                        let c = ark_combination(
+                            s.lin,
+                            &mut cs,
+                            &mut symbols,
+                            &mut witness,
+                        );
 
                         cs.enforce_constraint(a, b, c)?;
                     }
@@ -129,10 +160,15 @@ impl<'a, T: Field + ArkFieldExtensions, I: IntoIterator<Item = Statement<'a, T>>
     }
 }
 
-impl<'a, T: Field + ArkFieldExtensions, I: IntoIterator<Item = Statement<'a, T>>>
-    Computation<'a, T, I>
+impl<
+        'a,
+        T: Field + ArkFieldExtensions,
+        I: IntoIterator<Item = Statement<'a, T>>,
+    > Computation<'a, T, I>
 {
-    pub fn public_inputs_values(&self) -> Vec<<T::ArkEngine as PairingEngine>::Fr> {
+    pub fn public_inputs_values(
+        &self,
+    ) -> Vec<<T::ArkEngine as PairingEngine>::Fr> {
         self.program
             .public_inputs_values(self.witness.as_ref().unwrap())
             .iter()
@@ -145,7 +181,9 @@ mod parse {
     use super::*;
     use ark_ff::ToBytes;
     use zokrates_field::G2Type;
-    use zokrates_proof_systems::{Fr, G1Affine, G2Affine, G2AffineFq, G2AffineFq2};
+    use zokrates_proof_systems::{
+        Fr, G1Affine, G2Affine, G2AffineFq, G2AffineFq2,
+    };
 
     pub fn parse_g1<T: Field + ArkFieldExtensions>(
         e: &<T::ArkEngine as PairingEngine>::G1Affine,
@@ -217,7 +255,9 @@ mod parse {
         }
     }
 
-    pub fn parse_fr<T: ArkFieldExtensions>(e: &<T::ArkEngine as PairingEngine>::Fr) -> Fr {
+    pub fn parse_fr<T: ArkFieldExtensions>(
+        e: &<T::ArkEngine as PairingEngine>::Fr,
+    ) -> Fr {
         let mut bytes: Vec<u8> = Vec::new();
         e.write(&mut bytes).unwrap();
         bytes.reverse();
@@ -234,12 +274,15 @@ pub mod serialization {
 
     #[inline]
     fn decode_hex(value: String) -> Vec<u8> {
-        let mut bytes = hex::decode(value.strip_prefix("0x").unwrap()).unwrap();
+        let mut bytes =
+            hex::decode(value.strip_prefix("0x").unwrap()).unwrap();
         bytes.reverse();
         bytes
     }
 
-    pub fn to_g1<T: ArkFieldExtensions>(g1: G1Affine) -> <T::ArkEngine as PairingEngine>::G1Affine {
+    pub fn to_g1<T: ArkFieldExtensions>(
+        g1: G1Affine,
+    ) -> <T::ArkEngine as PairingEngine>::G1Affine {
         let mut bytes = vec![];
         bytes.append(&mut decode_hex(g1.0));
         bytes.append(&mut decode_hex(g1.1));
@@ -248,7 +291,9 @@ pub mod serialization {
         <T::ArkEngine as PairingEngine>::G1Affine::read(&*bytes).unwrap()
     }
 
-    pub fn to_g2<T: ArkFieldExtensions>(g2: G2Affine) -> <T::ArkEngine as PairingEngine>::G2Affine {
+    pub fn to_g2<T: ArkFieldExtensions>(
+        g2: G2Affine,
+    ) -> <T::ArkEngine as PairingEngine>::G2Affine {
         let mut bytes = vec![];
 
         match g2 {

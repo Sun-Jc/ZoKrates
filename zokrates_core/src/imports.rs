@@ -79,7 +79,9 @@ impl Importer {
             .into_iter()
             .map(|s| match s.value.symbol {
                 Symbol::Here(SymbolDefinition::Import(import)) => {
-                    Importer::resolve::<T, E>(import, &location, resolver, modules, arena)
+                    Importer::resolve::<T, E>(
+                        import, &location, resolver, modules, arena,
+                    )
                 }
                 _ => Ok(s),
             })
@@ -139,7 +141,9 @@ impl Importer {
                     } else {
                         SymbolDeclaration {
                             id: symbol.get_alias(),
-                            symbol: Symbol::Flat(FlatEmbed::SnarkVerifyBls12377),
+                            symbol: Symbol::Flat(
+                                FlatEmbed::SnarkVerifyBls12377,
+                            ),
                         }
                     }
                 }
@@ -192,22 +196,27 @@ impl Importer {
                     symbol: Symbol::Here(SymbolDefinition::Constant(
                         ConstantDefinition {
                             ty: UnresolvedType::Uint(32).into(),
-                            expression: Expression::U32Constant(T::get_required_bits() as u32)
-                                .into(),
+                            expression: Expression::U32Constant(
+                                T::get_required_bits() as u32,
+                            )
+                            .into(),
                         }
                         .start_end(span.from, span.to),
                     )),
                 },
                 s => {
                     return Err(CompileErrorInner::ImportError(
-                        Error::new(format!("Embed {} not found", s)).with_span(Some(span)),
+                        Error::new(format!("Embed {} not found", s))
+                            .with_span(Some(span)),
                     )
                     .in_file(location)
                     .into());
                 }
             },
             _ => match resolver {
-                Some(res) => match res.resolve(location.to_path_buf(), module_id.to_path_buf()) {
+                Some(res) => match res
+                    .resolve(location.to_path_buf(), module_id.to_path_buf())
+                {
                     Ok((source, new_location)) => {
                         let alias = symbol.alias.unwrap_or(
                             module_id
@@ -237,15 +246,20 @@ impl Importer {
                                     arena,
                                 )?;
 
-                                assert!(modules.insert(new_location.clone(), compiled).is_none());
+                                assert!(modules
+                                    .insert(new_location.clone(), compiled)
+                                    .is_none());
                             }
                         };
 
                         SymbolDeclaration {
                             id: alias,
                             symbol: Symbol::There(
-                                SymbolImport::with_id_in_module(symbol.id, new_location)
-                                    .start_end(span.from, span.to),
+                                SymbolImport::with_id_in_module(
+                                    symbol.id,
+                                    new_location,
+                                )
+                                .start_end(span.from, span.to),
                             ),
                         }
                     }

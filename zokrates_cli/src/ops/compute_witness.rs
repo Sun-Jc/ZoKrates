@@ -76,8 +76,9 @@ pub fn subcommand() -> App<'static, 'static> {
 pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     // read compiled program
     let path = Path::new(sub_matches.value_of("input").unwrap());
-    let file =
-        File::open(path).map_err(|why| format!("Could not open {}: {}", path.display(), why))?;
+    let file = File::open(path).map_err(|why| {
+        format!("Could not open {}: {}", path.display(), why)
+    })?;
 
     let mut reader = BufReader::new(file);
 
@@ -88,6 +89,8 @@ pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
         ProgEnum::Bw6_761Program(p) => cli_compute(p, sub_matches),
         ProgEnum::PallasProgram(p) => cli_compute(p, sub_matches),
         ProgEnum::VestaProgram(p) => cli_compute(p, sub_matches),
+
+        ProgEnum::GrumpkinProgram(p) => cli_compute(p, sub_matches),
     }
 }
 
@@ -108,11 +111,13 @@ fn cli_compute<'a, T: Field, I: Iterator<Item = ir::Statement<'a, T>>>(
     let signature = match is_abi {
         true => {
             let path = Path::new(sub_matches.value_of("abi-spec").unwrap());
-            let file = File::open(path)
-                .map_err(|why| format!("Could not open {}: {}", path.display(), why))?;
+            let file = File::open(path).map_err(|why| {
+                format!("Could not open {}: {}", path.display(), why)
+            })?;
             let mut reader = BufReader::new(file);
 
-            let abi: Abi = from_reader(&mut reader).map_err(|why| why.to_string())?;
+            let abi: Abi =
+                from_reader(&mut reader).map_err(|why| why.to_string())?;
 
             abi.signature()
         }
@@ -132,8 +137,10 @@ fn cli_compute<'a, T: Field, I: Iterator<Item = ir::Statement<'a, T>>>(
             let arguments = sub_matches.values_of("arguments");
             arguments
                 .map(|a| {
-                    a.map(|x| T::try_from_dec_str(x).map_err(|_| x.to_string()))
-                        .collect::<Result<Vec<_>, _>>()
+                    a.map(|x| {
+                        T::try_from_dec_str(x).map_err(|_| x.to_string())
+                    })
+                    .collect::<Result<Vec<_>, _>>()
                 })
                 .unwrap_or_else(|| Ok(vec![]))
                 .map(Inputs::Raw)
@@ -161,7 +168,10 @@ fn cli_compute<'a, T: Field, I: Iterator<Item = ir::Statement<'a, T>>>(
                             input.retain(|x| x != '\n');
                             input
                                 .split(' ')
-                                .map(|x| T::try_from_dec_str(x).map_err(|_| x.to_string()))
+                                .map(|x| {
+                                    T::try_from_dec_str(x)
+                                        .map_err(|_| x.to_string())
+                                })
                                 .collect::<Result<Vec<_>, _>>()
                                 .map(Inputs::Raw)
                         }
@@ -188,8 +198,11 @@ fn cli_compute<'a, T: Field, I: Iterator<Item = ir::Statement<'a, T>>>(
 
     use zokrates_abi::Decode;
 
-    let results_json_value: serde_json::Value =
-        zokrates_abi::Value::decode(witness.return_values(), *signature.output).into_serde_json();
+    let results_json_value: serde_json::Value = zokrates_abi::Value::decode(
+        witness.return_values(),
+        *signature.output,
+    )
+    .into_serde_json();
 
     if verbose {
         println!("\nWitness: \n{}\n", results_json_value);
@@ -197,8 +210,9 @@ fn cli_compute<'a, T: Field, I: Iterator<Item = ir::Statement<'a, T>>>(
 
     // write witness to file
     let output_path = Path::new(sub_matches.value_of("output").unwrap());
-    let output_file = File::create(output_path)
-        .map_err(|why| format!("Could not create {}: {}", output_path.display(), why))?;
+    let output_file = File::create(output_path).map_err(|why| {
+        format!("Could not create {}: {}", output_path.display(), why)
+    })?;
 
     let writer = BufWriter::new(output_file);
 
@@ -208,21 +222,24 @@ fn cli_compute<'a, T: Field, I: Iterator<Item = ir::Statement<'a, T>>>(
 
     // write witness in the json format
     if sub_matches.is_present("json") {
-        let json_path = Path::new(sub_matches.value_of("output").unwrap()).with_extension("json");
-        let json_file = File::create(&json_path)
-            .map_err(|why| format!("Could not create {}: {}", json_path.display(), why))?;
+        let json_path = Path::new(sub_matches.value_of("output").unwrap())
+            .with_extension("json");
+        let json_file = File::create(&json_path).map_err(|why| {
+            format!("Could not create {}: {}", json_path.display(), why)
+        })?;
 
         let writer = BufWriter::new(json_file);
 
-        witness
-            .write_json(writer)
-            .map_err(|why| format!("Could not save {}: {:?}", json_path.display(), why))?;
+        witness.write_json(writer).map_err(|why| {
+            format!("Could not save {}: {:?}", json_path.display(), why)
+        })?;
     }
 
     // write circom witness to file
     let wtns_path = Path::new(sub_matches.value_of("circom-witness").unwrap());
-    let wtns_file = File::create(wtns_path)
-        .map_err(|why| format!("Could not create {}: {}", output_path.display(), why))?;
+    let wtns_file = File::create(wtns_path).map_err(|why| {
+        format!("Could not create {}: {}", output_path.display(), why)
+    })?;
 
     let mut writer = BufWriter::new(wtns_file);
 

@@ -1,7 +1,7 @@
 use ark_crypto_primitives::SNARK;
 use ark_gm17::{
-    prepare_verifying_key, verify_proof, PreparedVerifyingKey, Proof as ArkProof, ProvingKey,
-    VerifyingKey, GM17 as ArkGM17,
+    prepare_verifying_key, verify_proof, PreparedVerifyingKey,
+    Proof as ArkProof, ProvingKey, VerifyingKey, GM17 as ArkGM17,
 };
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 use zokrates_field::{ArkFieldExtensions, Field};
@@ -13,15 +13,23 @@ use rand_0_8::{CryptoRng, RngCore};
 use zokrates_ast::ir::{ProgIterator, Statement, Witness};
 use zokrates_proof_systems::gm17::{ProofPoints, VerificationKey, GM17};
 use zokrates_proof_systems::Scheme;
-use zokrates_proof_systems::{Backend, NonUniversalBackend, Proof, SetupKeypair};
+use zokrates_proof_systems::{
+    Backend, NonUniversalBackend, Proof, SetupKeypair,
+};
 
 impl<T: Field + ArkFieldExtensions> NonUniversalBackend<T, GM17> for Ark {
-    fn setup<'a, I: IntoIterator<Item = Statement<'a, T>>, R: RngCore + CryptoRng>(
+    fn setup<
+        'a,
+        I: IntoIterator<Item = Statement<'a, T>>,
+        R: RngCore + CryptoRng,
+    >(
         program: ProgIterator<'a, T, I>,
         rng: &mut R,
     ) -> SetupKeypair<T, GM17> {
         let computation = Computation::without_witness(program);
-        let (pk, vk) = ArkGM17::<T::ArkEngine>::circuit_specific_setup(computation, rng).unwrap();
+        let (pk, vk) =
+            ArkGM17::<T::ArkEngine>::circuit_specific_setup(computation, rng)
+                .unwrap();
 
         let mut pk_vec: Vec<u8> = Vec::new();
         pk.serialize_unchecked(&mut pk_vec).unwrap();
@@ -63,7 +71,8 @@ impl<T: Field + ArkFieldExtensions> Backend<T, GM17> for Ark {
             ProvingKey::<<T as ArkFieldExtensions>::ArkEngine>::deserialize_unchecked(proving_key)
                 .unwrap();
 
-        let proof = ArkGM17::<T::ArkEngine>::prove(&pk, computation, rng).unwrap();
+        let proof =
+            ArkGM17::<T::ArkEngine>::prove(&pk, computation, rng).unwrap();
         let proof_points = ProofPoints {
             a: parse_g1::<T>(&proof.a),
             b: parse_g2::<T>(&proof.b),
@@ -73,7 +82,10 @@ impl<T: Field + ArkFieldExtensions> Backend<T, GM17> for Ark {
         Proof::new(proof_points, inputs)
     }
 
-    fn verify(vk: <GM17 as Scheme<T>>::VerificationKey, proof: Proof<T, GM17>) -> bool {
+    fn verify(
+        vk: <GM17 as Scheme<T>>::VerificationKey,
+        proof: Proof<T, GM17>,
+    ) -> bool {
         let vk = VerifyingKey {
             h_g2: serialization::to_g2::<T>(vk.h),
             g_alpha_g1: serialization::to_g1::<T>(vk.g_alpha),
@@ -137,7 +149,10 @@ mod tests {
 
         let rng = &mut StdRng::from_entropy();
         let keypair =
-            <Ark as NonUniversalBackend<Bls12_377Field, GM17>>::setup(program.clone(), rng);
+            <Ark as NonUniversalBackend<Bls12_377Field, GM17>>::setup(
+                program.clone(),
+                rng,
+            );
         let interpreter = Interpreter::default();
 
         let witness = interpreter
@@ -155,7 +170,8 @@ mod tests {
             keypair.pk.as_slice(),
             rng,
         );
-        let ans = <Ark as Backend<Bls12_377Field, GM17>>::verify(keypair.vk, proof);
+        let ans =
+            <Ark as Backend<Bls12_377Field, GM17>>::verify(keypair.vk, proof);
 
         assert!(ans);
     }
@@ -175,7 +191,10 @@ mod tests {
         };
 
         let rng = &mut StdRng::from_entropy();
-        let keypair = <Ark as NonUniversalBackend<Bw6_761Field, GM17>>::setup(program.clone(), rng);
+        let keypair = <Ark as NonUniversalBackend<Bw6_761Field, GM17>>::setup(
+            program.clone(),
+            rng,
+        );
         let interpreter = Interpreter::default();
 
         let witness = interpreter
@@ -193,7 +212,8 @@ mod tests {
             keypair.pk.as_slice(),
             rng,
         );
-        let ans = <Ark as Backend<Bw6_761Field, GM17>>::verify(keypair.vk, proof);
+        let ans =
+            <Ark as Backend<Bw6_761Field, GM17>>::verify(keypair.vk, proof);
 
         assert!(ans);
     }

@@ -7,7 +7,9 @@ use std::io::BufReader;
 use std::path::Path;
 use std::{fs::File, io::Write};
 
-use zokrates_bellpepper::nova::{self, NovaField, RecursiveSNARKWithStepCount};
+use zokrates_bellpepper::nova::{
+    self, NovaField, RecursiveSNARKWithStepCount,
+};
 
 pub fn subcommand() -> App<'static, 'static> {
     SubCommand::with_name("compress")
@@ -51,11 +53,11 @@ pub fn subcommand() -> App<'static, 'static> {
         )
 }
 
-
 pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     let path = Path::new(sub_matches.value_of("input").unwrap());
-    let file =
-        File::open(path).map_err(|why| format!("Could not open {}: {}", path.display(), why))?;
+    let file = File::open(path).map_err(|why| {
+        format!("Could not open {}: {}", path.display(), why)
+    })?;
 
     let reader = BufReader::new(file);
     let instance: RecursiveSNARKWithStepCount =
@@ -64,45 +66,50 @@ pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     cli_nova_compress::<PallasField>(instance, sub_matches)
 }
 
-type T = zokrates_field::PallasField;
+type T = zokrates_field::GrumpkinField;
 
 fn cli_nova_compress<T: NovaField>(
     instance: RecursiveSNARKWithStepCount,
     sub_matches: &ArgMatches,
 ) -> Result<(), String> {
     let params_path = Path::new(sub_matches.value_of("params-path").unwrap());
-    let params_file = File::open(params_path)
-        .map_err(|why| format!("Could not open {}: {}", params_path.display(), why))?;
+    let params_file = File::open(params_path).map_err(|why| {
+        format!("Could not open {}: {}", params_path.display(), why)
+    })?;
 
     let params_reader = BufReader::new(params_file);
-    let params = serde_cbor::from_reader(params_reader)
-        .map_err(|why| format!("Could not deserialize {}: {}", params_path.display(), why))?;
+    let params = serde_cbor::from_reader(params_reader).map_err(|why| {
+        format!("Could not deserialize {}: {}", params_path.display(), why)
+    })?;
 
     let proof_path = Path::new(sub_matches.value_of("proof-path").unwrap());
-    let verification_key_path = Path::new(sub_matches.value_of("verification-key-path").unwrap());
+    let verification_key_path =
+        Path::new(sub_matches.value_of("verification-key-path").unwrap());
 
     let (proof, vk) = nova::compress(&params, instance);
 
     let proof_json = serde_json::to_string_pretty(&proof).unwrap();
 
-    let mut proof_file = File::create(proof_path)
-        .map_err(|why| format!("Could not create {}: {}", proof_path.display(), why))?;
+    let mut proof_file = File::create(proof_path).map_err(|why| {
+        format!("Could not create {}: {}", proof_path.display(), why)
+    })?;
 
-    proof_file
-        .write(proof_json.as_bytes())
-        .map_err(|why| format!("Could not write to {}: {}", proof_path.display(), why))?;
+    proof_file.write(proof_json.as_bytes()).map_err(|why| {
+        format!("Could not write to {}: {}", proof_path.display(), why)
+    })?;
 
     println!("Compressed SNARK written to '{}'", proof_path.display());
 
     let verification_key_json = serde_json::to_string_pretty(&vk).unwrap();
 
-    let mut verification_key_file = File::create(verification_key_path).map_err(|why| {
-        format!(
-            "Could not create {}: {}",
-            verification_key_path.display(),
-            why
-        )
-    })?;
+    let mut verification_key_file = File::create(verification_key_path)
+        .map_err(|why| {
+            format!(
+                "Could not create {}: {}",
+                verification_key_path.display(),
+                why
+            )
+        })?;
 
     verification_key_file
         .write(verification_key_json.as_bytes())

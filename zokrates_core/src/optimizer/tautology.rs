@@ -13,7 +13,10 @@ use zokrates_field::Field;
 pub struct TautologyOptimizer;
 
 impl<'ast, T: Field> Folder<'ast, T> for TautologyOptimizer {
-    fn fold_constraint_statement(&mut self, s: ConstraintStatement<T>) -> Vec<Statement<'ast, T>> {
+    fn fold_constraint_statement(
+        &mut self,
+        s: ConstraintStatement<T>,
+    ) -> Vec<Statement<'ast, T>> {
         match s.quad.try_linear() {
             Ok(l) => {
                 if l == s.lin {

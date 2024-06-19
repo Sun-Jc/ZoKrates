@@ -1,6 +1,9 @@
 use crate::scheme::{NonUniversalScheme, Scheme};
 use crate::solidity::solidity_pairing_lib;
-use crate::{G1Affine, G2Affine, MpcScheme, SolidityCompatibleField, SolidityCompatibleScheme};
+use crate::{
+    G1Affine, G2Affine, MpcScheme, SolidityCompatibleField,
+    SolidityCompatibleScheme,
+};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use zokrates_field::Field;
@@ -37,14 +40,19 @@ impl<T: Field> MpcScheme<T> for G16 {}
 impl<T: SolidityCompatibleField> SolidityCompatibleScheme<T> for G16 {
     type Proof = Self::ProofPoints;
 
-    fn export_solidity_verifier(vk: <G16 as Scheme<T>>::VerificationKey) -> String {
+    fn export_solidity_verifier(
+        vk: <G16 as Scheme<T>>::VerificationKey,
+    ) -> String {
         let (mut template_text, solidity_pairing_lib_sans_bn256g2) =
             (String::from(CONTRACT_TEMPLATE), solidity_pairing_lib(false));
 
         let vk_regex = Regex::new(r#"(<%vk_[^i%]*%>)"#).unwrap();
-        let vk_gamma_abc_len_regex = Regex::new(r#"(<%vk_gamma_abc_length%>)"#).unwrap();
-        let vk_gamma_abc_repeat_regex = Regex::new(r#"(<%vk_gamma_abc_pts%>)"#).unwrap();
-        let vk_input_len_regex = Regex::new(r#"(<%vk_input_length%>)"#).unwrap();
+        let vk_gamma_abc_len_regex =
+            Regex::new(r#"(<%vk_gamma_abc_length%>)"#).unwrap();
+        let vk_gamma_abc_repeat_regex =
+            Regex::new(r#"(<%vk_gamma_abc_pts%>)"#).unwrap();
+        let vk_input_len_regex =
+            Regex::new(r#"(<%vk_input_length%>)"#).unwrap();
         let input_loop = Regex::new(r#"(<%input_loop%>)"#).unwrap();
         let input_argument = Regex::new(r#"(<%input_argument%>)"#).unwrap();
 
@@ -97,7 +105,8 @@ impl<T: SolidityCompatibleField> SolidityCompatibleScheme<T> for G16 {
         template_text = if gamma_abc_count > 1 {
             input_argument.replace(
                 template_text.as_str(),
-                format!(", uint[{}] memory input", gamma_abc_count - 1).as_str(),
+                format!(", uint[{}] memory input", gamma_abc_count - 1)
+                    .as_str(),
             )
         } else {
             input_argument.replace(template_text.as_str(), "")
@@ -124,7 +133,8 @@ impl<T: SolidityCompatibleField> SolidityCompatibleScheme<T> for G16 {
             .into_owned();
 
         let re = Regex::new(r"(?P<v>0[xX][0-9a-fA-F]{64})").unwrap();
-        template_text = re.replace_all(&template_text, "uint256($v)").to_string();
+        template_text =
+            re.replace_all(&template_text, "uint256($v)").to_string();
 
         format!("{}{}", solidity_pairing_lib_sans_bn256g2, template_text)
     }

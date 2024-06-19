@@ -38,7 +38,10 @@ impl<'ast, T: Field> Folder<'ast, T> for DuplicateOptimizer {
         fold_program(self, p)
     }
 
-    fn fold_statement(&mut self, s: Statement<'ast, T>) -> Vec<Statement<'ast, T>> {
+    fn fold_statement(
+        &mut self,
+        s: Statement<'ast, T>,
+    ) -> Vec<Statement<'ast, T>> {
         match s {
             Statement::Block(s) => s
                 .inner

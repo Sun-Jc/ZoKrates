@@ -1,6 +1,8 @@
 use crate::scheme::{NonUniversalScheme, Scheme};
 use crate::solidity::{solidity_pairing_lib, SOLIDITY_G2_ADDITION_LIB};
-use crate::{G1Affine, G2Affine, SolidityCompatibleField, SolidityCompatibleScheme};
+use crate::{
+    G1Affine, G2Affine, SolidityCompatibleField, SolidityCompatibleScheme,
+};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use zokrates_field::Field;
@@ -38,15 +40,20 @@ impl<T: Field> Scheme<T> for GM17 {
 impl<T: SolidityCompatibleField> SolidityCompatibleScheme<T> for GM17 {
     type Proof = Self::ProofPoints;
 
-    fn export_solidity_verifier(vk: <GM17 as Scheme<T>>::VerificationKey) -> String {
+    fn export_solidity_verifier(
+        vk: <GM17 as Scheme<T>>::VerificationKey,
+    ) -> String {
         let (mut template_text, solidity_pairing_lib) =
             (String::from(CONTRACT_TEMPLATE), solidity_pairing_lib(true));
 
         // replace things in template
         let vk_regex = Regex::new(r#"(<%vk_[^i%]*%>)"#).unwrap();
-        let vk_query_len_regex = Regex::new(r#"(<%vk_query_length%>)"#).unwrap();
-        let vk_query_repeat_regex = Regex::new(r#"(<%vk_query_pts%>)"#).unwrap();
-        let vk_input_len_regex = Regex::new(r#"(<%vk_input_length%>)"#).unwrap();
+        let vk_query_len_regex =
+            Regex::new(r#"(<%vk_query_length%>)"#).unwrap();
+        let vk_query_repeat_regex =
+            Regex::new(r#"(<%vk_query_pts%>)"#).unwrap();
+        let vk_input_len_regex =
+            Regex::new(r#"(<%vk_input_length%>)"#).unwrap();
         let input_loop = Regex::new(r#"(<%input_loop%>)"#).unwrap();
         let input_argument = Regex::new(r#"(<%input_argument%>)"#).unwrap();
 
@@ -72,7 +79,10 @@ impl<T: SolidityCompatibleField> SolidityCompatibleScheme<T> for GM17 {
 
         let query_count: usize = vk.query.len();
         template_text = vk_query_len_regex
-            .replace(template_text.as_str(), format!("{}", query_count).as_str())
+            .replace(
+                template_text.as_str(),
+                format!("{}", query_count).as_str(),
+            )
             .into_owned();
 
         template_text = vk_input_len_regex
@@ -127,7 +137,8 @@ impl<T: SolidityCompatibleField> SolidityCompatibleScheme<T> for GM17 {
             .into_owned();
 
         let re = Regex::new(r"(?P<v>0[xX][0-9a-fA-F]{64})").unwrap();
-        template_text = re.replace_all(&template_text, "uint256($v)").to_string();
+        template_text =
+            re.replace_all(&template_text, "uint256($v)").to_string();
 
         format!(
             "{}{}{}",

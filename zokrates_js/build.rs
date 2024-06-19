@@ -11,12 +11,17 @@ fn export_stdlib() {
     let root = "../zokrates_stdlib/stdlib";
     let mut stdlib = json::JsonValue::new_object();
 
-    for entry in WalkDir::new(root)
-        .into_iter()
-        .map(Result::unwrap)
-        .filter(|e| {
-            !e.file_type().is_dir() && e.path().extension().map(|e| e == "zok").unwrap_or(false)
-        })
+    for entry in
+        WalkDir::new(root)
+            .into_iter()
+            .map(Result::unwrap)
+            .filter(|e| {
+                !e.file_type().is_dir()
+                    && e.path()
+                        .extension()
+                        .map(|e| e == "zok")
+                        .unwrap_or(false)
+            })
     {
         let path: &Path = entry.path();
         let source = fs::read_to_string(path).unwrap();
@@ -33,12 +38,14 @@ fn export_stdlib() {
 
 fn export_metadata() {
     let path = "../zokrates_cli/Cargo.toml";
-    let config: toml::Value = toml::from_str(&fs::read_to_string(path).unwrap()).unwrap();
+    let config: toml::Value =
+        toml::from_str(&fs::read_to_string(path).unwrap()).unwrap();
 
     let mut metadata = json::JsonValue::new_object();
     metadata
         .insert("version", config["package"]["version"].as_str().unwrap())
         .unwrap();
 
-    fs::write("metadata.js", format!("export default {}", metadata.dump())).unwrap();
+    fs::write("metadata.js", format!("export default {}", metadata.dump()))
+        .unwrap();
 }

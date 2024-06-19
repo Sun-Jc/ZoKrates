@@ -33,7 +33,10 @@ mod tests {
             assert_eq!(bits.len(), 254);
             assert_eq!(
                 bits[0..10].to_vec(),
-                vec![true, true, false, false, false, false, false, true, true, false]
+                vec![
+                    true, true, false, false, false, false, false, true, true,
+                    false
+                ]
             );
 
             let bits = FieldPrime::one().to_bits_be();
@@ -241,14 +244,16 @@ mod tests {
 
         #[test]
         fn serde_ser_deser() {
-            let serialized = &serialize(&FieldPrime::from("11"), Infinite).unwrap();
+            let serialized =
+                &serialize(&FieldPrime::from("11"), Infinite).unwrap();
             let deserialized = deserialize(serialized).unwrap();
             assert_eq!(FieldPrime::from("11"), deserialized);
         }
 
         #[test]
         fn serde_json_ser_deser() {
-            let serialized = serde_json::to_string(&FieldPrime::from("11")).unwrap();
+            let serialized =
+                serde_json::to_string(&FieldPrime::from("11")).unwrap();
             let deserialized = serde_json::from_str(&serialized).unwrap();
             assert_eq!(FieldPrime::from("11"), deserialized);
         }
@@ -274,14 +279,16 @@ mod tests {
             let minus_one = FieldPrime::from(0) - one;
             assert_eq!("(-1)", &minus_one.to_compact_dec_string());
             // (p-1)/2 -> positive notation
-            let p_minus_one_over_two =
-                (FieldPrime::from(0) - FieldPrime::from(1)) / FieldPrime::from(2);
+            let p_minus_one_over_two = (FieldPrime::from(0)
+                - FieldPrime::from(1))
+                / FieldPrime::from(2);
             assert_eq!(
                 "10944121435919637611123202872628637544274182200208017171849102093287904247808",
                 &p_minus_one_over_two.to_compact_dec_string()
             );
             // (p-1)/2 + 1 -> negative notation (p-1)/2 + 1 - p == (-p+1)/2
-            let p_minus_one_over_two_plus_one = ((FieldPrime::from(0) - FieldPrime::from(1))
+            let p_minus_one_over_two_plus_one = ((FieldPrime::from(0)
+                - FieldPrime::from(1))
                 / FieldPrime::from(2))
                 + FieldPrime::from(1);
             assert_eq!(

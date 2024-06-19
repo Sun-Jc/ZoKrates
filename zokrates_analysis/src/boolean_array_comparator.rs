@@ -1,9 +1,9 @@
 use zokrates_ast::{
     common::WithSpan,
     typed::{
-        folder::*, ArrayExpression, ArrayType, BooleanExpression, Conditional, ConditionalKind,
-        Expr, FieldElementExpression, Select, Type, TypedExpression, TypedProgram, UExpression,
-        UExpressionInner,
+        folder::*, ArrayExpression, ArrayType, BooleanExpression, Conditional,
+        ConditionalKind, Expr, FieldElementExpression, Select, Type,
+        TypedExpression, TypedProgram, UExpression, UExpressionInner,
     },
 };
 
@@ -45,13 +45,28 @@ impl<'ast, T: Field> Folder<'ast, T> for BooleanArrayComparator {
                     let chunk_size = T::get_required_bits() - 1;
 
                     let left_elements: Vec<_> = (0..len)
-                        .map(|i| BooleanExpression::select(*e.left.clone(), i as u32).span(span))
+                        .map(|i| {
+                            BooleanExpression::select(
+                                *e.left.clone(),
+                                i as u32,
+                            )
+                            .span(span)
+                        })
                         .collect();
                     let right_elements: Vec<_> = (0..len)
-                        .map(|i| BooleanExpression::select(*e.right.clone(), i as u32).span(span))
+                        .map(|i| {
+                            BooleanExpression::select(
+                                *e.right.clone(),
+                                i as u32,
+                            )
+                            .span(span)
+                        })
                         .collect();
 
-                    let process = |elements: &[BooleanExpression<'ast, T>]| {
+                    let process = |elements: &[BooleanExpression<
+                        'ast,
+                        T,
+                    >]| {
                         elements
                             .chunks(chunk_size)
                             .map(|chunk| {
@@ -91,14 +106,23 @@ impl<'ast, T: Field> Folder<'ast, T> for BooleanArrayComparator {
 
                     BooleanExpression::array_eq(
                         ArrayExpression::value(left)
-                            .annotate(ArrayType::new(Type::FieldElement, chunk_count as u32))
+                            .annotate(ArrayType::new(
+                                Type::FieldElement,
+                                chunk_count as u32,
+                            ))
                             .span(span),
                         ArrayExpression::value(right)
-                            .annotate(ArrayType::new(Type::FieldElement, chunk_count as u32))
+                            .annotate(ArrayType::new(
+                                Type::FieldElement,
+                                chunk_count as u32,
+                            ))
                             .span(span),
                     )
                 }
-                _ => fold_boolean_expression_cases(self, BooleanExpression::ArrayEq(e)),
+                _ => fold_boolean_expression_cases(
+                    self,
+                    BooleanExpression::ArrayEq(e),
+                ),
             },
             e => fold_boolean_expression_cases(self, e),
         }
@@ -127,17 +151,26 @@ mod tests {
         let x = a_id("x").annotate(ArrayType::new(Type::Boolean, 2u32));
         let y = a_id("y").annotate(ArrayType::new(Type::Boolean, 2u32));
 
-        let e: BooleanExpression<DummyCurveField> =
-            BooleanExpression::ArrayEq(BinaryExpression::new(x.clone(), y.clone()));
+        let e: BooleanExpression<DummyCurveField> = BooleanExpression::ArrayEq(
+            BinaryExpression::new(x.clone(), y.clone()),
+        );
 
         let expected = BooleanExpression::ArrayEq(BinaryExpression::new(
             a([
                 conditional(select(x.clone(), 0u32), f(2).pow(u_32(1)), f(0))
-                    + conditional(select(x.clone(), 1u32), f(2).pow(u_32(0)), f(0)),
+                    + conditional(
+                        select(x.clone(), 1u32),
+                        f(2).pow(u_32(0)),
+                        f(0),
+                    ),
             ]),
             a([
                 conditional(select(y.clone(), 0u32), f(2).pow(u_32(1)), f(0))
-                    + conditional(select(y.clone(), 1u32), f(2).pow(u_32(0)), f(0)),
+                    + conditional(
+                        select(y.clone(), 1u32),
+                        f(2).pow(u_32(0)),
+                        f(0),
+                    ),
             ]),
         ));
 
@@ -155,18 +188,27 @@ mod tests {
         let x = a_id("x").annotate(ArrayType::new(Type::Boolean, 3u32));
         let y = a_id("y").annotate(ArrayType::new(Type::Boolean, 3u32));
 
-        let e: BooleanExpression<DummyCurveField> =
-            BooleanExpression::ArrayEq(BinaryExpression::new(x.clone(), y.clone()));
+        let e: BooleanExpression<DummyCurveField> = BooleanExpression::ArrayEq(
+            BinaryExpression::new(x.clone(), y.clone()),
+        );
 
         let expected = BooleanExpression::ArrayEq(BinaryExpression::new(
             a([
                 conditional(select(x.clone(), 0u32), f(2).pow(u_32(1)), f(0))
-                    + conditional(select(x.clone(), 1u32), f(2).pow(u_32(0)), f(0)),
+                    + conditional(
+                        select(x.clone(), 1u32),
+                        f(2).pow(u_32(0)),
+                        f(0),
+                    ),
                 conditional(select(x.clone(), 2u32), f(2).pow(u_32(0)), f(0)),
             ]),
             a([
                 conditional(select(y.clone(), 0u32), f(2).pow(u_32(1)), f(0))
-                    + conditional(select(y.clone(), 1u32), f(2).pow(u_32(0)), f(0)),
+                    + conditional(
+                        select(y.clone(), 1u32),
+                        f(2).pow(u_32(0)),
+                        f(0),
+                    ),
                 conditional(select(y.clone(), 2u32), f(2).pow(u_32(0)), f(0)),
             ]),
         ));

@@ -27,9 +27,14 @@ pub use crate::common::Solver;
 
 pub use self::witness::Witness;
 
-pub type LogStatement<T> = crate::common::statements::LogStatement<(ConcreteType, Vec<LinComb<T>>)>;
+pub type LogStatement<T> =
+    crate::common::statements::LogStatement<(ConcreteType, Vec<LinComb<T>>)>;
 pub type DirectiveStatement<'ast, T> =
-    crate::common::statements::DirectiveStatement<QuadComb<T>, Variable, Solver<'ast, T>>;
+    crate::common::statements::DirectiveStatement<
+        QuadComb<T>,
+        Variable,
+        Solver<'ast, T>,
+    >;
 
 #[derive(Derivative, Clone, Debug, Serialize, Deserialize)]
 #[derivative(Hash, PartialEq, Eq)]
@@ -43,7 +48,11 @@ pub struct ConstraintStatement<T> {
 }
 
 impl<T> ConstraintStatement<T> {
-    pub fn new(quad: QuadComb<T>, lin: LinComb<T>, error: Option<RuntimeError>) -> Self {
+    pub fn new(
+        quad: QuadComb<T>,
+        lin: LinComb<T>,
+        error: Option<RuntimeError>,
+    ) -> Self {
         Self {
             span: None,
             quad,
@@ -159,7 +168,11 @@ impl<'ast, T: Field> Statement<'ast, T> {
         lin: V,
         error: Option<RuntimeError>,
     ) -> Self {
-        Statement::Constraint(ConstraintStatement::new(quad.into(), lin.into(), error))
+        Statement::Constraint(ConstraintStatement::new(
+            quad.into(),
+            lin.into(),
+            error,
+        ))
     }
 
     pub fn log(
@@ -232,7 +245,9 @@ impl<'ast, T> Default for Prog<'ast, T> {
     }
 }
 
-impl<'ast, T, I: IntoIterator<Item = Statement<'ast, T>>> ProgIterator<'ast, T, I> {
+impl<'ast, T, I: IntoIterator<Item = Statement<'ast, T>>>
+    ProgIterator<'ast, T, I>
+{
     pub fn new(
         arguments: Vec<Parameter>,
         statements: I,
@@ -264,7 +279,8 @@ impl<'ast, T, I: IntoIterator<Item = Statement<'ast, T>>> ProgIterator<'ast, T, 
     }
 
     pub fn public_count(&self) -> usize {
-        self.arguments.iter().filter(|a| !a.private).count() + self.return_count
+        self.arguments.iter().filter(|a| !a.private).count()
+            + self.return_count
     }
 
     pub fn public_inputs(&self) -> PublicInputs {
@@ -335,7 +351,10 @@ mod tests {
         #[test]
         fn print_constraint() {
             let c: Statement<Bn128Field> = Statement::constraint(
-                QuadComb::new(Variable::new(42).into(), Variable::new(42).into()),
+                QuadComb::new(
+                    Variable::new(42).into(),
+                    Variable::new(42).into(),
+                ),
                 Variable::new(42),
                 None,
             );

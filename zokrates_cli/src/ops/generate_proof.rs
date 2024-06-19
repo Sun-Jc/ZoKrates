@@ -94,57 +94,91 @@ pub fn subcommand() -> App<'static, 'static> {
 
 pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     let program_path = Path::new(sub_matches.value_of("input").unwrap());
-    let program_file = File::open(program_path)
-        .map_err(|why| format!("Could not open {}: {}", program_path.display(), why))?;
+    let program_file = File::open(program_path).map_err(|why| {
+        format!("Could not open {}: {}", program_path.display(), why)
+    })?;
 
     let mut reader = BufReader::new(program_file);
     let prog = ProgEnum::deserialize(&mut reader)?;
 
     let curve_parameter = CurveParameter::try_from(prog.curve())?;
 
-    let backend_parameter = BackendParameter::try_from(sub_matches.value_of("backend").unwrap())?;
-    let scheme_parameter =
-        SchemeParameter::try_from(sub_matches.value_of("proving-scheme").unwrap())?;
+    let backend_parameter =
+        BackendParameter::try_from(sub_matches.value_of("backend").unwrap())?;
+    let scheme_parameter = SchemeParameter::try_from(
+        sub_matches.value_of("proving-scheme").unwrap(),
+    )?;
 
-    let parameters = Parameters(backend_parameter, curve_parameter, scheme_parameter);
+    let parameters =
+        Parameters(backend_parameter, curve_parameter, scheme_parameter);
 
     match parameters {
         #[cfg(feature = "bellman")]
-        Parameters(BackendParameter::Bellman, _, SchemeParameter::G16) => match prog {
-            ProgEnum::Bn128Program(p) => cli_generate_proof::<_, _, G16, Bellman>(p, sub_matches),
-            ProgEnum::Bls12_381Program(p) => {
-                cli_generate_proof::<_, _, G16, Bellman>(p, sub_matches)
+        Parameters(BackendParameter::Bellman, _, SchemeParameter::G16) => {
+            match prog {
+                ProgEnum::Bn128Program(p) => {
+                    cli_generate_proof::<_, _, G16, Bellman>(p, sub_matches)
+                }
+                ProgEnum::Bls12_381Program(p) => {
+                    cli_generate_proof::<_, _, G16, Bellman>(p, sub_matches)
+                }
+                _ => unreachable!(),
             }
-            _ => unreachable!(),
-        },
+        }
         #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, _, SchemeParameter::G16) => match prog {
-            ProgEnum::Bn128Program(p) => cli_generate_proof::<_, _, G16, Ark>(p, sub_matches),
-            ProgEnum::Bls12_381Program(p) => cli_generate_proof::<_, _, G16, Ark>(p, sub_matches),
-            ProgEnum::Bls12_377Program(p) => cli_generate_proof::<_, _, G16, Ark>(p, sub_matches),
-            ProgEnum::Bw6_761Program(p) => cli_generate_proof::<_, _, G16, Ark>(p, sub_matches),
-            _ => unreachable!(),
-        },
-        #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, _, SchemeParameter::GM17) => match prog {
-            ProgEnum::Bn128Program(p) => cli_generate_proof::<_, _, GM17, Ark>(p, sub_matches),
-            ProgEnum::Bls12_381Program(p) => cli_generate_proof::<_, _, GM17, Ark>(p, sub_matches),
-            ProgEnum::Bls12_377Program(p) => cli_generate_proof::<_, _, GM17, Ark>(p, sub_matches),
-            ProgEnum::Bw6_761Program(p) => cli_generate_proof::<_, _, GM17, Ark>(p, sub_matches),
-            _ => unreachable!(),
-        },
-        #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, _, SchemeParameter::MARLIN) => match prog {
-            ProgEnum::Bn128Program(p) => cli_generate_proof::<_, _, Marlin, Ark>(p, sub_matches),
-            ProgEnum::Bls12_381Program(p) => {
-                cli_generate_proof::<_, _, Marlin, Ark>(p, sub_matches)
+        Parameters(BackendParameter::Ark, _, SchemeParameter::G16) => {
+            match prog {
+                ProgEnum::Bn128Program(p) => {
+                    cli_generate_proof::<_, _, G16, Ark>(p, sub_matches)
+                }
+                ProgEnum::Bls12_381Program(p) => {
+                    cli_generate_proof::<_, _, G16, Ark>(p, sub_matches)
+                }
+                ProgEnum::Bls12_377Program(p) => {
+                    cli_generate_proof::<_, _, G16, Ark>(p, sub_matches)
+                }
+                ProgEnum::Bw6_761Program(p) => {
+                    cli_generate_proof::<_, _, G16, Ark>(p, sub_matches)
+                }
+                _ => unreachable!(),
             }
-            ProgEnum::Bls12_377Program(p) => {
-                cli_generate_proof::<_, _, Marlin, Ark>(p, sub_matches)
+        }
+        #[cfg(feature = "ark")]
+        Parameters(BackendParameter::Ark, _, SchemeParameter::GM17) => {
+            match prog {
+                ProgEnum::Bn128Program(p) => {
+                    cli_generate_proof::<_, _, GM17, Ark>(p, sub_matches)
+                }
+                ProgEnum::Bls12_381Program(p) => {
+                    cli_generate_proof::<_, _, GM17, Ark>(p, sub_matches)
+                }
+                ProgEnum::Bls12_377Program(p) => {
+                    cli_generate_proof::<_, _, GM17, Ark>(p, sub_matches)
+                }
+                ProgEnum::Bw6_761Program(p) => {
+                    cli_generate_proof::<_, _, GM17, Ark>(p, sub_matches)
+                }
+                _ => unreachable!(),
             }
-            ProgEnum::Bw6_761Program(p) => cli_generate_proof::<_, _, Marlin, Ark>(p, sub_matches),
-            _ => unreachable!(),
-        },
+        }
+        #[cfg(feature = "ark")]
+        Parameters(BackendParameter::Ark, _, SchemeParameter::MARLIN) => {
+            match prog {
+                ProgEnum::Bn128Program(p) => {
+                    cli_generate_proof::<_, _, Marlin, Ark>(p, sub_matches)
+                }
+                ProgEnum::Bls12_381Program(p) => {
+                    cli_generate_proof::<_, _, Marlin, Ark>(p, sub_matches)
+                }
+                ProgEnum::Bls12_377Program(p) => {
+                    cli_generate_proof::<_, _, Marlin, Ark>(p, sub_matches)
+                }
+                ProgEnum::Bw6_761Program(p) => {
+                    cli_generate_proof::<_, _, Marlin, Ark>(p, sub_matches)
+                }
+                _ => unreachable!(),
+            }
+        }
         _ => unreachable!(),
     }
 }
@@ -163,8 +197,9 @@ fn cli_generate_proof<
 
     // deserialize witness
     let witness_path = Path::new(sub_matches.value_of("witness").unwrap());
-    let witness_file = File::open(witness_path)
-        .map_err(|why| format!("Could not open {}: {}", witness_path.display(), why))?;
+    let witness_file = File::open(witness_path).map_err(|why| {
+        format!("Could not open {}: {}", witness_path.display(), why)
+    })?;
 
     let witness_reader = BufReader::new(witness_file);
 
@@ -174,8 +209,9 @@ fn cli_generate_proof<
     let pk_path = Path::new(sub_matches.value_of("proving-key-path").unwrap());
     let proof_path = Path::new(sub_matches.value_of("proof-path").unwrap());
 
-    let pk_file = File::open(pk_path)
-        .map_err(|why| format!("Could not open {}: {}", pk_path.display(), why))?;
+    let pk_file = File::open(pk_path).map_err(|why| {
+        format!("Could not open {}: {}", pk_path.display(), why)
+    })?;
 
     let pk_reader = BufReader::new(pk_file);
 
@@ -187,11 +223,14 @@ fn cli_generate_proof<
     let proof = B::generate_proof(program, witness, pk_reader, &mut rng);
     let mut proof_file = File::create(proof_path).unwrap();
 
-    let proof =
-        serde_json::to_string_pretty(&TaggedProof::<T, S>::new(proof.proof, proof.inputs)).unwrap();
-    proof_file
-        .write(proof.as_bytes())
-        .map_err(|why| format!("Could not write to {}: {}", proof_path.display(), why))?;
+    let proof = serde_json::to_string_pretty(&TaggedProof::<T, S>::new(
+        proof.proof,
+        proof.inputs,
+    ))
+    .unwrap();
+    proof_file.write(proof.as_bytes()).map_err(|why| {
+        format!("Could not write to {}: {}", proof_path.display(), why)
+    })?;
 
     if sub_matches.is_present("verbose") {
         println!("Proof:\n{}", proof);

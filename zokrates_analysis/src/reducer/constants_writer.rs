@@ -1,12 +1,14 @@
 // A folder to inline all constant definitions down to a single literal and register them in the state for later use.
 
 use crate::reducer::{
-    constants_reader::ConstantsReader, reduce_function, ConstantDefinitions, Error,
+    constants_reader::ConstantsReader, reduce_function, ConstantDefinitions,
+    Error,
 };
 use std::collections::HashSet;
 use zokrates_ast::typed::{
-    result_folder::*, Constant, ModuleId, OwnedModuleId, Typed, TypedConstant, TypedConstantSymbol,
-    TypedConstantSymbolDeclaration, TypedProgram, TypedSymbolDeclaration, UExpression,
+    result_folder::*, Constant, ModuleId, OwnedModuleId, Typed, TypedConstant,
+    TypedConstantSymbol, TypedConstantSymbolDeclaration, TypedProgram,
+    TypedSymbolDeclaration, UExpression,
 };
 use zokrates_field::Field;
 
@@ -41,21 +43,26 @@ impl<'ast, T: Field> ConstantsWriter<'ast, T> {
     fn update_program(&mut self) {
         let mut p = TypedProgram::default();
         std::mem::swap(&mut self.program, &mut p);
-        self.program = ConstantsReader::with_constants(&self.constants).read_into_program(p);
+        self.program = ConstantsReader::with_constants(&self.constants)
+            .read_into_program(p);
     }
 
     fn update_symbol_declaration(
         &self,
         d: TypedSymbolDeclaration<'ast, T>,
     ) -> TypedSymbolDeclaration<'ast, T> {
-        ConstantsReader::with_constants(&self.constants).read_into_symbol_declaration(d)
+        ConstantsReader::with_constants(&self.constants)
+            .read_into_symbol_declaration(d)
     }
 }
 
 impl<'ast, T: Field> ResultFolder<'ast, T> for ConstantsWriter<'ast, T> {
     type Error = Error;
 
-    fn fold_module_id(&mut self, id: OwnedModuleId) -> Result<OwnedModuleId, Self::Error> {
+    fn fold_module_id(
+        &mut self,
+        id: OwnedModuleId,
+    ) -> Result<OwnedModuleId, Self::Error> {
         // anytime we encounter a module id, visit the corresponding module if it hasn't been done yet
         if !self.treated(&id) {
             let current_m_id = self.change_location(id.clone());
@@ -100,29 +107,40 @@ impl<'ast, T: Field> ResultFolder<'ast, T> for ConstantsWriter<'ast, T> {
                 // replace them in the expression
                 use zokrates_ast::typed::folder::Folder;
 
-                let c = ConstantsReader::with_constants(&self.constants).fold_constant(c);
+                let c = ConstantsReader::with_constants(&self.constants)
+                    .fold_constant(c);
 
-                use zokrates_ast::typed::{DeclarationSignature, TypedFunction, TypedStatement};
+                use zokrates_ast::typed::{
+                    DeclarationSignature, TypedFunction, TypedStatement,
+                };
 
                 // wrap this expression in a function
                 let wrapper = TypedFunction {
                     arguments: vec![],
                     statements: vec![TypedStatement::ret(c.expression)],
-                    signature: DeclarationSignature::new().output(c.ty.clone()),
+                    signature: DeclarationSignature::new()
+                        .output(c.ty.clone()),
                 };
 
-                let mut inlined_wrapper = reduce_function(wrapper, &self.program)?;
+                let mut inlined_wrapper =
+                    reduce_function(wrapper, &self.program)?;
 
-                if let TypedStatement::Return(ret) = inlined_wrapper.statements.pop().unwrap() {
+                if let TypedStatement::Return(ret) =
+                    inlined_wrapper.statements.pop().unwrap()
+                {
                     let expression = ret.inner;
 
                     if !expression.is_constant() {
-                        return Err(Error::ConstantReduction(id.id.to_string(), id.module));
+                        return Err(Error::ConstantReduction(
+                            id.id.to_string(),
+                            id.module,
+                        ));
                     };
 
-                    if zokrates_ast::typed::types::try_from_g_type::<_, UExpression<'ast, T>>(
-                        c.ty.clone(),
-                    )
+                    if zokrates_ast::typed::types::try_from_g_type::<
+                        _,
+                        UExpression<'ast, T>,
+                    >(c.ty.clone())
                     .unwrap()
                         == expression.get_type()
                     {

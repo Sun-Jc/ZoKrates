@@ -29,7 +29,9 @@ impl<'ast> VariableWriteRemover {
         VariableWriteRemover
     }
 
-    pub fn apply<T: Field>(p: TypedProgram<T>) -> Result<TypedProgram<T>, Error> {
+    pub fn apply<T: Field>(
+        p: TypedProgram<T>,
+    ) -> Result<TypedProgram<T>, Error> {
         let mut remover = VariableWriteRemover::new();
         remover.fold_program(p)
     }
@@ -45,28 +47,29 @@ impl<'ast> VariableWriteRemover {
 
         match indices.len() {
             0 => new_expression,
-            _ => match base {
-                TypedExpression::Array(base) => {
-                    let inner_ty = base.inner_type();
-                    let size = base.size();
+            _ => {
+                match base {
+                    TypedExpression::Array(base) => {
+                        let inner_ty = base.inner_type();
+                        let size = base.size();
 
-                    let size: u32 = size.try_into().unwrap();
+                        let size: u32 = size.try_into().unwrap();
 
-                    let head = indices.remove(0);
-                    let tail = indices;
+                        let head = indices.remove(0);
+                        let tail = indices;
 
-                    match head {
-                        Access::Select(head) => {
-                            statements.insert(TypedStatement::assertion(
-                                BooleanExpression::uint_lt(
-                                    head.clone(),
-                                    UExpression::from(size).span(span),
-                                )
-                                .span(span),
-                                RuntimeError::SelectRangeCheck,
-                            ));
+                        match head {
+                            Access::Select(head) => {
+                                statements.insert(TypedStatement::assertion(
+                                    BooleanExpression::uint_lt(
+                                        head.clone(),
+                                        UExpression::from(size).span(span),
+                                    )
+                                    .span(span),
+                                    RuntimeError::SelectRangeCheck,
+                                ));
 
-                            ArrayExpression::value(
+                                ArrayExpression::value(
                                 (0..size)
                                     .map(|i| match inner_ty {
                                         Type::Int => unreachable!(),
@@ -274,20 +277,20 @@ impl<'ast> VariableWriteRemover {
                             .span(span)
                             .annotate(ArrayType::new(inner_ty.clone(), size))
                             .into()
+                            }
+                            _ => unreachable!(),
                         }
-                        _ => unreachable!(),
                     }
-                }
-                TypedExpression::Struct(base) => {
-                    let members = match base.get_type() {
-                        Type::Struct(members) => members.clone(),
-                        _ => unreachable!(),
-                    };
+                    TypedExpression::Struct(base) => {
+                        let members = match base.get_type() {
+                            Type::Struct(members) => members.clone(),
+                            _ => unreachable!(),
+                        };
 
-                    let head = indices.remove(0);
-                    let tail = indices;
+                        let head = indices.remove(0);
+                        let tail = indices;
 
-                    match head {
+                        match head {
                         Access::Member(head) => StructExpressionInner::Value(
                             members
                                 .clone()
@@ -405,17 +408,17 @@ impl<'ast> VariableWriteRemover {
                         .into(),
                         _ => unreachable!(),
                     }
-                }
-                TypedExpression::Tuple(base) => {
-                    let tuple_ty = match base.get_type() {
-                        Type::Tuple(tuple_ty) => tuple_ty.clone(),
-                        _ => unreachable!(),
-                    };
+                    }
+                    TypedExpression::Tuple(base) => {
+                        let tuple_ty = match base.get_type() {
+                            Type::Tuple(tuple_ty) => tuple_ty.clone(),
+                            _ => unreachable!(),
+                        };
 
-                    let head = indices.remove(0);
-                    let tail = indices;
+                        let head = indices.remove(0);
+                        let tail = indices;
 
-                    match head {
+                        match head {
                         Access::Element(head) => TupleExpressionInner::Value(
                             tuple_ty
                                 .clone()
@@ -524,9 +527,13 @@ impl<'ast> VariableWriteRemover {
                         .into(),
                         _ => unreachable!(),
                     }
+                    }
+                    e => unreachable!(
+                        "can't make an access on a {}",
+                        e.get_type()
+                    ),
                 }
-                e => unreachable!("can't make an access on a {}", e.get_type()),
-            },
+            }
         }
     }
 }
@@ -615,24 +622,40 @@ impl<'ast, T: Field> ResultFolder<'ast, T> for VariableWriteRemover {
 
                     let (variable, indices) = linear(a);
 
-                    let base: TypedExpression<'ast, T> = match variable.get_type() {
+                    let base: TypedExpression<'ast, T> = match variable
+                        .get_type()
+                    {
                         Type::Int => unreachable!(),
                         Type::FieldElement => {
-                            FieldElementExpression::identifier(variable.id.clone()).into()
+                            FieldElementExpression::identifier(
+                                variable.id.clone(),
+                            )
+                            .into()
                         }
-                        Type::Boolean => BooleanExpression::identifier(variable.id.clone()).into(),
-                        Type::Uint(bitwidth) => UExpression::identifier(variable.id.clone())
-                            .annotate(bitwidth)
-                            .into(),
-                        Type::Array(array_type) => ArrayExpression::identifier(variable.id.clone())
-                            .annotate(array_type)
-                            .into(),
-                        Type::Struct(members) => StructExpression::identifier(variable.id.clone())
-                            .annotate(members)
-                            .into(),
-                        Type::Tuple(tuple_ty) => TupleExpression::identifier(variable.id.clone())
-                            .annotate(tuple_ty)
-                            .into(),
+                        Type::Boolean => {
+                            BooleanExpression::identifier(variable.id.clone())
+                                .into()
+                        }
+                        Type::Uint(bitwidth) => {
+                            UExpression::identifier(variable.id.clone())
+                                .annotate(bitwidth)
+                                .into()
+                        }
+                        Type::Array(array_type) => {
+                            ArrayExpression::identifier(variable.id.clone())
+                                .annotate(array_type)
+                                .into()
+                        }
+                        Type::Struct(members) => {
+                            StructExpression::identifier(variable.id.clone())
+                                .annotate(members)
+                                .into()
+                        }
+                        Type::Tuple(tuple_ty) => {
+                            TupleExpression::identifier(variable.id.clone())
+                                .annotate(tuple_ty)
+                                .into()
+                        }
                     };
 
                     let base = base.span(span);
@@ -642,13 +665,21 @@ impl<'ast, T: Field> ResultFolder<'ast, T> for VariableWriteRemover {
                     let indices = indices
                         .into_iter()
                         .map(|a| match a {
-                            Access::Select(i) => Ok(Access::Select(self.fold_uint_expression(i)?)),
+                            Access::Select(i) => Ok(Access::Select(
+                                self.fold_uint_expression(i)?,
+                            )),
                             a => Ok(a),
                         })
                         .collect::<Result<_, _>>()?;
 
                     let mut range_checks = HashSet::new();
-                    let e = Self::choose_many(base, indices, expr, &mut range_checks, span);
+                    let e = Self::choose_many(
+                        base,
+                        indices,
+                        expr,
+                        &mut range_checks,
+                        span,
+                    );
 
                     Ok(range_checks
                         .into_iter()

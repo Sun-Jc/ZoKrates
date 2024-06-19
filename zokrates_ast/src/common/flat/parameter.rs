@@ -10,7 +10,11 @@ use std::fmt;
 #[derivative(PartialOrd, PartialEq, Eq, Hash, Ord)]
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Parameter {
-    #[derivative(PartialEq = "ignore", PartialOrd = "ignore", Hash = "ignore")]
+    #[derivative(
+        PartialEq = "ignore",
+        PartialOrd = "ignore",
+        Hash = "ignore"
+    )]
     pub span: Option<Span>,
     pub id: Variable,
     pub private: bool,
@@ -53,7 +57,10 @@ impl fmt::Display for Parameter {
 }
 
 impl Parameter {
-    pub fn apply_substitution(self, substitution: &HashMap<Variable, Variable>) -> Parameter {
+    pub fn apply_substitution(
+        self,
+        substitution: &HashMap<Variable, Variable>,
+    ) -> Parameter {
         Parameter {
             id: *substitution.get(&self.id).unwrap(),
             private: self.private,

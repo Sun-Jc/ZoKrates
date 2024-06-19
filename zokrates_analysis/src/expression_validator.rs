@@ -1,7 +1,8 @@
 use std::fmt;
 use zokrates_ast::typed::{result_folder::*, AssemblyAssignment, UExpression};
 use zokrates_ast::typed::{
-    FieldElementExpression, TypedAssemblyStatement, TypedProgram, UBitwidth, UExpressionInner,
+    FieldElementExpression, TypedAssemblyStatement, TypedProgram, UBitwidth,
+    UExpressionInner,
 };
 use zokrates_field::Field;
 
@@ -17,7 +18,9 @@ impl fmt::Display for Error {
 pub struct ExpressionValidator;
 
 impl ExpressionValidator {
-    pub fn validate<T: Field>(p: TypedProgram<T>) -> Result<TypedProgram<T>, Error> {
+    pub fn validate<T: Field>(
+        p: TypedProgram<T>,
+    ) -> Result<TypedProgram<T>, Error> {
         ExpressionValidator.fold_program(p)
     }
 }

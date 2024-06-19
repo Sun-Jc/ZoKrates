@@ -96,7 +96,10 @@ pub struct SymbolImport<'ast> {
 pub type SymbolImportNode<'ast> = Node<SymbolImport<'ast>>;
 
 impl<'ast> SymbolImport<'ast> {
-    pub fn with_id_in_module<S: Into<Identifier<'ast>>, U: Into<OwnedModuleId>>(
+    pub fn with_id_in_module<
+        S: Into<Identifier<'ast>>,
+        U: Into<OwnedModuleId>,
+    >(
         symbol_id: S,
         module_id: U,
     ) -> Self {
@@ -153,7 +156,9 @@ impl<'ast> fmt::Display for SymbolDeclaration<'ast> {
                     i.value.source.display(),
                     i.value.id
                 ),
-                SymbolDefinition::Struct(ref s) => write!(f, "struct {}{}", self.id, s),
+                SymbolDefinition::Struct(ref s) => {
+                    write!(f, "struct {}{}", self.id, s)
+                }
                 SymbolDefinition::Constant(ref c) => write!(
                     f,
                     "const {} {} = {}",
@@ -187,7 +192,12 @@ impl<'ast> fmt::Display for SymbolDeclaration<'ast> {
                 self.id
             ),
             Symbol::Flat(ref flat_fun) => {
-                write!(f, "def {}{}:\n\t// hidden", self.id, flat_fun.signature())
+                write!(
+                    f,
+                    "def {}{}:\n\t// hidden",
+                    self.id,
+                    flat_fun.signature()
+                )
             }
         }
     }
@@ -203,7 +213,11 @@ pub struct Module<'ast> {
 }
 
 impl<'ast> Module<'ast> {
-    pub fn with_symbols<I: IntoIterator<Item = SymbolDeclarationNode<'ast>>>(i: I) -> Self {
+    pub fn with_symbols<
+        I: IntoIterator<Item = SymbolDeclarationNode<'ast>>,
+    >(
+        i: I,
+    ) -> Self {
         Module {
             symbols: i.into_iter().collect(),
         }
@@ -389,7 +403,11 @@ pub type AssemblyStatementNode<'ast> = Node<AssemblyStatement<'ast>>;
 impl<'ast> fmt::Display for AssemblyStatement<'ast> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            AssemblyStatement::Assignment(ref lhs, ref rhs, ref constrained) => {
+            AssemblyStatement::Assignment(
+                ref lhs,
+                ref rhs,
+                ref constrained,
+            ) => {
                 write!(
                     f,
                     "{} <{} {}",
@@ -438,7 +456,9 @@ impl<'ast> fmt::Display for Statement<'ast> {
             Statement::Definition(ref var, ref rhs) => {
                 write!(f, "{} = {};", var, rhs)
             }
-            Statement::Assignment(ref lhs, ref rhs) => write!(f, "{} = {};", lhs, rhs),
+            Statement::Assignment(ref lhs, ref rhs) => {
+                write!(f, "{} = {};", lhs, rhs)
+            }
             Statement::Assertion(ref e, ref message) => {
                 write!(f, "assert({}", e)?;
                 match message {
@@ -644,19 +664,33 @@ pub type ExpressionNode<'ast> = Node<Expression<'ast>>;
 impl<'ast> fmt::Display for Expression<'ast> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Expression::FieldConstant(ref i) => write!(f, "{}", i.to_str_radix(10)),
+            Expression::FieldConstant(ref i) => {
+                write!(f, "{}", i.to_str_radix(10))
+            }
             Expression::U8Constant(ref i) => write!(f, "{}", i),
             Expression::U16Constant(ref i) => write!(f, "{}", i),
             Expression::U32Constant(ref i) => write!(f, "{}", i),
             Expression::U64Constant(ref i) => write!(f, "{}", i),
             Expression::IntConstant(ref i) => write!(f, "{}", i),
             Expression::Identifier(ref var) => write!(f, "{}", var),
-            Expression::Add(ref lhs, ref rhs) => write!(f, "({} + {})", lhs, rhs),
-            Expression::Sub(ref lhs, ref rhs) => write!(f, "({} - {})", lhs, rhs),
-            Expression::Mult(ref lhs, ref rhs) => write!(f, "({} * {})", lhs, rhs),
-            Expression::Div(ref lhs, ref rhs) => write!(f, "({} / {})", lhs, rhs),
-            Expression::Rem(ref lhs, ref rhs) => write!(f, "({} % {})", lhs, rhs),
-            Expression::Pow(ref lhs, ref rhs) => write!(f, "({}**{})", lhs, rhs),
+            Expression::Add(ref lhs, ref rhs) => {
+                write!(f, "({} + {})", lhs, rhs)
+            }
+            Expression::Sub(ref lhs, ref rhs) => {
+                write!(f, "({} - {})", lhs, rhs)
+            }
+            Expression::Mult(ref lhs, ref rhs) => {
+                write!(f, "({} * {})", lhs, rhs)
+            }
+            Expression::Div(ref lhs, ref rhs) => {
+                write!(f, "({} / {})", lhs, rhs)
+            }
+            Expression::Rem(ref lhs, ref rhs) => {
+                write!(f, "({} % {})", lhs, rhs)
+            }
+            Expression::Pow(ref lhs, ref rhs) => {
+                write!(f, "({}**{})", lhs, rhs)
+            }
             Expression::Neg(ref e) => write!(f, "(-{})", e),
             Expression::Pos(ref e) => write!(f, "(+{})", e),
             Expression::BooleanConstant(b) => write!(f, "{}", b),
@@ -684,12 +718,24 @@ impl<'ast> fmt::Display for Expression<'ast> {
                 }
                 write!(f, ")")
             }
-            Expression::Lt(ref lhs, ref rhs) => write!(f, "({} < {})", lhs, rhs),
-            Expression::Le(ref lhs, ref rhs) => write!(f, "({} <= {})", lhs, rhs),
-            Expression::Eq(ref lhs, ref rhs) => write!(f, "({} == {})", lhs, rhs),
-            Expression::Ge(ref lhs, ref rhs) => write!(f, "({} >= {})", lhs, rhs),
-            Expression::Gt(ref lhs, ref rhs) => write!(f, "({} > {})", lhs, rhs),
-            Expression::And(ref lhs, ref rhs) => write!(f, "({} && {})", lhs, rhs),
+            Expression::Lt(ref lhs, ref rhs) => {
+                write!(f, "({} < {})", lhs, rhs)
+            }
+            Expression::Le(ref lhs, ref rhs) => {
+                write!(f, "({} <= {})", lhs, rhs)
+            }
+            Expression::Eq(ref lhs, ref rhs) => {
+                write!(f, "({} == {})", lhs, rhs)
+            }
+            Expression::Ge(ref lhs, ref rhs) => {
+                write!(f, "({} >= {})", lhs, rhs)
+            }
+            Expression::Gt(ref lhs, ref rhs) => {
+                write!(f, "({} > {})", lhs, rhs)
+            }
+            Expression::And(ref lhs, ref rhs) => {
+                write!(f, "({} && {})", lhs, rhs)
+            }
             Expression::Not(ref exp) => write!(f, "!{}", exp),
             Expression::InlineArray(ref exprs) => {
                 write!(f, "[")?;
@@ -717,7 +763,9 @@ impl<'ast> fmt::Display for Expression<'ast> {
                 }?;
                 write!(f, ")")
             }
-            Expression::ArrayInitializer(ref e, ref count) => write!(f, "[{}; {}]", e, count),
+            Expression::ArrayInitializer(ref e, ref count) => {
+                write!(f, "[{}; {}]", e, count)
+            }
             Expression::InlineStruct(ref id, ref members) => {
                 write!(f, "{} {{", id)?;
                 for (i, (member_id, e)) in members.iter().enumerate() {
@@ -728,15 +776,33 @@ impl<'ast> fmt::Display for Expression<'ast> {
                 }
                 write!(f, "}}")
             }
-            Expression::Select(ref array, ref index) => write!(f, "{}[{}]", array, index),
-            Expression::Member(ref struc, ref id) => write!(f, "{}.{}", struc, id),
-            Expression::Element(ref tuple, ref id) => write!(f, "{}.{}", tuple, id),
-            Expression::Or(ref lhs, ref rhs) => write!(f, "({} || {})", lhs, rhs),
-            Expression::BitXor(ref lhs, ref rhs) => write!(f, "({} ^ {})", lhs, rhs),
-            Expression::BitAnd(ref lhs, ref rhs) => write!(f, "({} & {})", lhs, rhs),
-            Expression::BitOr(ref lhs, ref rhs) => write!(f, "({} | {})", lhs, rhs),
-            Expression::LeftShift(ref lhs, ref rhs) => write!(f, "({} << {})", lhs, rhs),
-            Expression::RightShift(ref lhs, ref rhs) => write!(f, "({} >> {})", lhs, rhs),
+            Expression::Select(ref array, ref index) => {
+                write!(f, "{}[{}]", array, index)
+            }
+            Expression::Member(ref struc, ref id) => {
+                write!(f, "{}.{}", struc, id)
+            }
+            Expression::Element(ref tuple, ref id) => {
+                write!(f, "{}.{}", tuple, id)
+            }
+            Expression::Or(ref lhs, ref rhs) => {
+                write!(f, "({} || {})", lhs, rhs)
+            }
+            Expression::BitXor(ref lhs, ref rhs) => {
+                write!(f, "({} ^ {})", lhs, rhs)
+            }
+            Expression::BitAnd(ref lhs, ref rhs) => {
+                write!(f, "({} & {})", lhs, rhs)
+            }
+            Expression::BitOr(ref lhs, ref rhs) => {
+                write!(f, "({} | {})", lhs, rhs)
+            }
+            Expression::LeftShift(ref lhs, ref rhs) => {
+                write!(f, "({} << {})", lhs, rhs)
+            }
+            Expression::RightShift(ref lhs, ref rhs) => {
+                write!(f, "({} >> {})", lhs, rhs)
+            }
         }
     }
 }

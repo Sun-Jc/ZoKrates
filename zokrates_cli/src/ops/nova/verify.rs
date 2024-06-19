@@ -10,7 +10,6 @@ use zokrates_ast::typed::abi::Abi;
 use zokrates_bellpepper::nova::{
     self, CompressedSNARK, NovaField, RecursiveSNARKWithStepCount, VerifierKey,
 };
-use zokrates_field::PallasField;
 
 pub fn subcommand() -> App<'static, 'static> {
     SubCommand::with_name("verify")
@@ -66,20 +65,25 @@ pub fn subcommand() -> App<'static, 'static> {
 pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     let proof_path = sub_matches.value_of("proof-path").unwrap();
 
-    let proof_file =
-        File::open(proof_path).map_err(|why| format!("Could not open {}: {}", proof_path, why))?;
+    let proof_file = File::open(proof_path)
+        .map_err(|why| format!("Could not open {}: {}", proof_path, why))?;
 
     let proof_reader = BufReader::new(proof_file);
 
-    let verification_key_path = sub_matches.value_of("verification-key-path").unwrap();
+    let verification_key_path =
+        sub_matches.value_of("verification-key-path").unwrap();
 
-    let verification_key_file = File::open(verification_key_path)
-        .map_err(|why| format!("Could not open {}: {}", verification_key_path, why))?;
+    let verification_key_file =
+        File::open(verification_key_path).map_err(|why| {
+            format!("Could not open {}: {}", verification_key_path, why)
+        })?;
 
     let verification_key_reader = BufReader::new(verification_key_file);
 
-    let proof: CompressedSNARK = serde_json::from_reader(proof_reader).unwrap();
-    let vk: VerifierKey = serde_json::from_reader(verification_key_reader).unwrap();
+    let proof: CompressedSNARK =
+        serde_json::from_reader(proof_reader).unwrap();
+    let vk: VerifierKey =
+        serde_json::from_reader(verification_key_reader).unwrap();
 
     cli_nova_verify(proof, vk, sub_matches)
 }
@@ -90,8 +94,9 @@ fn cli_nova_verify<'ast>(
     sub_matches: &ArgMatches,
 ) -> Result<(), String> {
     let path = Path::new(sub_matches.value_of("abi-spec").unwrap());
-    let file =
-        File::open(path).map_err(|why| format!("Could not open {}: {}", path.display(), why))?;
+    let file = File::open(path).map_err(|why| {
+        format!("Could not open {}: {}", path.display(), why)
+    })?;
 
     let mut reader = BufReader::new(file);
 
@@ -110,9 +115,12 @@ fn cli_nova_verify<'ast>(
             .encode()
     };
 
-    let instance_path = Path::new(sub_matches.value_of("instance-path").unwrap());
-    let instance: RecursiveSNARKWithStepCount<'ast> =
-        serde_json::from_reader(BufReader::new(File::open(instance_path).unwrap())).unwrap();
+    let instance_path =
+        Path::new(sub_matches.value_of("instance-path").unwrap());
+    let instance: RecursiveSNARKWithStepCount<'ast> = serde_json::from_reader(
+        BufReader::new(File::open(instance_path).unwrap()),
+    )
+    .unwrap();
     let steps = instance.steps;
 
     if nova::verify_compressed(&proof, &vk, init, steps) {

@@ -40,7 +40,8 @@ pub const BACKENDS: &[&str] = if cfg!(feature = "ark") {
     &[]
 };
 
-pub const CURVES: &[&str] = &[BN128, BLS12_381, BLS12_377, BW6_761, PALLAS, VESTA];
+pub const CURVES: &[&str] =
+    &[BN128, BLS12_381, BLS12_377, BW6_761, PALLAS, VESTA, BN254];
 
 pub const SCHEMES: &[&str] = &[G16, GM17, MARLIN];
 

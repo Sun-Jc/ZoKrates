@@ -39,7 +39,9 @@ impl From<crate::zir::RuntimeError> for RuntimeError {
             crate::zir::RuntimeError::SourceAssertion(metadata) => {
                 RuntimeError::SourceAssertion(metadata)
             }
-            crate::zir::RuntimeError::SelectRangeCheck => RuntimeError::SelectRangeCheck,
+            crate::zir::RuntimeError::SelectRangeCheck => {
+                RuntimeError::SelectRangeCheck
+            }
             crate::zir::RuntimeError::DivisionByZero => RuntimeError::Inverse,
             crate::zir::RuntimeError::IncompleteDynamicRange => {
                 RuntimeError::IncompleteDynamicRange

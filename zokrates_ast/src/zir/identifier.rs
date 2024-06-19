@@ -4,14 +4,18 @@ use std::fmt;
 
 use crate::typed::Identifier as CoreIdentifier;
 
-#[derive(Debug, PartialEq, Clone, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, PartialEq, Clone, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize,
+)]
 pub enum Identifier<'ast> {
     #[serde(borrow)]
     Source(SourceIdentifier<'ast>),
     Internal(usize),
 }
 
-#[derive(Debug, PartialEq, Clone, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, PartialEq, Clone, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize,
+)]
 pub enum SourceIdentifier<'ast> {
     #[serde(borrow)]
     Basic(CoreIdentifier<'ast>),
@@ -55,7 +59,9 @@ impl<'ast> fmt::Display for SourceIdentifier<'ast> {
             SourceIdentifier::Basic(i) => write!(f, "{}", i),
             SourceIdentifier::Select(i, index) => write!(f, "{}~{}", i, index),
             SourceIdentifier::Member(i, m) => write!(f, "{}.{}", i, m),
-            SourceIdentifier::Element(i, index) => write!(f, "{}.{}", i, index),
+            SourceIdentifier::Element(i, index) => {
+                write!(f, "{}.{}", i, index)
+            }
         }
     }
 }

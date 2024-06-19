@@ -4,7 +4,10 @@ use zokrates_field::Field;
 
 // util to convert a vector of `(coefficient, expression)` to a flat_expression
 // we build a binary tree of additions by splitting the vector recursively
-pub fn flat_expression_from_expression_summands<T: Field, U: Clone + Into<FlatExpression<T>>>(
+pub fn flat_expression_from_expression_summands<
+    T: Field,
+    U: Clone + Into<FlatExpression<T>>,
+>(
     v: &[(T, U)],
 ) -> FlatExpression<T> {
     match v.len() {
@@ -23,7 +26,9 @@ pub fn flat_expression_from_expression_summands<T: Field, U: Clone + Into<FlatEx
     }
 }
 
-pub fn flat_expression_from_bits<T: Field>(v: Vec<FlatExpression<T>>) -> FlatExpression<T> {
+pub fn flat_expression_from_bits<T: Field>(
+    v: Vec<FlatExpression<T>>,
+) -> FlatExpression<T> {
     flat_expression_from_expression_summands(
         &v.into_iter()
             .rev()
@@ -33,7 +38,9 @@ pub fn flat_expression_from_bits<T: Field>(v: Vec<FlatExpression<T>>) -> FlatExp
     )
 }
 
-pub fn flat_expression_from_variable_summands<T: Field>(v: &[(T, usize)]) -> FlatExpression<T> {
+pub fn flat_expression_from_variable_summands<T: Field>(
+    v: &[(T, usize)],
+) -> FlatExpression<T> {
     match v.len() {
         0 => FlatExpression::value(T::zero()),
         1 => {

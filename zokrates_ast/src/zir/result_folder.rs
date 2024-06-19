@@ -1,6 +1,8 @@
 // Generic walk through ZIR. Not mutating in place
 
-use crate::common::expressions::{BinaryOrExpression, IdentifierOrExpression, UnaryOrExpression};
+use crate::common::expressions::{
+    BinaryOrExpression, IdentifierOrExpression, UnaryOrExpression,
+};
 use crate::common::ResultFold;
 use crate::common::WithSpan;
 use crate::zir::types::UBitwidth;
@@ -23,7 +25,9 @@ impl<'ast, T: Field, F: ResultFolder<'ast, T>> ResultFold<F, F::Error>
     }
 }
 
-impl<'ast, T: Field, F: ResultFolder<'ast, T>> ResultFold<F, F::Error> for UExpression<'ast, T> {
+impl<'ast, T: Field, F: ResultFolder<'ast, T>> ResultFold<F, F::Error>
+    for UExpression<'ast, T>
+{
     fn fold(self, f: &mut F) -> Result<Self, F::Error> {
         f.fold_uint_expression(self)
     }
@@ -31,7 +35,10 @@ impl<'ast, T: Field, F: ResultFolder<'ast, T>> ResultFold<F, F::Error> for UExpr
 pub trait ResultFolder<'ast, T: Field>: Sized {
     type Error;
 
-    fn fold_program(&mut self, p: ZirProgram<'ast, T>) -> Result<ZirProgram<'ast, T>, Self::Error> {
+    fn fold_program(
+        &mut self,
+        p: ZirProgram<'ast, T>,
+    ) -> Result<ZirProgram<'ast, T>, Self::Error> {
         fold_program(self, p)
     }
 
@@ -42,25 +49,37 @@ pub trait ResultFolder<'ast, T: Field>: Sized {
         fold_function(self, f)
     }
 
-    fn fold_parameter(&mut self, p: Parameter<'ast>) -> Result<Parameter<'ast>, Self::Error> {
+    fn fold_parameter(
+        &mut self,
+        p: Parameter<'ast>,
+    ) -> Result<Parameter<'ast>, Self::Error> {
         Ok(Parameter {
             id: self.fold_variable(p.id)?,
             ..p
         })
     }
 
-    fn fold_name(&mut self, n: Identifier<'ast>) -> Result<Identifier<'ast>, Self::Error> {
+    fn fold_name(
+        &mut self,
+        n: Identifier<'ast>,
+    ) -> Result<Identifier<'ast>, Self::Error> {
         Ok(n)
     }
 
-    fn fold_variable(&mut self, v: Variable<'ast>) -> Result<Variable<'ast>, Self::Error> {
+    fn fold_variable(
+        &mut self,
+        v: Variable<'ast>,
+    ) -> Result<Variable<'ast>, Self::Error> {
         Ok(Variable {
             id: self.fold_name(v.id)?,
             ..v
         })
     }
 
-    fn fold_assignee(&mut self, a: ZirAssignee<'ast>) -> Result<ZirAssignee<'ast>, Self::Error> {
+    fn fold_assignee(
+        &mut self,
+        a: ZirAssignee<'ast>,
+    ) -> Result<ZirAssignee<'ast>, Self::Error> {
         self.fold_variable(a)
     }
 
@@ -160,8 +179,12 @@ pub trait ResultFolder<'ast, T: Field>: Sized {
         e: ZirExpression<'ast, T>,
     ) -> Result<ZirExpression<'ast, T>, Self::Error> {
         match e {
-            ZirExpression::FieldElement(e) => Ok(self.fold_field_expression(e)?.into()),
-            ZirExpression::Boolean(e) => Ok(self.fold_boolean_expression(e)?.into()),
+            ZirExpression::FieldElement(e) => {
+                Ok(self.fold_field_expression(e)?.into())
+            }
+            ZirExpression::Boolean(e) => {
+                Ok(self.fold_boolean_expression(e)?.into())
+            }
             ZirExpression::Uint(e) => Ok(self.fold_uint_expression(e)?.into()),
         }
     }
@@ -190,7 +213,10 @@ pub trait ResultFolder<'ast, T: Field>: Sized {
         &mut self,
         ty: &E::Ty,
         id: IdentifierExpression<'ast, E>,
-    ) -> Result<IdentifierOrExpression<Identifier<'ast>, E, E::Inner>, Self::Error> {
+    ) -> Result<
+        IdentifierOrExpression<Identifier<'ast>, E, E::Inner>,
+        Self::Error,
+    > {
         fold_identifier_expression(self, ty, id)
     }
 
@@ -231,7 +257,10 @@ pub trait ResultFolder<'ast, T: Field>: Sized {
     }
 
     fn fold_select_expression<
-        E: Clone + Expr<'ast, T> + ResultFold<Self, Self::Error> + Select<'ast, T>,
+        E: Clone
+            + Expr<'ast, T>
+            + ResultFold<Self, Self::Error>
+            + Select<'ast, T>,
     >(
         &mut self,
         ty: &E::Ty,
@@ -327,7 +356,11 @@ fn fold_assembly_statement<'ast, T: Field, F: ResultFolder<'ast, T>>(
         .map(|s| s.into_iter().map(|s| s.span(span)).collect())
 }
 
-pub fn fold_assembly_statement_cases<'ast, T: Field, F: ResultFolder<'ast, T>>(
+pub fn fold_assembly_statement_cases<
+    'ast,
+    T: Field,
+    F: ResultFolder<'ast, T>,
+>(
     f: &mut F,
     s: ZirAssemblyStatement<'ast, T>,
 ) -> Result<Vec<ZirAssemblyStatement<'ast, T>>, F::Error> {
@@ -357,7 +390,9 @@ pub fn fold_statement_cases<'ast, T: Field, F: ResultFolder<'ast, T>>(
         ZirStatement::Definition(s) => f.fold_definition_statement(s),
         ZirStatement::IfElse(s) => f.fold_if_else_statement(s),
         ZirStatement::Assertion(s) => f.fold_assertion_statement(s),
-        ZirStatement::MultipleDefinition(s) => f.fold_multiple_definition_statement(s),
+        ZirStatement::MultipleDefinition(s) => {
+            f.fold_multiple_definition_statement(s)
+        }
         ZirStatement::Log(s) => f.fold_log_statement(s),
         ZirStatement::Assembly(s) => f.fold_assembly_block(s),
     }
@@ -385,7 +420,8 @@ pub fn fold_definition_statement<'ast, T: Field, F: ResultFolder<'ast, T>>(
 ) -> Result<Vec<ZirStatement<'ast, T>>, F::Error> {
     let rhs = f.fold_expression(s.rhs)?;
     Ok(vec![ZirStatement::Definition(
-        DefinitionStatement::new(f.fold_assignee(s.assignee)?, rhs).span(s.span),
+        DefinitionStatement::new(f.fold_assignee(s.assignee)?, rhs)
+            .span(s.span),
     )])
 }
 
@@ -420,7 +456,11 @@ pub fn fold_assertion_statement<'ast, T: Field, F: ResultFolder<'ast, T>>(
     s: AssertionStatement<'ast, T>,
 ) -> Result<Vec<ZirStatement<'ast, T>>, F::Error> {
     Ok(vec![ZirStatement::Assertion(
-        AssertionStatement::new(f.fold_boolean_expression(s.expression)?, s.error).span(s.span),
+        AssertionStatement::new(
+            f.fold_boolean_expression(s.expression)?,
+            s.error,
+        )
+        .span(s.span),
     )])
 }
 
@@ -459,7 +499,11 @@ pub fn fold_assembly_block<'ast, T: Field, F: ResultFolder<'ast, T>>(
     ))])
 }
 
-pub fn fold_multiple_definition_statement<'ast, T: Field, F: ResultFolder<'ast, T>>(
+pub fn fold_multiple_definition_statement<
+    'ast,
+    T: Field,
+    F: ResultFolder<'ast, T>,
+>(
     f: &mut F,
     s: MultipleDefinitionStatement<'ast, T>,
 ) -> Result<Vec<ZirStatement<'ast, T>>, F::Error> {
@@ -483,7 +527,11 @@ fn fold_field_expression<'ast, T: Field, F: ResultFolder<'ast, T>>(
     f.fold_field_expression_cases(e).map(|e| e.span(span))
 }
 
-pub fn fold_field_expression_cases<'ast, T: Field, F: ResultFolder<'ast, T>>(
+pub fn fold_field_expression_cases<
+    'ast,
+    T: Field,
+    F: ResultFolder<'ast, T>,
+>(
     f: &mut F,
     e: FieldElementExpression<'ast, T>,
 ) -> Result<FieldElementExpression<'ast, T>, F::Error> {
@@ -491,77 +539,103 @@ pub fn fold_field_expression_cases<'ast, T: Field, F: ResultFolder<'ast, T>>(
         FieldElementExpression::Value(n) => FieldElementExpression::Value(n),
         FieldElementExpression::Identifier(id) => {
             match f.fold_identifier_expression(&Type::FieldElement, id)? {
-                IdentifierOrExpression::Identifier(i) => FieldElementExpression::Identifier(i),
+                IdentifierOrExpression::Identifier(i) => {
+                    FieldElementExpression::Identifier(i)
+                }
                 IdentifierOrExpression::Expression(e) => e,
             }
         }
         FieldElementExpression::Select(e) => {
             match f.fold_select_expression(&Type::FieldElement, e)? {
-                SelectOrExpression::Select(s) => FieldElementExpression::Select(s),
+                SelectOrExpression::Select(s) => {
+                    FieldElementExpression::Select(s)
+                }
                 SelectOrExpression::Expression(u) => u,
             }
         }
         FieldElementExpression::Add(e) => {
             match f.fold_binary_expression(&Type::FieldElement, e)? {
-                BinaryOrExpression::Binary(e) => FieldElementExpression::Add(e),
+                BinaryOrExpression::Binary(e) => {
+                    FieldElementExpression::Add(e)
+                }
                 BinaryOrExpression::Expression(e) => e,
             }
         }
         FieldElementExpression::Sub(e) => {
             match f.fold_binary_expression(&Type::FieldElement, e)? {
-                BinaryOrExpression::Binary(e) => FieldElementExpression::Sub(e),
+                BinaryOrExpression::Binary(e) => {
+                    FieldElementExpression::Sub(e)
+                }
                 BinaryOrExpression::Expression(e) => e,
             }
         }
         FieldElementExpression::Mult(e) => {
             match f.fold_binary_expression(&Type::FieldElement, e)? {
-                BinaryOrExpression::Binary(e) => FieldElementExpression::Mult(e),
+                BinaryOrExpression::Binary(e) => {
+                    FieldElementExpression::Mult(e)
+                }
                 BinaryOrExpression::Expression(e) => e,
             }
         }
         FieldElementExpression::Div(e) => {
             match f.fold_binary_expression(&Type::FieldElement, e)? {
-                BinaryOrExpression::Binary(e) => FieldElementExpression::Div(e),
+                BinaryOrExpression::Binary(e) => {
+                    FieldElementExpression::Div(e)
+                }
                 BinaryOrExpression::Expression(e) => e,
             }
         }
         FieldElementExpression::Pow(e) => {
             match f.fold_binary_expression(&Type::FieldElement, e)? {
-                BinaryOrExpression::Binary(e) => FieldElementExpression::Pow(e),
+                BinaryOrExpression::Binary(e) => {
+                    FieldElementExpression::Pow(e)
+                }
                 BinaryOrExpression::Expression(e) => e,
             }
         }
         FieldElementExpression::And(e) => {
             match f.fold_binary_expression(&Type::FieldElement, e)? {
-                BinaryOrExpression::Binary(e) => FieldElementExpression::And(e),
+                BinaryOrExpression::Binary(e) => {
+                    FieldElementExpression::And(e)
+                }
                 BinaryOrExpression::Expression(e) => e,
             }
         }
-        FieldElementExpression::Or(e) => match f.fold_binary_expression(&Type::FieldElement, e)? {
-            BinaryOrExpression::Binary(e) => FieldElementExpression::Or(e),
-            BinaryOrExpression::Expression(e) => e,
-        },
+        FieldElementExpression::Or(e) => {
+            match f.fold_binary_expression(&Type::FieldElement, e)? {
+                BinaryOrExpression::Binary(e) => FieldElementExpression::Or(e),
+                BinaryOrExpression::Expression(e) => e,
+            }
+        }
         FieldElementExpression::Xor(e) => {
             match f.fold_binary_expression(&Type::FieldElement, e)? {
-                BinaryOrExpression::Binary(e) => FieldElementExpression::Xor(e),
+                BinaryOrExpression::Binary(e) => {
+                    FieldElementExpression::Xor(e)
+                }
                 BinaryOrExpression::Expression(e) => e,
             }
         }
         FieldElementExpression::LeftShift(e) => {
             match f.fold_binary_expression(&Type::FieldElement, e)? {
-                BinaryOrExpression::Binary(e) => FieldElementExpression::LeftShift(e),
+                BinaryOrExpression::Binary(e) => {
+                    FieldElementExpression::LeftShift(e)
+                }
                 BinaryOrExpression::Expression(e) => e,
             }
         }
         FieldElementExpression::RightShift(e) => {
             match f.fold_binary_expression(&Type::FieldElement, e)? {
-                BinaryOrExpression::Binary(e) => FieldElementExpression::RightShift(e),
+                BinaryOrExpression::Binary(e) => {
+                    FieldElementExpression::RightShift(e)
+                }
                 BinaryOrExpression::Expression(e) => e,
             }
         }
         FieldElementExpression::Conditional(c) => {
             match f.fold_conditional_expression(&Type::FieldElement, c)? {
-                ConditionalOrExpression::Conditional(s) => FieldElementExpression::Conditional(s),
+                ConditionalOrExpression::Conditional(s) => {
+                    FieldElementExpression::Conditional(s)
+                }
                 ConditionalOrExpression::Expression(u) => u,
             }
         }
@@ -576,7 +650,11 @@ fn fold_boolean_expression<'ast, T: Field, F: ResultFolder<'ast, T>>(
     f.fold_boolean_expression_cases(e).map(|e| e.span(span))
 }
 
-pub fn fold_boolean_expression_cases<'ast, T: Field, F: ResultFolder<'ast, T>>(
+pub fn fold_boolean_expression_cases<
+    'ast,
+    T: Field,
+    F: ResultFolder<'ast, T>,
+>(
     f: &mut F,
     e: BooleanExpression<'ast, T>,
 ) -> Result<BooleanExpression<'ast, T>, F::Error> {
@@ -586,14 +664,18 @@ pub fn fold_boolean_expression_cases<'ast, T: Field, F: ResultFolder<'ast, T>>(
         BooleanExpression::Value(v) => BooleanExpression::Value(v),
         BooleanExpression::Identifier(id) => {
             match f.fold_identifier_expression(&Type::Boolean, id)? {
-                IdentifierOrExpression::Identifier(i) => BooleanExpression::Identifier(i),
+                IdentifierOrExpression::Identifier(i) => {
+                    BooleanExpression::Identifier(i)
+                }
                 IdentifierOrExpression::Expression(e) => e,
             }
         }
-        BooleanExpression::Select(e) => match f.fold_select_expression(&Type::Boolean, e)? {
-            SelectOrExpression::Select(s) => BooleanExpression::Select(s),
-            SelectOrExpression::Expression(u) => u,
-        },
+        BooleanExpression::Select(e) => {
+            match f.fold_select_expression(&Type::Boolean, e)? {
+                SelectOrExpression::Select(s) => BooleanExpression::Select(s),
+                SelectOrExpression::Expression(u) => u,
+            }
+        }
         FieldEq(e) => match f.fold_binary_expression(&Type::Boolean, e)? {
             BinaryOrExpression::Binary(e) => FieldEq(e),
             BinaryOrExpression::Expression(u) => u,
@@ -636,7 +718,9 @@ pub fn fold_boolean_expression_cases<'ast, T: Field, F: ResultFolder<'ast, T>>(
         },
         BooleanExpression::Conditional(c) => {
             match f.fold_conditional_expression(&Type::Boolean, c)? {
-                ConditionalOrExpression::Conditional(s) => BooleanExpression::Conditional(s),
+                ConditionalOrExpression::Conditional(s) => {
+                    BooleanExpression::Conditional(s)
+                }
                 ConditionalOrExpression::Expression(u) => u,
             }
         }
@@ -672,7 +756,9 @@ pub fn fold_uint_expression_cases<'ast, T: Field, F: ResultFolder<'ast, T>>(
     Ok(match e {
         Value(v) => UExpressionInner::Value(v),
         Identifier(id) => match f.fold_identifier_expression(&ty, id)? {
-            IdentifierOrExpression::Identifier(i) => UExpressionInner::Identifier(i),
+            IdentifierOrExpression::Identifier(i) => {
+                UExpressionInner::Identifier(i)
+            }
             IdentifierOrExpression::Expression(e) => e,
         },
         Select(e) => match f.fold_select_expression(&ty, e)? {
@@ -819,9 +905,18 @@ pub fn fold_select_expression<
 pub fn fold_binary_expression<
     'ast,
     T: Field,
-    L: Expr<'ast, T> + PartialEq + ResultFold<F, F::Error> + From<ZirExpression<'ast, T>>,
-    R: Expr<'ast, T> + PartialEq + ResultFold<F, F::Error> + From<ZirExpression<'ast, T>>,
-    E: Expr<'ast, T> + PartialEq + ResultFold<F, F::Error> + From<ZirExpression<'ast, T>>,
+    L: Expr<'ast, T>
+        + PartialEq
+        + ResultFold<F, F::Error>
+        + From<ZirExpression<'ast, T>>,
+    R: Expr<'ast, T>
+        + PartialEq
+        + ResultFold<F, F::Error>
+        + From<ZirExpression<'ast, T>>,
+    E: Expr<'ast, T>
+        + PartialEq
+        + ResultFold<F, F::Error>
+        + From<ZirExpression<'ast, T>>,
     F: ResultFolder<'ast, T>,
     Op,
 >(
@@ -837,8 +932,14 @@ pub fn fold_binary_expression<
 pub fn fold_unary_expression<
     'ast,
     T: Field,
-    In: Expr<'ast, T> + PartialEq + ResultFold<F, F::Error> + From<ZirExpression<'ast, T>>,
-    E: Expr<'ast, T> + PartialEq + ResultFold<F, F::Error> + From<ZirExpression<'ast, T>>,
+    In: Expr<'ast, T>
+        + PartialEq
+        + ResultFold<F, F::Error>
+        + From<ZirExpression<'ast, T>>,
+    E: Expr<'ast, T>
+        + PartialEq
+        + ResultFold<F, F::Error>
+        + From<ZirExpression<'ast, T>>,
     F: ResultFolder<'ast, T>,
     Op,
 >(

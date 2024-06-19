@@ -7,7 +7,8 @@ pub mod nova;
 
 use bellpepper_core::num::AllocatedNum;
 use bellpepper_core::{
-    Circuit, ConstraintSystem, LinearCombination, SynthesisError, Variable as BellpepperVariable,
+    Circuit, ConstraintSystem, LinearCombination, SynthesisError,
+    Variable as BellpepperVariable,
 };
 use std::collections::BTreeMap;
 use zokrates_ast::common::flat::Variable;
@@ -24,7 +25,10 @@ pub struct Computation<'ast, T> {
 }
 
 impl<'ast, T: Field> Computation<'ast, T> {
-    pub fn with_witness(program: &'ast Prog<'ast, T>, witness: Witness<T>) -> Self {
+    pub fn with_witness(
+        program: &'ast Prog<'ast, T>,
+        witness: Witness<T>,
+    ) -> Self {
         Computation {
             program,
             witness: Some(witness),
@@ -87,31 +91,34 @@ impl<'ast, T: BellpepperFieldExtensions + Field> Circuit<T::BellpepperField>
 
         assert!(symbols.insert(Variable::one(), CS::one()).is_none());
 
-        symbols.extend(self.program.arguments.iter().enumerate().map(|(index, p)| {
-            let wire = match p.private {
-                true => {
-                    AllocatedNum::alloc(cs.namespace(|| format!("PRIVATE_INPUT_{}", index)), || {
-                        Ok(witness
-                            .0
-                            .remove(&p.id)
-                            .ok_or(SynthesisError::AssignmentMissing)?
-                            .into_bellpepper())
-                    })
+        symbols.extend(self.program.arguments.iter().enumerate().map(
+            |(index, p)| {
+                let wire = match p.private {
+                    true => AllocatedNum::alloc(
+                        cs.namespace(|| format!("PRIVATE_INPUT_{}", index)),
+                        || {
+                            Ok(witness
+                                .0
+                                .remove(&p.id)
+                                .ok_or(SynthesisError::AssignmentMissing)?
+                                .into_bellpepper())
+                        },
+                    ),
+                    false => AllocatedNum::alloc_input(
+                        cs.namespace(|| format!("PUBLIC_INPUT_{}", index)),
+                        || {
+                            Ok(witness
+                                .0
+                                .remove(&p.id)
+                                .ok_or(SynthesisError::AssignmentMissing)?
+                                .into_bellpepper())
+                        },
+                    ),
                 }
-                false => AllocatedNum::alloc_input(
-                    cs.namespace(|| format!("PUBLIC_INPUT_{}", index)),
-                    || {
-                        Ok(witness
-                            .0
-                            .remove(&p.id)
-                            .ok_or(SynthesisError::AssignmentMissing)?
-                            .into_bellpepper())
-                    },
-                ),
-            }
-            .unwrap();
-            (p.id, wire.get_variable())
-        }));
+                .unwrap();
+                (p.id, wire.get_variable())
+            },
+        ));
 
         self.program.returns().iter().for_each(|v| {
             assert!(v.id < 0); // this should indeed be an output
@@ -134,7 +141,9 @@ impl<'ast, T: BellpepperFieldExtensions + Field> Circuit<T::BellpepperField>
 }
 
 impl<'ast, T: BellpepperFieldExtensions + Field> Computation<'ast, T> {
-    pub fn synthesize_input_to_output<CS: ConstraintSystem<T::BellpepperField>>(
+    pub fn synthesize_input_to_output<
+        CS: ConstraintSystem<T::BellpepperField>,
+    >(
         &self,
         cs: &mut CS,
         symbols: &mut BTreeMap<Variable, BellpepperVariable>,
@@ -142,9 +151,24 @@ impl<'ast, T: BellpepperFieldExtensions + Field> Computation<'ast, T> {
     ) -> Result<(), SynthesisError> {
         for (i, statement) in self.program.statements.iter().enumerate() {
             if let Statement::Constraint(constraint) = statement {
-                let a = &bellpepper_combination(&constraint.quad.left, cs, symbols, witness);
-                let b = &bellpepper_combination(&constraint.quad.right, cs, symbols, witness);
-                let c = &bellpepper_combination(&constraint.lin, cs, symbols, witness);
+                let a = &bellpepper_combination(
+                    &constraint.quad.left,
+                    cs,
+                    symbols,
+                    witness,
+                );
+                let b = &bellpepper_combination(
+                    &constraint.quad.right,
+                    cs,
+                    symbols,
+                    witness,
+                );
+                let c = &bellpepper_combination(
+                    &constraint.lin,
+                    cs,
+                    symbols,
+                    witness,
+                );
 
                 cs.enforce(
                     || format!("Constraint {}", i),

@@ -239,7 +239,10 @@ mod prime_field {
                     })
                 }
 
-                fn write<W: Write>(&self, mut writer: W) -> std::io::Result<()> {
+                fn write<W: Write>(
+                    &self,
+                    mut writer: W,
+                ) -> std::io::Result<()> {
                     use ark_ff::ToBytes;
                     self.v.write(&mut writer)?;
                     Ok(())
@@ -248,7 +251,10 @@ mod prime_field {
                 fn from_byte_vector(bytes: Vec<u8>) -> Self {
                     use ark_ff::FromBytes;
                     FieldPrime {
-                        v: Fr::from(<Fr as PrimeField>::BigInt::read(&bytes[..]).unwrap()),
+                        v: Fr::from(
+                            <Fr as PrimeField>::BigInt::read(&bytes[..])
+                                .unwrap(),
+                        ),
                     }
                 }
 
@@ -271,7 +277,9 @@ mod prime_field {
                 }
                 fn max_unique_value() -> FieldPrime {
                     FieldPrime {
-                        v: Fr::from(2u32).pow([Self::get_required_bits() as u64 - 1]) - Fr::one(),
+                        v: Fr::from(2u32)
+                            .pow([Self::get_required_bits() as u64 - 1])
+                            - Fr::one(),
                     }
                 }
                 fn get_required_bits() -> usize {
@@ -285,8 +293,12 @@ mod prime_field {
                         v: Fr::from_str(s).map_err(|_| FieldParseError)?,
                     })
                 }
-                fn try_from_str(s: &str, radix: u32) -> Result<Self, FieldParseError> {
-                    let x = BigUint::parse_bytes(s.as_bytes(), radix).ok_or(FieldParseError)?;
+                fn try_from_str(
+                    s: &str,
+                    radix: u32,
+                ) -> Result<Self, FieldParseError> {
+                    let x = BigUint::parse_bytes(s.as_bytes(), radix)
+                        .ok_or(FieldParseError)?;
                     FieldPrime::try_from(x).map_err(|_| FieldParseError)
                 }
                 fn to_compact_dec_string(&self) -> String {
@@ -296,7 +308,9 @@ mod prime_field {
                     } else {
                         format!(
                             "(-{})",
-                            (FieldPrime::max_value() - self + FieldPrime::one()).to_string()
+                            (FieldPrime::max_value() - self
+                                + FieldPrime::one())
+                            .to_string()
                         )
                     }
                 }
@@ -305,7 +319,9 @@ mod prime_field {
                     use ark_ff::BigInteger;
                     use ark_ff::FpParameters;
                     use sha2::{Digest, Sha256};
-                    let hash = Sha256::digest(&<Fr as PrimeField>::Params::MODULUS.to_bytes_le());
+                    let hash = Sha256::digest(
+                        &<Fr as PrimeField>::Params::MODULUS.to_bytes_le(),
+                    );
                     for i in 0..4 {
                         res[i] = hash[i];
                     }
@@ -485,7 +501,10 @@ mod prime_field {
             }
 
             impl CheckedDiv for FieldPrime {
-                fn checked_div(&self, other: &FieldPrime) -> Option<FieldPrime> {
+                fn checked_div(
+                    &self,
+                    other: &FieldPrime,
+                ) -> Option<FieldPrime> {
                     if other.v == Fr::zero() {
                         None
                     } else {
@@ -565,7 +584,10 @@ mod prime_field {
             }
 
             impl Serialize for FieldPrime {
-                fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+                fn serialize<S>(
+                    &self,
+                    serializer: S,
+                ) -> Result<S::Ok, S::Error>
                 where
                     S: Serializer,
                 {
@@ -586,7 +608,10 @@ mod prime_field {
             impl<'de> Visitor<'de> for FieldVisitor {
                 type Value = FieldPrime;
 
-                fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                fn expecting(
+                    &self,
+                    formatter: &mut fmt::Formatter,
+                ) -> fmt::Result {
                     formatter.write_str("an ark field element")
                 }
 
@@ -595,19 +620,26 @@ mod prime_field {
                     E: de::Error,
                 {
                     use ark_serialize::CanonicalDeserialize;
-                    let value: Fr = Fr::deserialize(value).map_err(|e| E::custom(e.to_string()))?;
+                    let value: Fr = Fr::deserialize(value)
+                        .map_err(|e| E::custom(e.to_string()))?;
 
                     Ok(FieldPrime { v: value })
                 }
 
-                fn visit_byte_buf<E>(self, value: Vec<u8>) -> Result<Self::Value, E>
+                fn visit_byte_buf<E>(
+                    self,
+                    value: Vec<u8>,
+                ) -> Result<Self::Value, E>
                 where
                     E: de::Error,
                 {
                     self.visit_bytes(&value[..])
                 }
 
-                fn visit_seq<A>(self, value: A) -> Result<Self::Value, A::Error>
+                fn visit_seq<A>(
+                    self,
+                    value: A,
+                ) -> Result<Self::Value, A::Error>
                 where
                     A: SeqAccess<'de>,
                 {
@@ -687,7 +719,10 @@ mod prime_field {
                 fn into_bellperson(self) -> Self::BellpersonField {
                     use ff::PrimeField;
                     let bytes = self.to_byte_vector();
-                    Self::BellpersonField::from_repr_vartime(bytes.try_into().unwrap()).unwrap()
+                    Self::BellpersonField::from_repr_vartime(
+                        bytes.try_into().unwrap(),
+                    )
+                    .unwrap()
                 }
             }
         };
@@ -710,7 +745,10 @@ mod prime_field {
                 fn into_bellpepper(self) -> Self::BellpepperField {
                     use ff::PrimeField;
                     let bytes = self.to_byte_vector();
-                    Self::BellpepperField::from_repr_vartime(bytes.try_into().unwrap()).unwrap()
+                    Self::BellpepperField::from_repr_vartime(
+                        bytes.try_into().unwrap(),
+                    )
+                    .unwrap()
                 }
             }
         };
@@ -723,11 +761,15 @@ mod prime_field {
             impl ArkFieldExtensions for FieldPrime {
                 type ArkEngine = $ark_type;
 
-                fn from_ark(e: <Self::ArkEngine as ark_ec::PairingEngine>::Fr) -> Self {
+                fn from_ark(
+                    e: <Self::ArkEngine as ark_ec::PairingEngine>::Fr,
+                ) -> Self {
                     Self { v: e }
                 }
 
-                fn into_ark(self) -> <Self::ArkEngine as ark_ec::PairingEngine>::Fr {
+                fn into_ark(
+                    self,
+                ) -> <Self::ArkEngine as ark_ec::PairingEngine>::Fr {
                     self.v
                 }
             }
@@ -750,3 +792,54 @@ pub use bw6_761::FieldPrime as Bw6_761Field;
 pub use dummy_curve::FieldPrime as DummyCurveField;
 pub use pallas::FieldPrime as PallasField;
 pub use vesta::FieldPrime as VestaField;
+
+pub mod bn254 {
+    // use halo2curves::bn256::Fq as BN254BaseField;
+    use ark_bn254::Fq as BN254BaseField;
+
+    #[cfg(feature = "bellpepper_extensions")]
+    use crate::{Cycle, GrumpkinField};
+    #[cfg(feature = "bellpepper_extensions")]
+    // use ark_bn254::Fq;
+    use halo2curves::bn256::Fq;
+
+    use crate::G2Type;
+
+    #[cfg(feature = "bellpepper_extensions")]
+    impl Cycle for FieldPrime {
+        type Other = GrumpkinField;
+        type Point = halo2curves::bn256::G1;
+    }
+
+    #[cfg(feature = "bellpepper_extensions")]
+    bellpepper_extensions!(Fq);
+
+    prime_field!("bn254", BN254BaseField, G2Type::Fq2);
+}
+
+pub use bn254::FieldPrime as BN254Field;
+
+pub mod grumpkin {
+    //    use halo2curves::grumpkin::Fq as GrumpkinBaseField;
+    use ark_bn254::Fr as GrumpkinBaseField;
+
+    #[cfg(feature = "bellpepper_extensions")]
+    use crate::{BN254Field, Cycle};
+    #[cfg(feature = "bellpepper_extensions")]
+    // use ark_bn254::Fq as Fq;
+    use halo2curves::grumpkin::Fq;
+
+    use crate::G2Type;
+
+    #[cfg(feature = "bellpepper_extensions")]
+    impl Cycle for FieldPrime {
+        type Other = BN254Field;
+        type Point = halo2curves::grumpkin::G1;
+    }
+
+    #[cfg(feature = "bellpepper_extensions")]
+    bellpepper_extensions!(Fq);
+
+    prime_field!("grumpkin", GrumpkinBaseField, G2Type::Fq2);
+}
+pub use grumpkin::FieldPrime as GrumpkinField;

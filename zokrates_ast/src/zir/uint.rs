@@ -1,6 +1,11 @@
-use crate::common::expressions::{UValueExpression, UnaryExpression, ValueExpression};
+use crate::common::expressions::{
+    UValueExpression, UnaryExpression, ValueExpression,
+};
 use crate::zir::IdentifierExpression;
-use crate::{common::expressions::BinaryExpression, common::operators::*, zir::types::UBitwidth};
+use crate::{
+    common::expressions::BinaryExpression, common::operators::*,
+    zir::types::UBitwidth,
+};
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use zokrates_field::Field;
@@ -12,45 +17,52 @@ impl<'ast, T: Field> UExpression<'ast, T> {
     pub fn add(self, other: Self) -> UExpression<'ast, T> {
         let bitwidth = self.bitwidth;
         assert_eq!(bitwidth, other.bitwidth);
-        UExpressionInner::Add(BinaryExpression::new(self, other)).annotate(bitwidth)
+        UExpressionInner::Add(BinaryExpression::new(self, other))
+            .annotate(bitwidth)
     }
 
     #[allow(clippy::should_implement_trait)]
     pub fn sub(self, other: Self) -> UExpression<'ast, T> {
         let bitwidth = self.bitwidth;
         assert_eq!(bitwidth, other.bitwidth);
-        UExpressionInner::Sub(BinaryExpression::new(self, other)).annotate(bitwidth)
+        UExpressionInner::Sub(BinaryExpression::new(self, other))
+            .annotate(bitwidth)
     }
 
     pub fn select(values: Vec<Self>, index: Self) -> UExpression<'ast, T> {
         let bitwidth = values[0].bitwidth;
-        UExpressionInner::Select(SelectExpression::new(values, index)).annotate(bitwidth)
+        UExpressionInner::Select(SelectExpression::new(values, index))
+            .annotate(bitwidth)
     }
 
     pub fn mult(self, other: Self) -> UExpression<'ast, T> {
         let bitwidth = self.bitwidth;
         assert_eq!(bitwidth, other.bitwidth);
-        UExpressionInner::Mult(BinaryExpression::new(self, other)).annotate(bitwidth)
+        UExpressionInner::Mult(BinaryExpression::new(self, other))
+            .annotate(bitwidth)
     }
 
     #[allow(clippy::should_implement_trait)]
     pub fn div(self, other: Self) -> UExpression<'ast, T> {
         let bitwidth = self.bitwidth;
         assert_eq!(bitwidth, other.bitwidth);
-        UExpressionInner::Div(BinaryExpression::new(self, other)).annotate(bitwidth)
+        UExpressionInner::Div(BinaryExpression::new(self, other))
+            .annotate(bitwidth)
     }
 
     #[allow(clippy::should_implement_trait)]
     pub fn rem(self, other: Self) -> UExpression<'ast, T> {
         let bitwidth = self.bitwidth;
         assert_eq!(bitwidth, other.bitwidth);
-        UExpressionInner::Rem(BinaryExpression::new(self, other)).annotate(bitwidth)
+        UExpressionInner::Rem(BinaryExpression::new(self, other))
+            .annotate(bitwidth)
     }
 
     pub fn xor(self, other: Self) -> UExpression<'ast, T> {
         let bitwidth = self.bitwidth;
         assert_eq!(bitwidth, other.bitwidth);
-        UExpressionInner::Xor(BinaryExpression::new(self, other)).annotate(bitwidth)
+        UExpressionInner::Xor(BinaryExpression::new(self, other))
+            .annotate(bitwidth)
     }
 
     #[allow(clippy::should_implement_trait)]
@@ -62,23 +74,27 @@ impl<'ast, T: Field> UExpression<'ast, T> {
     pub fn or(self, other: Self) -> UExpression<'ast, T> {
         let bitwidth = self.bitwidth;
         assert_eq!(bitwidth, other.bitwidth);
-        UExpressionInner::Or(BinaryExpression::new(self, other)).annotate(bitwidth)
+        UExpressionInner::Or(BinaryExpression::new(self, other))
+            .annotate(bitwidth)
     }
 
     pub fn and(self, other: Self) -> UExpression<'ast, T> {
         let bitwidth = self.bitwidth;
         assert_eq!(bitwidth, other.bitwidth);
-        UExpressionInner::And(BinaryExpression::new(self, other)).annotate(bitwidth)
+        UExpressionInner::And(BinaryExpression::new(self, other))
+            .annotate(bitwidth)
     }
 
     pub fn left_shift(self, by: Self) -> UExpression<'ast, T> {
         let bitwidth = self.bitwidth;
-        UExpressionInner::LeftShift(BinaryExpression::new(self, by)).annotate(bitwidth)
+        UExpressionInner::LeftShift(BinaryExpression::new(self, by))
+            .annotate(bitwidth)
     }
 
     pub fn right_shift(self, by: Self) -> UExpression<'ast, T> {
         let bitwidth = self.bitwidth;
-        UExpressionInner::RightShift(BinaryExpression::new(self, by)).annotate(bitwidth)
+        UExpressionInner::RightShift(BinaryExpression::new(self, by))
+            .annotate(bitwidth)
     }
 }
 
@@ -132,7 +148,9 @@ impl ShouldReduce {
     // we cannot disable a reduction that was enabled
     pub fn make_false(self) -> Self {
         match self {
-            ShouldReduce::True => unreachable!("Attempt to disable a required reduction"),
+            ShouldReduce::True => {
+                unreachable!("Attempt to disable a required reduction")
+            }
             _ => ShouldReduce::False,
         }
     }
@@ -183,26 +201,95 @@ pub enum UExpressionInner<'ast, T> {
     #[serde(borrow)]
     Identifier(IdentifierExpression<'ast, UExpression<'ast, T>>),
     Select(SelectExpression<'ast, T, UExpression<'ast, T>>),
-    Add(BinaryExpression<OpAdd, UExpression<'ast, T>, UExpression<'ast, T>, UExpression<'ast, T>>),
-    Sub(BinaryExpression<OpSub, UExpression<'ast, T>, UExpression<'ast, T>, UExpression<'ast, T>>),
-    Mult(BinaryExpression<OpMul, UExpression<'ast, T>, UExpression<'ast, T>, UExpression<'ast, T>>),
-    Div(BinaryExpression<OpDiv, UExpression<'ast, T>, UExpression<'ast, T>, UExpression<'ast, T>>),
-    Rem(BinaryExpression<OpRem, UExpression<'ast, T>, UExpression<'ast, T>, UExpression<'ast, T>>),
-    Xor(BinaryExpression<OpXor, UExpression<'ast, T>, UExpression<'ast, T>, UExpression<'ast, T>>),
-    And(BinaryExpression<OpAnd, UExpression<'ast, T>, UExpression<'ast, T>, UExpression<'ast, T>>),
-    Or(BinaryExpression<OpOr, UExpression<'ast, T>, UExpression<'ast, T>, UExpression<'ast, T>>),
+    Add(
+        BinaryExpression<
+            OpAdd,
+            UExpression<'ast, T>,
+            UExpression<'ast, T>,
+            UExpression<'ast, T>,
+        >,
+    ),
+    Sub(
+        BinaryExpression<
+            OpSub,
+            UExpression<'ast, T>,
+            UExpression<'ast, T>,
+            UExpression<'ast, T>,
+        >,
+    ),
+    Mult(
+        BinaryExpression<
+            OpMul,
+            UExpression<'ast, T>,
+            UExpression<'ast, T>,
+            UExpression<'ast, T>,
+        >,
+    ),
+    Div(
+        BinaryExpression<
+            OpDiv,
+            UExpression<'ast, T>,
+            UExpression<'ast, T>,
+            UExpression<'ast, T>,
+        >,
+    ),
+    Rem(
+        BinaryExpression<
+            OpRem,
+            UExpression<'ast, T>,
+            UExpression<'ast, T>,
+            UExpression<'ast, T>,
+        >,
+    ),
+    Xor(
+        BinaryExpression<
+            OpXor,
+            UExpression<'ast, T>,
+            UExpression<'ast, T>,
+            UExpression<'ast, T>,
+        >,
+    ),
+    And(
+        BinaryExpression<
+            OpAnd,
+            UExpression<'ast, T>,
+            UExpression<'ast, T>,
+            UExpression<'ast, T>,
+        >,
+    ),
+    Or(
+        BinaryExpression<
+            OpOr,
+            UExpression<'ast, T>,
+            UExpression<'ast, T>,
+            UExpression<'ast, T>,
+        >,
+    ),
     LeftShift(
-        BinaryExpression<OpLsh, UExpression<'ast, T>, UExpression<'ast, T>, UExpression<'ast, T>>,
+        BinaryExpression<
+            OpLsh,
+            UExpression<'ast, T>,
+            UExpression<'ast, T>,
+            UExpression<'ast, T>,
+        >,
     ),
     RightShift(
-        BinaryExpression<OpRsh, UExpression<'ast, T>, UExpression<'ast, T>, UExpression<'ast, T>>,
+        BinaryExpression<
+            OpRsh,
+            UExpression<'ast, T>,
+            UExpression<'ast, T>,
+            UExpression<'ast, T>,
+        >,
     ),
     Not(UnaryExpression<OpNot, UExpression<'ast, T>, UExpression<'ast, T>>),
     Conditional(ConditionalExpression<'ast, T, UExpression<'ast, T>>),
 }
 
 impl<'ast, T> UExpressionInner<'ast, T> {
-    pub fn annotate<W: Into<UBitwidth>>(self, bitwidth: W) -> UExpression<'ast, T> {
+    pub fn annotate<W: Into<UBitwidth>>(
+        self,
+        bitwidth: W,
+    ) -> UExpression<'ast, T> {
         UExpression {
             metadata: None,
             bitwidth: bitwidth.into(),

@@ -55,7 +55,9 @@ fn force_no_reduce<T: Field>(e: UExpression<T>) -> UExpression<T> {
 }
 
 impl<'ast, T: Field> Folder<'ast, T> for UintOptimizer<'ast, T> {
-    fn fold_select_expression<E: Expr<'ast, T> + Fold<Self> + Select<'ast, T>>(
+    fn fold_select_expression<
+        E: Expr<'ast, T> + Fold<Self> + Select<'ast, T>,
+    >(
         &mut self,
         _: &E::Ty,
         e: SelectExpression<'ast, T, E>,
@@ -63,7 +65,10 @@ impl<'ast, T: Field> Folder<'ast, T> for UintOptimizer<'ast, T> {
         let array = e.array.into_iter().map(|e| e.fold(self)).collect();
         let index = e.index.fold(self);
 
-        SelectOrExpression::Select(SelectExpression::new(array, force_reduce(index)))
+        SelectOrExpression::Select(SelectExpression::new(
+            array,
+            force_reduce(index),
+        ))
     }
 
     fn fold_boolean_expression_cases(
@@ -102,7 +107,10 @@ impl<'ast, T: Field> Folder<'ast, T> for UintOptimizer<'ast, T> {
         }
     }
 
-    fn fold_uint_expression(&mut self, e: UExpression<'ast, T>) -> UExpression<'ast, T> {
+    fn fold_uint_expression(
+        &mut self,
+        e: UExpression<'ast, T>,
+    ) -> UExpression<'ast, T> {
         let span = e.get_span();
 
         if e.metadata.is_some() {
@@ -127,7 +135,9 @@ impl<'ast, T: Field> Folder<'ast, T> for UintOptimizer<'ast, T> {
                 self.ids
                     .get(&Variable::uint(id.id.clone(), range))
                     .cloned()
-                    .unwrap_or_else(|| panic!("identifier should have been defined: {}", id)),
+                    .unwrap_or_else(|| {
+                        panic!("identifier should have been defined: {}", id)
+                    }),
             ),
             Select(e) => {
                 let index = *e.index;
@@ -172,7 +182,9 @@ impl<'ast, T: Field> Folder<'ast, T> for UintOptimizer<'ast, T> {
                                 left_max
                                     .checked_add(&range_max.clone())
                                     .map(|max| (false, true, max))
-                                    .unwrap_or_else(|| (true, true, range_max + range_max))
+                                    .unwrap_or_else(|| {
+                                        (true, true, range_max + range_max)
+                                    })
                             })
                     });
 
@@ -211,10 +223,11 @@ impl<'ast, T: Field> Folder<'ast, T> for UintOptimizer<'ast, T> {
                 let right = self.fold_uint_expression(*e.right);
 
                 let left_max = left.metadata.clone().unwrap().max;
-                let right_bitwidth = right.metadata.clone().unwrap().bitwidth();
+                let right_bitwidth =
+                    right.metadata.clone().unwrap().bitwidth();
 
-                let offset =
-                    T::from(2u32).pow(std::cmp::max(right_bitwidth, range as u32) as usize);
+                let offset = T::from(2u32)
+                    .pow(std::cmp::max(right_bitwidth, range as u32) as usize);
 
                 let target_offset = T::from(2u32).pow(range);
 
@@ -225,7 +238,9 @@ impl<'ast, T: Field> Folder<'ast, T> for UintOptimizer<'ast, T> {
                         left_max
                             .checked_add(&target_offset)
                             .map(|max| (false, true, max))
-                            .unwrap_or_else(|| (true, true, range_max + target_offset))
+                            .unwrap_or_else(|| {
+                                (true, true, range_max + target_offset)
+                            })
                     } else {
                         left_max
                             .checked_add(&offset)
@@ -261,21 +276,24 @@ impl<'ast, T: Field> Folder<'ast, T> for UintOptimizer<'ast, T> {
                 let left = self.fold_uint_expression(*e.left);
                 let right = self.fold_uint_expression(*e.right);
 
-                UExpression::xor(force_reduce(left), force_reduce(right)).with_max(range_max)
+                UExpression::xor(force_reduce(left), force_reduce(right))
+                    .with_max(range_max)
             }
             And(e) => {
                 // reduce the two terms
                 let left = self.fold_uint_expression(*e.left);
                 let right = self.fold_uint_expression(*e.right);
 
-                UExpression::and(force_reduce(left), force_reduce(right)).with_max(range_max)
+                UExpression::and(force_reduce(left), force_reduce(right))
+                    .with_max(range_max)
             }
             Or(e) => {
                 // reduce the two terms
                 let left = self.fold_uint_expression(*e.left);
                 let right = self.fold_uint_expression(*e.right);
 
-                UExpression::or(force_reduce(left), force_reduce(right)).with_max(range_max)
+                UExpression::or(force_reduce(left), force_reduce(right))
+                    .with_max(range_max)
             }
             Mult(e) => {
                 // reduce the two terms
@@ -296,7 +314,9 @@ impl<'ast, T: Field> Folder<'ast, T> for UintOptimizer<'ast, T> {
                                 left_max
                                     .checked_mul(&range_max.clone())
                                     .map(|max| (false, true, max))
-                                    .unwrap_or_else(|| (true, true, range_max * range_max))
+                                    .unwrap_or_else(|| {
+                                        (true, true, range_max * range_max)
+                                    })
                             })
                     });
 
@@ -318,14 +338,16 @@ impl<'ast, T: Field> Folder<'ast, T> for UintOptimizer<'ast, T> {
                 let left = self.fold_uint_expression(*e.left);
                 let right = self.fold_uint_expression(*e.right);
 
-                UExpression::div(force_reduce(left), force_reduce(right)).with_max(range_max)
+                UExpression::div(force_reduce(left), force_reduce(right))
+                    .with_max(range_max)
             }
             Rem(e) => {
                 // reduce the two terms
                 let left = self.fold_uint_expression(*e.left);
                 let right = self.fold_uint_expression(*e.right);
 
-                UExpression::rem(force_reduce(left), force_reduce(right)).with_max(range_max)
+                UExpression::rem(force_reduce(left), force_reduce(right))
+                    .with_max(range_max)
             }
             Not(e) => {
                 let inner = self.fold_uint_expression(*e.inner);
@@ -349,7 +371,8 @@ impl<'ast, T: Field> Folder<'ast, T> for UintOptimizer<'ast, T> {
 
                         UExpression::left_shift(
                             force_reduce(left),
-                            UExpression::value(by.value).annotate(UBitwidth::B32),
+                            UExpression::value(by.value)
+                                .annotate(UBitwidth::B32),
                         )
                         .with_max(max)
                     }
@@ -373,7 +396,8 @@ impl<'ast, T: Field> Folder<'ast, T> for UintOptimizer<'ast, T> {
 
                         UExpression::right_shift(
                             force_reduce(left),
-                            UExpression::value(by.value).annotate(UBitwidth::B32),
+                            UExpression::value(by.value)
+                                .annotate(UBitwidth::B32),
                         )
                         .with_max(max)
                     }
@@ -385,10 +409,15 @@ impl<'ast, T: Field> Folder<'ast, T> for UintOptimizer<'ast, T> {
                 let consequence = e.consequence.fold(self);
                 let alternative = e.alternative.fold(self);
 
-                let consequence_max = consequence.metadata.clone().unwrap().max;
-                let alternative_max = alternative.metadata.clone().unwrap().max;
+                let consequence_max =
+                    consequence.metadata.clone().unwrap().max;
+                let alternative_max =
+                    alternative.metadata.clone().unwrap().max;
 
-                let max = std::cmp::max(consequence_max.to_biguint(), alternative_max.to_biguint());
+                let max = std::cmp::max(
+                    consequence_max.to_biguint(),
+                    alternative_max.to_biguint(),
+                );
 
                 UExpression::conditional(
                     condition,
@@ -404,7 +433,10 @@ impl<'ast, T: Field> Folder<'ast, T> for UintOptimizer<'ast, T> {
         res.span(span)
     }
 
-    fn fold_return_statement(&mut self, s: ReturnStatement<'ast, T>) -> Vec<ZirStatement<'ast, T>> {
+    fn fold_return_statement(
+        &mut self,
+        s: ReturnStatement<'ast, T>,
+    ) -> Vec<ZirStatement<'ast, T>> {
         // we need to put back in range to return
         vec![ZirStatement::ret(
             s.inner
@@ -506,7 +538,8 @@ impl<'ast, T: Field> Folder<'ast, T> for UintOptimizer<'ast, T> {
                                         .into_iter()
                                         .map(|e| match e {
                                             ZirExpression::Uint(e) => {
-                                                let e = self.fold_uint_expression(e);
+                                                let e = self
+                                                    .fold_uint_expression(e);
                                                 let e = force_reduce(e);
                                                 ZirExpression::Uint(e)
                                             }
@@ -537,7 +570,10 @@ impl<'ast, T: Field> Folder<'ast, T> for UintOptimizer<'ast, T> {
         }
     }
 
-    fn fold_log_statement(&mut self, s: LogStatement<'ast, T>) -> Vec<ZirStatement<'ast, T>> {
+    fn fold_log_statement(
+        &mut self,
+        s: LogStatement<'ast, T>,
+    ) -> Vec<ZirStatement<'ast, T>> {
         vec![ZirStatement::Log(LogStatement::new(
             s.format_string,
             s.expressions
@@ -548,7 +584,8 @@ impl<'ast, T: Field> Folder<'ast, T> for UintOptimizer<'ast, T> {
                         e.into_iter()
                             .map(|e| match e {
                                 ZirExpression::Uint(e) => {
-                                    force_reduce(self.fold_uint_expression(e)).into()
+                                    force_reduce(self.fold_uint_expression(e))
+                                        .into()
                                 }
                                 e => self.fold_expression(e),
                             })
@@ -610,14 +647,19 @@ mod tests {
             };
 
             assert_eq!(
-                UintOptimizer::new()
-                    .fold_uint_expression(UExpression::$op(left.clone(), right.clone())),
-                UExpression::$op(left_expected, right_expected).with_max($res_max)
+                UintOptimizer::new().fold_uint_expression(UExpression::$op(
+                    left.clone(),
+                    right.clone()
+                )),
+                UExpression::$op(left_expected, right_expected)
+                    .with_max($res_max)
             );
         }};
     }
 
-    fn e_with_max<'a, U: Into<Bn128Field>>(max: U) -> UExpression<'a, Bn128Field> {
+    fn e_with_max<'a, U: Into<Bn128Field>>(
+        max: U,
+    ) -> UExpression<'a, Bn128Field> {
         UExpression::identifier("foo".into())
             .annotate(32)
             .metadata(UMetadata::with_max(max))
@@ -743,7 +785,11 @@ mod tests {
 
     #[test]
     fn right_shift() {
-        fn right_shift_test<U: Into<Bn128Field>>(e_max: U, by: u32, output_max: u32) {
+        fn right_shift_test<U: Into<Bn128Field>>(
+            e_max: U,
+            by: u32,
+            output_max: u32,
+        ) {
             let left = e_with_max(e_max);
 
             let right = by;
@@ -753,9 +799,11 @@ mod tests {
             let right_expected = right;
 
             assert_eq!(
-                UintOptimizer::new()
-                    .fold_uint_expression(UExpression::right_shift(left.clone(), right.into())),
-                UExpression::right_shift(left_expected, right_expected.into()).with_max(output_max)
+                UintOptimizer::new().fold_uint_expression(
+                    UExpression::right_shift(left.clone(), right.into())
+                ),
+                UExpression::right_shift(left_expected, right_expected.into())
+                    .with_max(output_max)
             );
         }
 
@@ -766,7 +814,11 @@ mod tests {
 
     #[test]
     fn left_shift() {
-        fn left_shift_test<U: Into<Bn128Field>>(e_max: U, by: u32, output_max: u32) {
+        fn left_shift_test<U: Into<Bn128Field>>(
+            e_max: U,
+            by: u32,
+            output_max: u32,
+        ) {
             let left = e_with_max(e_max);
 
             let right = by;
@@ -776,9 +828,11 @@ mod tests {
             let right_expected = right;
 
             assert_eq!(
-                UintOptimizer::new()
-                    .fold_uint_expression(UExpression::left_shift(left.clone(), right.into())),
-                UExpression::left_shift(left_expected, right_expected.into()).with_max(output_max)
+                UintOptimizer::new().fold_uint_expression(
+                    UExpression::left_shift(left.clone(), right.into())
+                ),
+                UExpression::left_shift(left_expected, right_expected.into())
+                    .with_max(output_max)
             );
         }
 
@@ -790,9 +844,10 @@ mod tests {
     #[test]
     fn if_else() {
         // `left` and `right` are smaller than the target
-        let consequence: UExpression<Bn128Field> = UExpression::identifier("a".into())
-            .annotate(32)
-            .metadata(UMetadata::with_max(42u32));
+        let consequence: UExpression<Bn128Field> =
+            UExpression::identifier("a".into())
+                .annotate(32)
+                .metadata(UMetadata::with_max(42u32));
 
         let alternative = UExpression::identifier("b".into())
             .annotate(32)

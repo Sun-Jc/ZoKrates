@@ -11,7 +11,11 @@ use std::marker::PhantomData;
 #[derivative(PartialOrd, PartialEq, Eq, Hash, Ord)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BinaryExpression<Op, L, R, Out> {
-    #[derivative(PartialEq = "ignore", PartialOrd = "ignore", Hash = "ignore")]
+    #[derivative(
+        PartialEq = "ignore",
+        PartialOrd = "ignore",
+        Hash = "ignore"
+    )]
     pub span: Option<Span>,
     pub left: Box<L>,
     pub right: Box<R>,
@@ -31,8 +35,8 @@ impl<Op, L, R, Out> BinaryExpression<Op, L, R, Out> {
     }
 }
 
-impl<Op: OperatorStr, L: fmt::Display, R: fmt::Display, Out: fmt::Display> fmt::Display
-    for BinaryExpression<Op, L, R, Out>
+impl<Op: OperatorStr, L: fmt::Display, R: fmt::Display, Out: fmt::Display>
+    fmt::Display for BinaryExpression<Op, L, R, Out>
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "({} {} {})", self.left, Op::STR, self.right,)
@@ -61,7 +65,11 @@ pub type EqExpression<E, B> = BinaryExpression<OpEq, E, E, B>;
 #[derivative(PartialOrd, PartialEq, Eq, Hash, Ord)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UnaryExpression<Op, In, Out> {
-    #[derivative(PartialEq = "ignore", PartialOrd = "ignore", Hash = "ignore")]
+    #[derivative(
+        PartialEq = "ignore",
+        PartialOrd = "ignore",
+        Hash = "ignore"
+    )]
     pub span: Option<Span>,
     pub inner: Box<In>,
     operator: PhantomData<Op>,
@@ -107,7 +115,11 @@ pub enum UnaryOrExpression<Op, In, E, I> {
 #[derivative(PartialOrd, PartialEq, Eq, Hash, Ord)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ValueExpression<V> {
-    #[derivative(PartialEq = "ignore", PartialOrd = "ignore", Hash = "ignore")]
+    #[derivative(
+        PartialEq = "ignore",
+        PartialOrd = "ignore",
+        Hash = "ignore"
+    )]
     pub span: Option<Span>,
     pub value: V,
 }
@@ -141,7 +153,11 @@ pub enum ValueOrExpression<V, I> {
 #[derivative(PartialOrd, PartialEq, Eq, Hash, Ord)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct IdentifierExpression<I, E> {
-    #[derivative(PartialEq = "ignore", PartialOrd = "ignore", Hash = "ignore")]
+    #[derivative(
+        PartialEq = "ignore",
+        PartialOrd = "ignore",
+        Hash = "ignore"
+    )]
     pub span: Option<Span>,
     pub id: I,
     pub ty: PhantomData<E>,
@@ -183,7 +199,11 @@ pub enum IdentifierOrExpression<V, E, I> {
 #[derivative(PartialOrd, PartialEq, Eq, Hash, Ord)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DefinitionStatement<A, E> {
-    #[derivative(PartialEq = "ignore", PartialOrd = "ignore", Hash = "ignore")]
+    #[derivative(
+        PartialEq = "ignore",
+        PartialOrd = "ignore",
+        Hash = "ignore"
+    )]
     pub span: Option<Span>,
     pub assignee: A,
     pub rhs: E,
@@ -209,7 +229,9 @@ impl<A, E> WithSpan for DefinitionStatement<A, E> {
     }
 }
 
-impl<A: fmt::Display, E: fmt::Display> fmt::Display for DefinitionStatement<A, E> {
+impl<A: fmt::Display, E: fmt::Display> fmt::Display
+    for DefinitionStatement<A, E>
+{
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} = {}", self.assignee, self.rhs,)
     }
@@ -219,7 +241,11 @@ impl<A: fmt::Display, E: fmt::Display> fmt::Display for DefinitionStatement<A, E
 #[derivative(PartialOrd, PartialEq, Eq, Hash, Ord)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AssertionStatement<B, E> {
-    #[derivative(PartialEq = "ignore", PartialOrd = "ignore", Hash = "ignore")]
+    #[derivative(
+        PartialEq = "ignore",
+        PartialOrd = "ignore",
+        Hash = "ignore"
+    )]
     pub span: Option<Span>,
     pub expression: B,
     pub error: E,
@@ -249,7 +275,11 @@ impl<B, E> WithSpan for AssertionStatement<B, E> {
 #[derivative(PartialOrd, PartialEq, Eq, Hash, Ord)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReturnStatement<E> {
-    #[derivative(PartialEq = "ignore", PartialOrd = "ignore", Hash = "ignore")]
+    #[derivative(
+        PartialEq = "ignore",
+        PartialOrd = "ignore",
+        Hash = "ignore"
+    )]
     pub span: Option<Span>,
     pub inner: E,
 }

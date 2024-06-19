@@ -1,5 +1,6 @@
 use crate::cli_constants::{
-    self, FLATTENED_CODE_DEFAULT_PATH, NOVA_PUBLIC_INIT, NOVA_STEPS_PRIVATE_INPUTS,
+    self, FLATTENED_CODE_DEFAULT_PATH, NOVA_PUBLIC_INIT,
+    NOVA_STEPS_PRIVATE_INPUTS,
 };
 use clap::{App, Arg, ArgMatches, SubCommand};
 use serde_json::{from_reader, Value};
@@ -81,19 +82,22 @@ pub fn subcommand() -> App<'static, 'static> {
 pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     // read compiled program
     let path = Path::new(sub_matches.value_of("input").unwrap());
-    let file =
-        File::open(path).map_err(|why| format!("Could not open {}: {}", path.display(), why))?;
+    let file = File::open(path).map_err(|why| {
+        format!("Could not open {}: {}", path.display(), why)
+    })?;
 
     let mut reader = BufReader::new(file);
 
     match ProgEnum::deserialize(&mut reader)? {
-        ProgEnum::PallasProgram(p) => cli_nova_prove_step(p, sub_matches),
+        // ProgEnum::PallasProgram(p) => cli_nova_prove_step(p, sub_matches),
+
+        ProgEnum::GrumpkinProgram(p) => cli_nova_prove_step(p, sub_matches),
         // ProgEnum::VestaProgram(p) => cli_nova_prove_step(p, sub_matches),
-        _ => Err("Nova is only supported for the following curves: [\"pallas\", \"vesta\"]".into()),
+        _ => Err("Nova is only supported for the following curves: [\"pallas\", \"vesta\", \"bn254\"]".into()),
     }
 }
 
-type T = zokrates_field::PallasField;
+type T = zokrates_field::GrumpkinField;
 
 fn cli_nova_prove_step<'ast, I: Iterator<Item = ir::Statement<'ast, T>>>(
     program: ir::ProgIterator<'ast, T, I>,
@@ -106,8 +110,9 @@ fn cli_nova_prove_step<'ast, I: Iterator<Item = ir::Statement<'ast, T>>>(
     println!("Done");
 
     let path = Path::new(sub_matches.value_of("abi-spec").unwrap());
-    let file =
-        File::open(path).map_err(|why| format!("Could not open {}: {}", path.display(), why))?;
+    let file = File::open(path).map_err(|why| {
+        format!("Could not open {}: {}", path.display(), why)
+    })?;
 
     let mut reader = BufReader::new(file);
 
@@ -132,7 +137,8 @@ fn cli_nova_prove_step<'ast, I: Iterator<Item = ir::Statement<'ast, T>>>(
         let json_str = std::fs::read_to_string(path).unwrap();
 
         {
-            let values: Value = serde_json::from_str(&json_str).map_err(|e| e.to_string())?;
+            let values: Value =
+                serde_json::from_str(&json_str).map_err(|e| e.to_string())?;
 
             match values {
                 Value::Array(values) => Ok(Values(
@@ -142,7 +148,10 @@ fn cli_nova_prove_step<'ast, I: Iterator<Item = ir::Statement<'ast, T>>>(
                         .collect::<Result<_, _>>()
                         .map_err(|e| e.to_string())?,
                 )),
-                _ => Err(format!("Expected an array of values, found `{}`", values)),
+                _ => Err(format!(
+                    "Expected an array of values, found `{}`",
+                    values
+                )),
             }
         }
         .unwrap()
@@ -154,23 +163,27 @@ fn cli_nova_prove_step<'ast, I: Iterator<Item = ir::Statement<'ast, T>>>(
 
     let from = sub_matches.is_present("continue").then(|| {
         let path = Path::new(sub_matches.value_of("instance-path").unwrap());
-        serde_json::from_reader(BufReader::new(File::open(path).unwrap())).unwrap()
+        serde_json::from_reader(BufReader::new(File::open(path).unwrap()))
+            .unwrap()
     });
 
     println!("Reading parameters...");
 
     let params_path = Path::new(sub_matches.value_of("params-path").unwrap());
-    let params_file = File::open(params_path)
-        .map_err(|why| format!("Could not open {}: {}", params_path.display(), why))?;
+    let params_file = File::open(params_path).map_err(|why| {
+        format!("Could not open {}: {}", params_path.display(), why)
+    })?;
 
     let params_reader = BufReader::new(params_file);
-    let params = serde_cbor::from_reader(params_reader)
-        .map_err(|why| format!("Could not deserialize {}: {}", params_path.display(), why))?;
+    let params = serde_cbor::from_reader(params_reader).map_err(|why| {
+        format!("Could not deserialize {}: {}", params_path.display(), why)
+    })?;
 
     println!("Done");
 
-    let mut proof_file = File::create(proof_path)
-        .map_err(|why| format!("Could not create {}: {}", proof_path.display(), why))?;
+    let mut proof_file = File::create(proof_path).map_err(|why| {
+        format!("Could not create {}: {}", proof_path.display(), why)
+    })?;
 
     println!("Generating proof...");
     let proof = nova::prove(&params, &program, init.clone(), from, steps)
@@ -180,9 +193,9 @@ fn cli_nova_prove_step<'ast, I: Iterator<Item = ir::Statement<'ast, T>>>(
 
     let proof_json = serde_json::to_string_pretty(&proof).unwrap();
 
-    proof_file
-        .write(proof_json.as_bytes())
-        .map_err(|why| format!("Could not write to {}: {}", proof_path.display(), why))?;
+    proof_file.write(proof_json.as_bytes()).map_err(|why| {
+        format!("Could not write to {}: {}", proof_path.display(), why)
+    })?;
 
     match proof {
         None => println!("No proof to verify"),

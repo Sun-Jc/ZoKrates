@@ -7,7 +7,9 @@ use std::io::{Read, Write};
 // id > 0 for intermediate variables
 // id == 0 for ~one
 // id < 0 for public outputs
-#[derive(Serialize, Deserialize, Clone, PartialEq, Hash, Eq, Ord, PartialOrd, Copy)]
+#[derive(
+    Serialize, Deserialize, Clone, PartialEq, Hash, Eq, Ord, PartialOrd, Copy,
+)]
 pub struct Variable {
     pub id: isize,
 }
@@ -70,7 +72,10 @@ impl fmt::Debug for Variable {
 }
 
 impl Variable {
-    pub fn apply_substitution(self, substitution: &HashMap<Variable, Variable>) -> &Self {
+    pub fn apply_substitution(
+        self,
+        substitution: &HashMap<Variable, Variable>,
+    ) -> &Self {
         substitution.get(&self).unwrap()
     }
 

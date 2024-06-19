@@ -26,7 +26,10 @@ pub trait Folder<'ast, T: Field>: Sized {
         fold_variable(self, v)
     }
 
-    fn fold_statement(&mut self, s: FlatStatement<'ast, T>) -> Vec<FlatStatement<'ast, T>> {
+    fn fold_statement(
+        &mut self,
+        s: FlatStatement<'ast, T>,
+    ) -> Vec<FlatStatement<'ast, T>> {
         fold_statement(self, s)
     }
 
@@ -44,11 +47,15 @@ pub trait Folder<'ast, T: Field>: Sized {
     fn fold_identifier_expression(
         &mut self,
         e: IdentifierExpression<Variable, FlatExpression<T>>,
-    ) -> IdentifierOrExpression<Variable, FlatExpression<T>, FlatExpression<T>> {
+    ) -> IdentifierOrExpression<Variable, FlatExpression<T>, FlatExpression<T>>
+    {
         fold_identifier_expression(self, e)
     }
 
-    fn fold_directive(&mut self, d: FlatDirective<'ast, T>) -> FlatDirective<'ast, T> {
+    fn fold_directive(
+        &mut self,
+        d: FlatDirective<'ast, T>,
+    ) -> FlatDirective<'ast, T> {
         fold_directive(self, d)
     }
 }
@@ -93,12 +100,16 @@ pub fn fold_statement<'ast, T: Field, F: Folder<'ast, T>>(
             f.fold_variable(s.assignee),
             f.fold_expression(s.rhs),
         )],
-        FlatStatement::Directive(d) => vec![FlatStatement::Directive(f.fold_directive(d))],
+        FlatStatement::Directive(d) => {
+            vec![FlatStatement::Directive(f.fold_directive(d))]
+        }
         FlatStatement::Log(s) => vec![FlatStatement::log(
             s.format_string,
             s.expressions
                 .into_iter()
-                .map(|(t, e)| (t, e.into_iter().map(|e| f.fold_expression(e)).collect()))
+                .map(|(t, e)| {
+                    (t, e.into_iter().map(|e| f.fold_expression(e)).collect())
+                })
                 .collect(),
         )],
     }
@@ -110,10 +121,14 @@ pub fn fold_expression<'ast, T: Field, F: Folder<'ast, T>>(
 ) -> FlatExpression<T> {
     match e {
         FlatExpression::Value(n) => FlatExpression::Value(n),
-        FlatExpression::Identifier(id) => match f.fold_identifier_expression(id) {
-            IdentifierOrExpression::Identifier(e) => FlatExpression::Identifier(e),
-            IdentifierOrExpression::Expression(e) => e,
-        },
+        FlatExpression::Identifier(id) => {
+            match f.fold_identifier_expression(id) {
+                IdentifierOrExpression::Identifier(e) => {
+                    FlatExpression::Identifier(e)
+                }
+                IdentifierOrExpression::Expression(e) => e,
+            }
+        }
         FlatExpression::Add(e) => match f.fold_binary_expression(e) {
             BinaryOrExpression::Binary(e) => FlatExpression::Add(e),
             BinaryOrExpression::Expression(e) => e,
@@ -138,7 +153,15 @@ fn fold_identifier_expression<'ast, T: Field, F: Folder<'ast, T>>(
     IdentifierOrExpression::Identifier(IdentifierExpression { id, ..e })
 }
 
-fn fold_binary_expression<'ast, T: Field, F: Folder<'ast, T>, Op, L: Fold<F>, R: Fold<F>, E>(
+fn fold_binary_expression<
+    'ast,
+    T: Field,
+    F: Folder<'ast, T>,
+    Op,
+    L: Fold<F>,
+    R: Fold<F>,
+    E,
+>(
     f: &mut F,
     e: BinaryExpression<Op, L, R, E>,
 ) -> BinaryOrExpression<Op, L, R, E, FlatExpression<T>> {
@@ -163,13 +186,19 @@ pub fn fold_directive<'ast, T: Field, F: Folder<'ast, T>>(
     }
 }
 
-pub fn fold_argument<'ast, T: Field, F: Folder<'ast, T>>(f: &mut F, a: Parameter) -> Parameter {
+pub fn fold_argument<'ast, T: Field, F: Folder<'ast, T>>(
+    f: &mut F,
+    a: Parameter,
+) -> Parameter {
     Parameter {
         id: f.fold_variable(a.id),
         ..a
     }
 }
 
-pub fn fold_variable<'ast, T: Field, F: Folder<'ast, T>>(_f: &mut F, v: Variable) -> Variable {
+pub fn fold_variable<'ast, T: Field, F: Folder<'ast, T>>(
+    _f: &mut F,
+    v: Variable,
+) -> Variable {
     v
 }

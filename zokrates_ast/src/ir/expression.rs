@@ -207,7 +207,10 @@ impl<T: Field> LinComb<T> {
 
                 // all terms must contain the same variable
                 if self.value.iter().all(|element| element.0 == *first) {
-                    Ok(self.value.into_iter().fold(T::zero(), |acc, e| acc + e.1))
+                    Ok(self
+                        .value
+                        .into_iter()
+                        .fold(T::zero(), |acc, e| acc + e.1))
                 } else {
                     Err(self)
                 }
@@ -235,7 +238,9 @@ impl<T: Field> LinComb<T> {
                 {
                     Ok((
                         *first,
-                        self.value.into_iter().fold(T::zero(), |acc, e| acc + e.1),
+                        self.value
+                            .into_iter()
+                            .fold(T::zero(), |acc, e| acc + e.1),
                     ))
                 } else {
                     Err(self)
@@ -288,8 +293,11 @@ impl<T: Field> LinComb<T> {
 
 impl<T: Field> QuadComb<T> {
     pub fn into_canonical(self) -> CanonicalQuadComb<T> {
-        CanonicalQuadComb::new(self.left.into_canonical(), self.right.into_canonical())
-            .span(self.span)
+        CanonicalQuadComb::new(
+            self.left.into_canonical(),
+            self.right.into_canonical(),
+        )
+        .span(self.span)
     }
 
     pub fn reduce(self) -> Self {
@@ -306,7 +314,11 @@ impl<T: Field> fmt::Display for LinComb<T> {
                 "{}",
                 self.value
                     .iter()
-                    .map(|(k, v)| format!("{} * {}", v.to_compact_dec_string(), k))
+                    .map(|(k, v)| format!(
+                        "{} * {}",
+                        v.to_compact_dec_string(),
+                        k
+                    ))
                     .collect::<Vec<_>>()
                     .join(" + ")
             ),
@@ -417,8 +429,8 @@ mod tests {
 
         #[test]
         fn display() {
-            let a: LinComb<Bn128Field> =
-                LinComb::from(Variable::new(42)) + LinComb::summand(3, Variable::new(21));
+            let a: LinComb<Bn128Field> = LinComb::from(Variable::new(42))
+                + LinComb::summand(3, Variable::new(21));
             assert_eq!(&a.to_string(), "1 * _42 + 3 * _21");
             let zero: LinComb<Bn128Field> = LinComb::zero();
             assert_eq!(&zero.to_string(), "0");
@@ -430,7 +442,8 @@ mod tests {
         #[test]
         fn from_linear() {
             let a: LinComb<Bn128Field> =
-                LinComb::summand(3, Variable::new(42)) + LinComb::summand(4, Variable::new(33));
+                LinComb::summand(3, Variable::new(42))
+                    + LinComb::summand(4, Variable::new(33));
             let expected = QuadComb::new(LinComb::one(), a.clone());
             assert_eq!(QuadComb::from(a), expected);
         }
@@ -438,19 +451,23 @@ mod tests {
         #[test]
         fn zero() {
             let a: LinComb<Bn128Field> = LinComb::zero();
-            let expected: QuadComb<Bn128Field> = QuadComb::new(LinComb::one(), LinComb::zero());
+            let expected: QuadComb<Bn128Field> =
+                QuadComb::new(LinComb::one(), LinComb::zero());
             assert_eq!(QuadComb::from(a), expected);
         }
 
         #[test]
         fn display() {
             let a: QuadComb<Bn128Field> = QuadComb::new(
-                LinComb::summand(3, Variable::new(42)) + LinComb::summand(4, Variable::new(33)),
+                LinComb::summand(3, Variable::new(42))
+                    + LinComb::summand(4, Variable::new(33)),
                 LinComb::summand(1, Variable::new(21)),
             );
             assert_eq!(&a.to_string(), "(3 * _42 + 4 * _33) * (1 * _21)");
-            let a: QuadComb<Bn128Field> =
-                QuadComb::new(LinComb::zero(), LinComb::summand(1, Variable::new(21)));
+            let a: QuadComb<Bn128Field> = QuadComb::new(
+                LinComb::zero(),
+                LinComb::summand(1, Variable::new(21)),
+            );
             assert_eq!(&a.to_string(), "(0) * (1 * _21)");
         }
     }

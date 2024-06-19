@@ -1,13 +1,15 @@
 use ark_crypto_primitives::SNARK;
 use ark_groth16::{
-    prepare_verifying_key, verify_proof, Groth16, PreparedVerifyingKey, Proof as ArkProof,
-    ProvingKey, VerifyingKey,
+    prepare_verifying_key, verify_proof, Groth16, PreparedVerifyingKey,
+    Proof as ArkProof, ProvingKey, VerifyingKey,
 };
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 use std::io::Read;
 use zokrates_field::ArkFieldExtensions;
 use zokrates_field::Field;
-use zokrates_proof_systems::{Backend, NonUniversalBackend, Proof, SetupKeypair};
+use zokrates_proof_systems::{
+    Backend, NonUniversalBackend, Proof, SetupKeypair,
+};
 
 use crate::Computation;
 use crate::{parse_fr, serialization, Ark};
@@ -41,7 +43,8 @@ impl<T: Field + ArkFieldExtensions> Backend<T, G16> for Ark {
             ProvingKey::<<T as ArkFieldExtensions>::ArkEngine>::deserialize_unchecked(proving_key)
                 .unwrap();
 
-        let proof = Groth16::<T::ArkEngine>::prove(&pk, computation, rng).unwrap();
+        let proof =
+            Groth16::<T::ArkEngine>::prove(&pk, computation, rng).unwrap();
 
         let proof_points = ProofPoints {
             a: parse_g1::<T>(&proof.a),
@@ -52,7 +55,10 @@ impl<T: Field + ArkFieldExtensions> Backend<T, G16> for Ark {
         Proof::new(proof_points, inputs)
     }
 
-    fn verify(vk: <G16 as Scheme<T>>::VerificationKey, proof: Proof<T, G16>) -> bool {
+    fn verify(
+        vk: <G16 as Scheme<T>>::VerificationKey,
+        proof: Proof<T, G16>,
+    ) -> bool {
         let vk = VerifyingKey {
             alpha_g1: serialization::to_g1::<T>(vk.alpha),
             beta_g2: serialization::to_g2::<T>(vk.beta),
@@ -65,7 +71,8 @@ impl<T: Field + ArkFieldExtensions> Backend<T, G16> for Ark {
                 .collect(),
         };
 
-        let pvk: PreparedVerifyingKey<T::ArkEngine> = prepare_verifying_key(&vk);
+        let pvk: PreparedVerifyingKey<T::ArkEngine> =
+            prepare_verifying_key(&vk);
         let ark_proof = ArkProof {
             a: serialization::to_g1::<T>(proof.proof.a),
             b: serialization::to_g2::<T>(proof.proof.b),
@@ -87,12 +94,18 @@ impl<T: Field + ArkFieldExtensions> Backend<T, G16> for Ark {
 }
 
 impl<T: Field + ArkFieldExtensions> NonUniversalBackend<T, G16> for Ark {
-    fn setup<'a, I: IntoIterator<Item = Statement<'a, T>>, R: RngCore + CryptoRng>(
+    fn setup<
+        'a,
+        I: IntoIterator<Item = Statement<'a, T>>,
+        R: RngCore + CryptoRng,
+    >(
         program: ProgIterator<'a, T, I>,
         rng: &mut R,
     ) -> SetupKeypair<T, G16> {
         let computation = Computation::without_witness(program);
-        let (pk, vk) = Groth16::<T::ArkEngine>::circuit_specific_setup(computation, rng).unwrap();
+        let (pk, vk) =
+            Groth16::<T::ArkEngine>::circuit_specific_setup(computation, rng)
+                .unwrap();
 
         let mut pk_vec: Vec<u8> = Vec::new();
         pk.serialize_unchecked(&mut pk_vec).unwrap();
@@ -102,7 +115,11 @@ impl<T: Field + ArkFieldExtensions> NonUniversalBackend<T, G16> for Ark {
             beta: parse_g2::<T>(&vk.beta_g2),
             gamma: parse_g2::<T>(&vk.gamma_g2),
             delta: parse_g2::<T>(&vk.delta_g2),
-            gamma_abc: vk.gamma_abc_g1.iter().map(|g1| parse_g1::<T>(g1)).collect(),
+            gamma_abc: vk
+                .gamma_abc_g1
+                .iter()
+                .map(|g1| parse_g1::<T>(g1))
+                .collect(),
         };
 
         SetupKeypair::new(vk, pk_vec)
@@ -135,8 +152,10 @@ mod tests {
         };
 
         let rng = &mut StdRng::from_entropy();
-        let keypair =
-            <Ark as NonUniversalBackend<Bls12_377Field, G16>>::setup(program.clone(), rng);
+        let keypair = <Ark as NonUniversalBackend<Bls12_377Field, G16>>::setup(
+            program.clone(),
+            rng,
+        );
         let interpreter = Interpreter::default();
 
         let witness = interpreter
@@ -154,7 +173,8 @@ mod tests {
             keypair.pk.as_slice(),
             rng,
         );
-        let ans = <Ark as Backend<Bls12_377Field, G16>>::verify(keypair.vk, proof);
+        let ans =
+            <Ark as Backend<Bls12_377Field, G16>>::verify(keypair.vk, proof);
 
         assert!(ans);
     }
@@ -174,7 +194,10 @@ mod tests {
         };
 
         let rng = &mut StdRng::from_entropy();
-        let keypair = <Ark as NonUniversalBackend<Bw6_761Field, G16>>::setup(program.clone(), rng);
+        let keypair = <Ark as NonUniversalBackend<Bw6_761Field, G16>>::setup(
+            program.clone(),
+            rng,
+        );
         let interpreter = Interpreter::default();
 
         let witness = interpreter
@@ -192,7 +215,8 @@ mod tests {
             keypair.pk.as_slice(),
             rng,
         );
-        let ans = <Ark as Backend<Bw6_761Field, G16>>::verify(keypair.vk, proof);
+        let ans =
+            <Ark as Backend<Bw6_761Field, G16>>::verify(keypair.vk, proof);
 
         assert!(ans);
     }

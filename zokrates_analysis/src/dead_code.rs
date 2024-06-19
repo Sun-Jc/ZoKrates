@@ -1,5 +1,7 @@
 use std::collections::HashSet;
-use zokrates_ast::zir::{folder::*, Identifier, ZirFunction, ZirProgram, ZirStatement};
+use zokrates_ast::zir::{
+    folder::*, Identifier, ZirFunction, ZirProgram, ZirStatement,
+};
 use zokrates_field::Field;
 
 #[derive(Default)]
@@ -14,7 +16,10 @@ impl<'ast> DeadCodeEliminator<'ast> {
 }
 
 impl<'ast, T: Field> Folder<'ast, T> for DeadCodeEliminator<'ast> {
-    fn fold_function(&mut self, f: ZirFunction<'ast, T>) -> ZirFunction<'ast, T> {
+    fn fold_function(
+        &mut self,
+        f: ZirFunction<'ast, T>,
+    ) -> ZirFunction<'ast, T> {
         // iterate on the statements starting from the end, as we want to see usage before definition
         let mut statements: Vec<_> = f
             .statements

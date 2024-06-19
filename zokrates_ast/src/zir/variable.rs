@@ -12,11 +12,17 @@ impl<'ast> Variable<'ast> {
         Self::with_id_and_type(id, Type::Boolean)
     }
 
-    pub fn uint<W: Into<UBitwidth>>(id: Identifier<'ast>, bitwidth: W) -> Variable<'ast> {
+    pub fn uint<W: Into<UBitwidth>>(
+        id: Identifier<'ast>,
+        bitwidth: W,
+    ) -> Variable<'ast> {
         Self::with_id_and_type(id, Type::uint(bitwidth))
     }
 
-    pub fn with_id_and_type<I: Into<Identifier<'ast>>>(id: I, ty: Type) -> Variable<'ast> {
+    pub fn with_id_and_type<I: Into<Identifier<'ast>>>(
+        id: I,
+        ty: Type,
+    ) -> Variable<'ast> {
         Variable::new(id.into(), ty)
     }
 

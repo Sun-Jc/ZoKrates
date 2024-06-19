@@ -52,8 +52,9 @@ impl<'ast, T: Field> Folder<'ast, T> for DirectiveOptimizer<'ast, T> {
                 vec![Statement::Directive(d)]
             }
             Entry::Occupied(e) => {
-                self.substitution
-                    .extend(d.outputs.into_iter().zip(e.get().iter().cloned()));
+                self.substitution.extend(
+                    d.outputs.into_iter().zip(e.get().iter().cloned()),
+                );
                 vec![]
             }
         }

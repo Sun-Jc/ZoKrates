@@ -4,7 +4,8 @@ use std::collections::HashMap;
 use std::fmt;
 use zokrates_abi::{Decode, Value};
 use zokrates_ast::ir::{
-    LinComb, Parameter, QuadComb, RuntimeError, Solver, Statement, Variable, Witness,
+    LinComb, Parameter, QuadComb, RuntimeError, Solver, Statement, Variable,
+    Witness,
 };
 use zokrates_ast::zir::{self, Expr};
 use zokrates_field::Field;
@@ -34,7 +35,13 @@ impl Interpreter {
         arguments: &[Parameter],
         solvers: &[Solver<'ast, T>],
     ) -> ExecutionResult<T> {
-        self.execute_with_log_stream(inputs, statements, arguments, solvers, &mut std::io::sink())
+        self.execute_with_log_stream(
+            inputs,
+            statements,
+            arguments,
+            solvers,
+            &mut std::io::sink(),
+        )
     }
 
     pub fn execute_with_log_stream<
@@ -68,21 +75,27 @@ impl Interpreter {
         for statement in statements {
             match statement.borrow() {
                 Statement::Block(..) => unreachable!(),
-                Statement::Constraint(s) => match s.lin.is_assignee(&witness) {
-                    true => {
-                        let val = evaluate_quad(&witness, &s.quad).unwrap();
-                        witness.insert(s.lin.value.first().unwrap().0, val);
-                    }
-                    false => {
-                        let lhs_value = evaluate_quad(&witness, &s.quad).unwrap();
-                        let rhs_value = evaluate_lin(&witness, &s.lin).unwrap();
-                        if lhs_value != rhs_value {
-                            return Err(Error::UnsatisfiedConstraint {
-                                error: s.error.clone(),
-                            });
+                Statement::Constraint(s) => {
+                    match s.lin.is_assignee(&witness) {
+                        true => {
+                            let val =
+                                evaluate_quad(&witness, &s.quad).unwrap();
+                            witness
+                                .insert(s.lin.value.first().unwrap().0, val);
+                        }
+                        false => {
+                            let lhs_value =
+                                evaluate_quad(&witness, &s.quad).unwrap();
+                            let rhs_value =
+                                evaluate_lin(&witness, &s.lin).unwrap();
+                            if lhs_value != rhs_value {
+                                return Err(Error::UnsatisfiedConstraint {
+                                    error: s.error.clone(),
+                                });
+                            }
                         }
                     }
-                },
+                }
                 Statement::Directive(ref d) => {
                     let mut inputs: Vec<_> = d
                         .inputs
@@ -90,16 +103,21 @@ impl Interpreter {
                         .map(|i| evaluate_quad(&witness, i).unwrap())
                         .collect();
 
-                    let res = match (&d.solver, self.should_try_out_of_range) {
-                        (Solver::Bits(bitwidth), true) if *bitwidth >= T::get_required_bits() => {
-                            Ok(Self::try_solve_with_out_of_range_bits(
-                                *bitwidth,
-                                inputs.pop().unwrap(),
-                            ))
+                    let res =
+                        match (&d.solver, self.should_try_out_of_range) {
+                            (Solver::Bits(bitwidth), true)
+                                if *bitwidth >= T::get_required_bits() =>
+                            {
+                                Ok(Self::try_solve_with_out_of_range_bits(
+                                    *bitwidth,
+                                    inputs.pop().unwrap(),
+                                ))
+                            }
+                            _ => Self::execute_solver(
+                                &d.solver, &inputs, solvers,
+                            ),
                         }
-                        _ => Self::execute_solver(&d.solver, &inputs, solvers),
-                    }
-                    .map_err(Error::Solver)?;
+                        .map_err(Error::Solver)?;
 
                     for (i, o) in d.outputs.iter().enumerate() {
                         witness.insert(*o, res[i]);
@@ -124,7 +142,8 @@ impl Interpreter {
                         )
                         .map_err(|_| Error::LogStream)?;
 
-                        write!(log_stream, "{}", part).map_err(|_| Error::LogStream)?;
+                        write!(log_stream, "{}", part)
+                            .map_err(|_| Error::LogStream)?;
                     }
 
                     writeln!(log_stream).map_err(|_| Error::LogStream)?;
@@ -137,13 +156,20 @@ impl Interpreter {
         Ok(witness)
     }
 
-    fn try_solve_with_out_of_range_bits<T: Field>(bit_width: usize, input: T) -> Vec<T> {
+    fn try_solve_with_out_of_range_bits<T: Field>(
+        bit_width: usize,
+        input: T,
+    ) -> Vec<T> {
         use num::traits::Pow;
         use num_bigint::BigUint;
 
-        let candidate = input.to_biguint() + T::max_value().to_biguint() + T::from(1).to_biguint();
+        let candidate = input.to_biguint()
+            + T::max_value().to_biguint()
+            + T::from(1).to_biguint();
 
-        let input = if candidate < T::from(2).to_biguint().pow(T::get_required_bits()) {
+        let input = if candidate
+            < T::from(2).to_biguint().pow(T::get_required_bits())
+        {
             candidate
         } else {
             input.to_biguint()
@@ -153,14 +179,18 @@ impl Interpreter {
 
         (0..padding)
             .map(|_| T::zero())
-            .chain((0..T::get_required_bits()).rev().scan(input, |state, i| {
-                if BigUint::from(2usize).pow(i) <= *state {
-                    *state = (*state).clone() - BigUint::from(2usize).pow(i);
-                    Some(T::one())
-                } else {
-                    Some(T::zero())
-                }
-            }))
+            .chain((0..T::get_required_bits()).rev().scan(
+                input,
+                |state, i| {
+                    if BigUint::from(2usize).pow(i) <= *state {
+                        *state =
+                            (*state).clone() - BigUint::from(2usize).pow(i);
+                        Some(T::one())
+                    } else {
+                        Some(T::zero())
+                    }
+                },
+            ))
             .collect()
     }
 
@@ -170,13 +200,14 @@ impl Interpreter {
         solvers: &[Solver<'ast, T>],
     ) -> Result<Vec<T>, String> {
         let solver = match solver {
-            Solver::Ref(call) => solvers
-                .get(call.index)
-                .ok_or_else(|| format!("Could not get solver at index {}", call.index))?,
+            Solver::Ref(call) => solvers.get(call.index).ok_or_else(|| {
+                format!("Could not get solver at index {}", call.index)
+            })?,
             s => s,
         };
 
-        let (expected_input_count, expected_output_count) = solver.get_signature();
+        let (expected_input_count, expected_output_count) =
+            solver.get_signature();
         assert_eq!(inputs.len(), expected_input_count);
 
         let res = match solver {
@@ -223,7 +254,10 @@ impl Interpreter {
                     })
                     .collect::<Result<HashMap<_, _>, _>>()?;
 
-                let mut propagator = zokrates_analysis::ZirPropagator::with_constants(constants);
+                let mut propagator =
+                    zokrates_analysis::ZirPropagator::with_constants(
+                        constants,
+                    );
 
                 let folded_function = propagator
                     .fold_function(func.clone())
@@ -258,7 +292,8 @@ impl Interpreter {
                 let bits = inputs[0].to_bits_be();
 
                 // only keep at most `bit_width` of them, starting from the least significant
-                let bits = bits[bits.len().saturating_sub(*bit_width)..].to_vec();
+                let bits =
+                    bits[bits.len().saturating_sub(*bit_width)..].to_vec();
 
                 // pad with zeroes so that the result is exactly `bit_width` long
                 (0..bit_width - bits.len())
@@ -294,7 +329,9 @@ impl Interpreter {
                 vec![a * (b - c) + c]
             }
 
-            Solver::Div => vec![inputs[0].checked_div(&inputs[1]).unwrap_or_else(T::one)],
+            Solver::Div => {
+                vec![inputs[0].checked_div(&inputs[1]).unwrap_or_else(T::one)]
+            }
             Solver::EuclideanDiv => {
                 use num::CheckedDiv;
 
@@ -363,7 +400,10 @@ pub enum Error {
     LogStream,
 }
 
-fn evaluate_lin<T: Field>(w: &Witness<T>, l: &LinComb<T>) -> Result<T, EvaluationError> {
+fn evaluate_lin<T: Field>(
+    w: &Witness<T>,
+    l: &LinComb<T>,
+) -> Result<T, EvaluationError> {
     l.value.iter().try_fold(T::from(0), |acc, (var, mult)| {
         w.0.get(var)
             .map(|v| acc + (*v * mult))
@@ -371,7 +411,10 @@ fn evaluate_lin<T: Field>(w: &Witness<T>, l: &LinComb<T>) -> Result<T, Evaluatio
     })
 }
 
-pub fn evaluate_quad<T: Field>(w: &Witness<T>, q: &QuadComb<T>) -> Result<T, EvaluationError> {
+pub fn evaluate_quad<T: Field>(
+    w: &Witness<T>,
+    q: &QuadComb<T>,
+) -> Result<T, EvaluationError> {
     let left = evaluate_lin(w, &q.left)?;
     let right = evaluate_lin(w, &q.right)?;
     Ok(left * right)
@@ -407,7 +450,9 @@ impl fmt::Display for Error {
                 received,
                 if received == 1 { "" } else { "s" }
             ),
-            Error::LogStream => write!(f, "Error writing a log to the log stream"),
+            Error::LogStream => {
+                write!(f, "Error writing a log to the log stream")
+            }
         }
     }
 }
@@ -444,7 +489,8 @@ mod tests {
                 &[],
             )
             .unwrap();
-            let res: Vec<Bn128Field> = [0, 1].iter().map(|&i| Bn128Field::from(i)).collect();
+            let res: Vec<Bn128Field> =
+                [0, 1].iter().map(|&i| Bn128Field::from(i)).collect();
             assert_eq!(r, &res[..]);
         }
 
@@ -461,7 +507,8 @@ mod tests {
                 &[],
             )
             .unwrap();
-            let res: Vec<Bn128Field> = [1, 1].iter().map(|&i| Bn128Field::from(i)).collect();
+            let res: Vec<Bn128Field> =
+                [1, 1].iter().map(|&i| Bn128Field::from(i)).collect();
             assert_eq!(r, &res[..]);
         }
     }
@@ -502,7 +549,9 @@ mod tests {
     #[test]
     fn five_hundred_bits_of_1() {
         let inputs = vec![Bn128Field::from(1)];
-        let res = Interpreter::execute_solver(&Solver::Bits(500), &inputs, &[]).unwrap();
+        let res =
+            Interpreter::execute_solver(&Solver::Bits(500), &inputs, &[])
+                .unwrap();
 
         let mut expected = vec![Bn128Field::from(0); 500];
         expected[499] = Bn128Field::from(1);
@@ -515,8 +564,8 @@ mod tests {
         use std::ops::Mul;
         use zir::{
             types::{Signature, Type},
-            FieldElementExpression, Identifier, IdentifierExpression, Parameter, Variable,
-            ZirFunction, ZirStatement,
+            FieldElementExpression, Identifier, IdentifierExpression,
+            Parameter, Variable, ZirFunction, ZirStatement,
         };
         use zokrates_ast::common::RefCall;
 
@@ -524,12 +573,17 @@ mod tests {
 
         // (field i0) -> i0 * i0
         let solver = Solver::Zir(ZirFunction {
-            arguments: vec![Parameter::new(Variable::field_element(id.id.clone()), true)],
-            statements: vec![ZirStatement::ret(vec![FieldElementExpression::mul(
-                FieldElementExpression::Identifier(id.clone()),
-                FieldElementExpression::Identifier(id.clone()),
-            )
-            .into()])],
+            arguments: vec![Parameter::new(
+                Variable::field_element(id.id.clone()),
+                true,
+            )],
+            statements: vec![ZirStatement::ret(vec![
+                FieldElementExpression::mul(
+                    FieldElementExpression::Identifier(id.clone()),
+                    FieldElementExpression::Identifier(id.clone()),
+                )
+                .into(),
+            ])],
             signature: Signature::new()
                 .inputs(vec![Type::FieldElement])
                 .outputs(vec![Type::FieldElement]),

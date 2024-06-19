@@ -2,11 +2,15 @@ use crate::common::{
     flat::{Parameter, Variable},
     RuntimeError, Solver,
 };
-use crate::flat::{flat_expression_from_bits, flat_expression_from_variable_summands};
-use crate::flat::{FlatDirective, FlatExpression, FlatFunctionIterator, FlatStatement};
+use crate::flat::{
+    flat_expression_from_bits, flat_expression_from_variable_summands,
+};
+use crate::flat::{
+    FlatDirective, FlatExpression, FlatFunctionIterator, FlatStatement,
+};
 use crate::typed::types::{
-    ConcreteGenericsAssignment, DeclarationConstant, DeclarationSignature, DeclarationType,
-    GenericIdentifier,
+    ConcreteGenericsAssignment, DeclarationConstant, DeclarationSignature,
+    DeclarationType, GenericIdentifier,
 };
 use crate::untyped::{
     types::{UnresolvedSignature, UnresolvedType},
@@ -35,7 +39,18 @@ cfg_if::cfg_if! {
 
 /// A low level function that contains non-deterministic introduction of variables. It is carried out as is until
 /// the flattening step when it can be inlined.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    Copy,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+)]
 pub enum FlatEmbed {
     FieldToBoolUnsafe,
     BitArrayLe,
@@ -225,16 +240,28 @@ impl FlatEmbed {
                 ))),
             FlatEmbed::U8ToBits => DeclarationSignature::new()
                 .inputs(vec![DeclarationType::uint(8)])
-                .output(DeclarationType::array((DeclarationType::Boolean, 8u32))),
+                .output(DeclarationType::array((
+                    DeclarationType::Boolean,
+                    8u32,
+                ))),
             FlatEmbed::U16ToBits => DeclarationSignature::new()
                 .inputs(vec![DeclarationType::uint(16)])
-                .output(DeclarationType::array((DeclarationType::Boolean, 16u32))),
+                .output(DeclarationType::array((
+                    DeclarationType::Boolean,
+                    16u32,
+                ))),
             FlatEmbed::U32ToBits => DeclarationSignature::new()
                 .inputs(vec![DeclarationType::uint(32)])
-                .output(DeclarationType::array((DeclarationType::Boolean, 32u32))),
+                .output(DeclarationType::array((
+                    DeclarationType::Boolean,
+                    32u32,
+                ))),
             FlatEmbed::U64ToBits => DeclarationSignature::new()
                 .inputs(vec![DeclarationType::uint(64)])
-                .output(DeclarationType::array((DeclarationType::Boolean, 64u32))),
+                .output(DeclarationType::array((
+                    DeclarationType::Boolean,
+                    64u32,
+                ))),
             FlatEmbed::U8FromBits => DeclarationSignature::new()
                 .output(DeclarationType::uint(8))
                 .inputs(vec![DeclarationType::array((
@@ -265,7 +292,10 @@ impl FlatEmbed {
                     DeclarationType::array((DeclarationType::Boolean, 512u32)),
                     DeclarationType::array((DeclarationType::Boolean, 256u32)),
                 ])
-                .output(DeclarationType::array((DeclarationType::Boolean, 256u32))),
+                .output(DeclarationType::array((
+                    DeclarationType::Boolean,
+                    256u32,
+                ))),
             #[cfg(feature = "ark")]
             FlatEmbed::SnarkVerifyBls12377 => DeclarationSignature::new()
                 .generics(vec![
@@ -281,7 +311,10 @@ impl FlatEmbed {
                         DeclarationType::FieldElement,
                         GenericIdentifier::with_name("N").with_index(0),
                     )), // inputs
-                    DeclarationType::array((DeclarationType::FieldElement, 8u32)), // proof
+                    DeclarationType::array((
+                        DeclarationType::FieldElement,
+                        8u32,
+                    )), // proof
                     DeclarationType::array((
                         DeclarationType::FieldElement,
                         GenericIdentifier::with_name("V").with_index(1),
@@ -291,7 +324,10 @@ impl FlatEmbed {
         }
     }
 
-    pub fn generics<'ast, T>(&self, assignment: &ConcreteGenericsAssignment<'ast>) -> Vec<u32> {
+    pub fn generics<'ast, T>(
+        &self,
+        assignment: &ConcreteGenericsAssignment<'ast>,
+    ) -> Vec<u32> {
         let gen = self.typed_signature().generics.into_iter().map(
             |c: Option<DeclarationConstant<'ast, T>>| match c.unwrap() {
                 DeclarationConstant::Generic(g) => g,
@@ -332,8 +368,11 @@ impl FlatEmbed {
 /// - constraint system variables
 /// - arguments
 #[cfg(feature = "bellman")]
-pub fn sha256_round<'ast, T: Field>(
-) -> FlatFunctionIterator<'ast, T, impl IntoIterator<Item = FlatStatement<'ast, T>>> {
+pub fn sha256_round<'ast, T: Field>() -> FlatFunctionIterator<
+    'ast,
+    T,
+    impl IntoIterator<Item = FlatStatement<'ast, T>>,
+> {
     use zokrates_field::Bn128Field;
     assert_eq!(T::id(), Bn128Field::id());
 
@@ -386,8 +425,10 @@ pub fn sha256_round<'ast, T: Field>(
     // insert flattened statements to represent constraints
     let constraint_statements = r1cs.constraints.into_iter().map(|c| {
         let c = from_bellman::<T, Bn256>(c);
-        let rhs_a = flat_expression_from_variable_summands::<T>(c.a.as_slice());
-        let rhs_b = flat_expression_from_variable_summands::<T>(c.b.as_slice());
+        let rhs_a =
+            flat_expression_from_variable_summands::<T>(c.a.as_slice());
+        let rhs_b =
+            flat_expression_from_variable_summands::<T>(c.b.as_slice());
         let lhs = flat_expression_from_variable_summands::<T>(c.c.as_slice());
 
         FlatStatement::condition(
@@ -398,7 +439,8 @@ pub fn sha256_round<'ast, T: Field>(
     });
 
     // define which subset of the witness is returned
-    let outputs = output_indices.map(|o| FlatExpression::identifier(Variable::new(o)));
+    let outputs =
+        output_indices.map(|o| FlatExpression::identifier(Variable::new(o)));
     // insert a directive to set the witness based on the bellman gadget and  inputs
     let directive_statement = FlatStatement::Directive(FlatDirective::new(
         cs_indices.map(Variable::new).collect(),
@@ -410,10 +452,10 @@ pub fn sha256_round<'ast, T: Field>(
             .collect(),
     ));
     // insert a statement to return the subset of the witness
-    let return_statements = outputs
-        .into_iter()
-        .enumerate()
-        .map(|(index, e)| FlatStatement::definition(Variable::public(index), e));
+    let return_statements =
+        outputs.into_iter().enumerate().map(|(index, e)| {
+            FlatStatement::definition(Variable::public(index), e)
+        });
     let statements = std::iter::once(directive_statement)
         .chain(std::iter::once(one_binding_statement))
         .chain(input_binding_statements)
@@ -431,12 +473,22 @@ pub fn sha256_round<'ast, T: Field>(
 #[cfg(feature = "ark")]
 pub fn snark_verify_bls12_377<'ast, T: Field>(
     n: usize,
-) -> FlatFunctionIterator<'ast, T, impl IntoIterator<Item = FlatStatement<'ast, T>>> {
+) -> FlatFunctionIterator<
+    'ast,
+    T,
+    impl IntoIterator<Item = FlatStatement<'ast, T>>,
+> {
     use zokrates_field::Bw6_761Field;
     assert_eq!(T::id(), Bw6_761Field::id());
 
-    let (out_index, input_indices, proof_indices, vk_indices, constraints, variable_count) =
-        generate_verify_constraints(n);
+    let (
+        out_index,
+        input_indices,
+        proof_indices,
+        vk_indices,
+        constraints,
+        variable_count,
+    ) = generate_verify_constraints(n);
 
     let cs_indices = 0..variable_count;
     let input_indices = input_indices.into_iter();
@@ -444,9 +496,11 @@ pub fn snark_verify_bls12_377<'ast, T: Field>(
     let vk_indices = vk_indices.into_iter();
 
     // indices of the arguments to the function
-    let input_argument_indices = input_indices.clone().map(|i| i + variable_count);
+    let input_argument_indices =
+        input_indices.clone().map(|i| i + variable_count);
 
-    let proof_argument_indices = proof_indices.clone().map(|i| i + variable_count);
+    let proof_argument_indices =
+        proof_indices.clone().map(|i| i + variable_count);
 
     let vk_argument_indices = vk_indices.clone().map(|i| i + variable_count);
 
@@ -495,9 +549,12 @@ pub fn snark_verify_bls12_377<'ast, T: Field>(
         .into_iter()
         .map(|c| {
             let c = from_ark::<T, Bls12_377>(c);
-            let rhs_a = flat_expression_from_variable_summands::<T>(c.a.as_slice());
-            let rhs_b = flat_expression_from_variable_summands::<T>(c.b.as_slice());
-            let lhs = flat_expression_from_variable_summands::<T>(c.c.as_slice());
+            let rhs_a =
+                flat_expression_from_variable_summands::<T>(c.a.as_slice());
+            let rhs_b =
+                flat_expression_from_variable_summands::<T>(c.b.as_slice());
+            let lhs =
+                flat_expression_from_variable_summands::<T>(c.c.as_slice());
 
             FlatStatement::condition(
                 lhs,
@@ -558,7 +615,11 @@ fn use_variable(
 ///   as some elements can have multiple representations: For example, `unpack(0)` is `[0, ..., 0]` but also `unpack(p)`
 pub fn unpack_to_bitwidth<'ast, T: Field>(
     bit_width: usize,
-) -> FlatFunctionIterator<'ast, T, impl IntoIterator<Item = FlatStatement<'ast, T>>> {
+) -> FlatFunctionIterator<
+    'ast,
+    T,
+    impl IntoIterator<Item = FlatStatement<'ast, T>>,
+> {
     let mut counter = 0;
 
     let mut layout = HashMap::new();
@@ -574,7 +635,9 @@ pub fn unpack_to_bitwidth<'ast, T: Field>(
     ))];
 
     let directive_outputs: Vec<Variable> = (0..bit_width)
-        .map(|index| use_variable(&mut layout, format!("o{}", index), &mut counter))
+        .map(|index| {
+            use_variable(&mut layout, format!("o{}", index), &mut counter)
+        })
         .collect();
 
     let solver = Solver::bits(bit_width);
@@ -589,7 +652,8 @@ pub fn unpack_to_bitwidth<'ast, T: Field>(
     // o253, o252, ... o{253 - (bit_width - 1)} are bits
     let mut statements: Vec<FlatStatement<T>> = (0..bit_width)
         .map(|index| {
-            let bit = FlatExpression::identifier(Variable::new(bit_width - index));
+            let bit =
+                FlatExpression::identifier(Variable::new(bit_width - index));
             FlatStatement::condition(
                 bit.clone(),
                 FlatExpression::mul(bit.clone(), bit),
@@ -623,12 +687,9 @@ pub fn unpack_to_bitwidth<'ast, T: Field>(
         )),
     );
 
-    statements.extend(
-        outputs
-            .into_iter()
-            .enumerate()
-            .map(|(index, e)| FlatStatement::definition(Variable::public(index), e)),
-    );
+    statements.extend(outputs.into_iter().enumerate().map(|(index, e)| {
+        FlatStatement::definition(Variable::public(index), e)
+    }));
 
     FlatFunctionIterator {
         arguments,
@@ -649,10 +710,15 @@ mod tests {
 
         #[test]
         fn split254() {
-            let unpack =
-                unpack_to_bitwidth::<Bn128Field>(Bn128Field::get_required_bits()).collect();
+            let unpack = unpack_to_bitwidth::<Bn128Field>(
+                Bn128Field::get_required_bits(),
+            )
+            .collect();
 
-            assert_eq!(unpack.arguments, vec![Parameter::private(Variable::new(0))]);
+            assert_eq!(
+                unpack.arguments,
+                vec![Parameter::private(Variable::new(0))]
+            );
             assert_eq!(
                 unpack.statements[0],
                 FlatStatement::Directive(FlatDirective::new(
@@ -665,7 +731,10 @@ mod tests {
             );
             assert_eq!(
                 unpack.statements.len(),
-                Bn128Field::get_required_bits() + 1 + 1 + Bn128Field::get_required_bits()
+                Bn128Field::get_required_bits()
+                    + 1
+                    + 1
+                    + Bn128Field::get_required_bits()
             ) // 254 bit checks, 1 directive, 1 sum check, 254 returns
         }
     }

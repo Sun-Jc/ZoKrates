@@ -8,7 +8,8 @@ use zokrates_ast::zir::lqc::LinQuadComb;
 use zokrates_ast::zir::result_folder::ResultFolder;
 use zokrates_ast::zir::AssemblyConstraint;
 use zokrates_ast::zir::{
-    Expr, FieldElementExpression, Id, Identifier, ZirAssemblyStatement, ZirProgram,
+    Expr, FieldElementExpression, Id, Identifier, ZirAssemblyStatement,
+    ZirProgram,
 };
 use zokrates_field::Field;
 
@@ -24,7 +25,9 @@ impl fmt::Display for Error {
 pub struct AssemblyTransformer;
 
 impl AssemblyTransformer {
-    pub fn transform<T: Field>(p: ZirProgram<T>) -> Result<ZirProgram<T>, Error> {
+    pub fn transform<T: Field>(
+        p: ZirProgram<T>,
+    ) -> Result<ZirProgram<T>, Error> {
         AssemblyTransformer.fold_program(p)
     }
 }
@@ -44,7 +47,8 @@ impl<'ast, T: Field> ResultFolder<'ast, T> for AssemblyTransformer {
                 lhs @ FieldElementExpression::Identifier(..),
                 rhs @ FieldElementExpression::Identifier(..),
             ) => (true, lhs, rhs),
-            (FieldElementExpression::Mult(e), other) | (other, FieldElementExpression::Mult(e))
+            (FieldElementExpression::Mult(e), other)
+            | (other, FieldElementExpression::Mult(e))
                 if other.is_linear() =>
             {
                 (
@@ -57,11 +61,18 @@ impl<'ast, T: Field> ResultFolder<'ast, T> for AssemblyTransformer {
         };
 
         match is_quadratic {
-            true => Ok(vec![ZirAssemblyStatement::constraint(lhs, rhs, s.metadata)]),
+            true => Ok(vec![ZirAssemblyStatement::constraint(
+                lhs, rhs, s.metadata,
+            )]),
             false => {
                 let sub = FieldElementExpression::sub(lhs, rhs);
-                let mut lqc = LinQuadComb::try_from(sub.clone())
-                    .map_err(|_| Error("Non-quadratic constraints are not allowed".to_string()))?;
+                let mut lqc =
+                    LinQuadComb::try_from(sub.clone()).map_err(|_| {
+                        Error(
+                            "Non-quadratic constraints are not allowed"
+                                .to_string(),
+                        )
+                    })?;
 
                 let linear = lqc
                     .linear
@@ -72,37 +83,47 @@ impl<'ast, T: Field> ResultFolder<'ast, T> for AssemblyTransformer {
                             FieldElementExpression::identifier(i),
                         )
                     })
-                    .fold(FieldElementExpression::value(T::from(0)), |acc, e| {
-                        FieldElementExpression::add(acc, e)
-                    });
+                    .fold(
+                        FieldElementExpression::value(T::from(0)),
+                        |acc, e| FieldElementExpression::add(acc, e),
+                    );
 
                 let lhs = FieldElementExpression::add(
                     FieldElementExpression::value(lqc.constant),
                     linear,
                 );
 
-                let rhs: FieldElementExpression<'ast, T> = if lqc.quadratic.len() > 1 {
+                let rhs: FieldElementExpression<'ast, T> = if lqc
+                    .quadratic
+                    .len()
+                    > 1
+                {
                     let common_factor = lqc
                         .quadratic
                         .iter()
-                        .scan(None, |state: &mut Option<Vec<&Identifier>>, (_, a, b)| {
-                            // short circuit if we do not have any common factors anymore
-                            if *state == Some(vec![]) {
-                                None
-                            } else {
-                                match state {
-                                    // only keep factors found in this term
-                                    Some(factors) => {
-                                        factors.retain(|&x| x == a || x == b);
-                                    }
-                                    // initialisation step, start with the two factors in the first term
-                                    None => {
-                                        *state = Some(vec![a, b]);
-                                    }
-                                };
-                                state.clone()
-                            }
-                        })
+                        .scan(
+                            None,
+                            |state: &mut Option<Vec<&Identifier>>,
+                             (_, a, b)| {
+                                // short circuit if we do not have any common factors anymore
+                                if *state == Some(vec![]) {
+                                    None
+                                } else {
+                                    match state {
+                                        // only keep factors found in this term
+                                        Some(factors) => {
+                                            factors
+                                                .retain(|&x| x == a || x == b);
+                                        }
+                                        // initialisation step, start with the two factors in the first term
+                                        None => {
+                                            *state = Some(vec![a, b]);
+                                        }
+                                    };
+                                    state.clone()
+                                }
+                            },
+                        )
                         .last()
                         .and_then(|mut v| v.pop().cloned());
 
@@ -114,14 +135,21 @@ impl<'ast, T: Field> ResultFolder<'ast, T> for AssemblyTransformer {
                                     let c = T::zero() - c;
                                     let e = match (i0, i1) {
                                         (i0, i1) if factor.eq(&i0) => {
-                                            FieldElementExpression::identifier(i1)
+                                            FieldElementExpression::identifier(
+                                                i1,
+                                            )
                                         }
                                         (i0, i1) if factor.eq(&i1) => {
-                                            FieldElementExpression::identifier(i0)
+                                            FieldElementExpression::identifier(
+                                                i0,
+                                            )
                                         }
                                         _ => unreachable!(),
                                     };
-                                    FieldElementExpression::mul(FieldElementExpression::value(c), e)
+                                    FieldElementExpression::mul(
+                                        FieldElementExpression::value(c),
+                                        e,
+                                    )
                                 })
                                 .fold(
                                     FieldElementExpression::value(T::from(0)),
@@ -130,7 +158,8 @@ impl<'ast, T: Field> ResultFolder<'ast, T> for AssemblyTransformer {
                             FieldElementExpression::identifier(factor),
                         )),
                         None => Err(Error(
-                            "Non-quadratic constraints are not allowed".to_string(),
+                            "Non-quadratic constraints are not allowed"
+                                .to_string(),
                         )),
                     }?
                 } else {
@@ -139,13 +168,17 @@ impl<'ast, T: Field> ResultFolder<'ast, T> for AssemblyTransformer {
                         .map(|(c, i0, i1)| {
                             FieldElementExpression::mul(
                                 FieldElementExpression::mul(
-                                    FieldElementExpression::value(T::zero() - c),
+                                    FieldElementExpression::value(
+                                        T::zero() - c,
+                                    ),
                                     FieldElementExpression::identifier(i0),
                                 ),
                                 FieldElementExpression::identifier(i1),
                             )
                         })
-                        .unwrap_or_else(|| FieldElementExpression::value(T::from(0)))
+                        .unwrap_or_else(|| {
+                            FieldElementExpression::value(T::from(0))
+                        })
                 };
 
                 let mut propagator = ZirPropagator::default();
@@ -157,7 +190,9 @@ impl<'ast, T: Field> ResultFolder<'ast, T> for AssemblyTransformer {
                     .fold_field_expression(rhs)
                     .map_err(|e| Error(e.to_string()))?;
 
-                Ok(vec![ZirAssemblyStatement::constraint(lhs, rhs, s.metadata)])
+                Ok(vec![ZirAssemblyStatement::constraint(
+                    lhs, rhs, s.metadata,
+                )])
             }
         }
     }
@@ -209,11 +244,13 @@ mod tests {
             FieldElementExpression::identifier("c".into()),
         );
 
-        let result = AssemblyTransformer.fold_assembly_statement(ZirAssemblyStatement::constraint(
-            lhs,
-            rhs,
-            SourceMetadata::default(),
-        ));
+        let result = AssemblyTransformer.fold_assembly_statement(
+            ZirAssemblyStatement::constraint(
+                lhs,
+                rhs,
+                SourceMetadata::default(),
+            ),
+        );
 
         assert!(result.is_err());
     }
@@ -313,7 +350,9 @@ mod tests {
                         ),
                         FieldElementExpression::mul(
                             FieldElementExpression::mul(
-                                FieldElementExpression::value(Bn128Field::from(2)),
+                                FieldElementExpression::value(
+                                    Bn128Field::from(2),
+                                ),
                                 FieldElementExpression::identifier("a".into()),
                             ),
                             FieldElementExpression::identifier("b".into()),
@@ -347,7 +386,9 @@ mod tests {
                     FieldElementExpression::add(
                         FieldElementExpression::identifier("x".into()),
                         FieldElementExpression::mul(
-                            FieldElementExpression::value(Bn128Field::from(-1)),
+                            FieldElementExpression::value(Bn128Field::from(
+                                -1,
+                            )),
                             FieldElementExpression::identifier("a".into()),
                         ),
                     ),

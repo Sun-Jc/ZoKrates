@@ -19,8 +19,8 @@ pub use self::fold::{Fold, ResultFold};
 pub use self::metadata::SourceMetadata;
 pub use self::parameter::Parameter;
 pub use self::position::{
-    LocalSourceSpan, ModuleId, ModuleIdHash, ModuleMap, OwnedModuleId, Position, SourceSpan, Span,
-    WithSpan,
+    LocalSourceSpan, ModuleId, ModuleIdHash, ModuleMap, OwnedModuleId,
+    Position, SourceSpan, Span, WithSpan,
 };
 pub use self::solvers::{RefCall, Solver};
 pub use self::value::Value;

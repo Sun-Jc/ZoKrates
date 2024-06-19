@@ -40,10 +40,18 @@ pub fn optimize<'ast, T: Field, I: IntoIterator<Item = Statement<'ast, T>>>(
             .into_iter()
             .map(|a| redefinition_optimizer.fold_argument(a))
             .map(|a| {
-                <TautologyOptimizer as Folder<T>>::fold_argument(&mut tautologies_optimizer, a)
+                <TautologyOptimizer as Folder<T>>::fold_argument(
+                    &mut tautologies_optimizer,
+                    a,
+                )
             })
             .map(|a| directive_optimizer.fold_argument(a))
-            .map(|a| <DuplicateOptimizer as Folder<T>>::fold_argument(&mut duplicate_optimizer, a))
+            .map(|a| {
+                <DuplicateOptimizer as Folder<T>>::fold_argument(
+                    &mut duplicate_optimizer,
+                    a,
+                )
+            })
             .collect(),
         statements: p
             .statements

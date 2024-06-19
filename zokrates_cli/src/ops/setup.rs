@@ -94,8 +94,8 @@ pub fn subcommand() -> App<'static, 'static> {
 pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     // read compiled program
     let path = Path::new(sub_matches.value_of("input").unwrap());
-    let file =
-        File::open(path).map_err(|why| format!("Couldn't open {}: {}", path.display(), why))?;
+    let file = File::open(path)
+        .map_err(|why| format!("Couldn't open {}: {}", path.display(), why))?;
 
     let mut reader = BufReader::new(file);
     let prog = ProgEnum::deserialize(&mut reader)?;
@@ -108,46 +108,64 @@ pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
 
     match parameters {
         #[cfg(feature = "bellman")]
-        Parameters(BackendParameter::Bellman, _, SchemeParameter::G16) => match prog {
-            ProgEnum::Bn128Program(p) => {
-                cli_setup_non_universal::<_, _, G16, Bellman>(p, sub_matches)
+        Parameters(BackendParameter::Bellman, _, SchemeParameter::G16) => {
+            match prog {
+                ProgEnum::Bn128Program(p) => {
+                    cli_setup_non_universal::<_, _, G16, Bellman>(
+                        p,
+                        sub_matches,
+                    )
+                }
+                ProgEnum::Bls12_381Program(p) => {
+                    cli_setup_non_universal::<_, _, G16, Bellman>(
+                        p,
+                        sub_matches,
+                    )
+                }
+                _ => unreachable!(),
             }
-            ProgEnum::Bls12_381Program(p) => {
-                cli_setup_non_universal::<_, _, G16, Bellman>(p, sub_matches)
-            }
-            _ => unreachable!(),
-        },
+        }
         #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, _, SchemeParameter::G16) => match prog {
-            ProgEnum::Bn128Program(p) => cli_setup_non_universal::<_, _, G16, Ark>(p, sub_matches),
-            ProgEnum::Bls12_381Program(p) => {
-                cli_setup_non_universal::<_, _, G16, Ark>(p, sub_matches)
+        Parameters(BackendParameter::Ark, _, SchemeParameter::G16) => {
+            match prog {
+                ProgEnum::Bn128Program(p) => {
+                    cli_setup_non_universal::<_, _, G16, Ark>(p, sub_matches)
+                }
+                ProgEnum::Bls12_381Program(p) => {
+                    cli_setup_non_universal::<_, _, G16, Ark>(p, sub_matches)
+                }
+                ProgEnum::Bls12_377Program(p) => {
+                    cli_setup_non_universal::<_, _, G16, Ark>(p, sub_matches)
+                }
+                ProgEnum::Bw6_761Program(p) => {
+                    cli_setup_non_universal::<_, _, G16, Ark>(p, sub_matches)
+                }
+                _ => unreachable!(),
             }
-            ProgEnum::Bls12_377Program(p) => {
-                cli_setup_non_universal::<_, _, G16, Ark>(p, sub_matches)
-            }
-            ProgEnum::Bw6_761Program(p) => {
-                cli_setup_non_universal::<_, _, G16, Ark>(p, sub_matches)
-            }
-            _ => unreachable!(),
-        },
+        }
         #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, _, SchemeParameter::GM17) => match prog {
-            ProgEnum::Bn128Program(p) => cli_setup_non_universal::<_, _, GM17, Ark>(p, sub_matches),
-            ProgEnum::Bls12_381Program(p) => {
-                cli_setup_non_universal::<_, _, GM17, Ark>(p, sub_matches)
+        Parameters(BackendParameter::Ark, _, SchemeParameter::GM17) => {
+            match prog {
+                ProgEnum::Bn128Program(p) => {
+                    cli_setup_non_universal::<_, _, GM17, Ark>(p, sub_matches)
+                }
+                ProgEnum::Bls12_381Program(p) => {
+                    cli_setup_non_universal::<_, _, GM17, Ark>(p, sub_matches)
+                }
+                ProgEnum::Bls12_377Program(p) => {
+                    cli_setup_non_universal::<_, _, GM17, Ark>(p, sub_matches)
+                }
+                ProgEnum::Bw6_761Program(p) => {
+                    cli_setup_non_universal::<_, _, GM17, Ark>(p, sub_matches)
+                }
+                _ => unreachable!(),
             }
-            ProgEnum::Bls12_377Program(p) => {
-                cli_setup_non_universal::<_, _, GM17, Ark>(p, sub_matches)
-            }
-            ProgEnum::Bw6_761Program(p) => {
-                cli_setup_non_universal::<_, _, GM17, Ark>(p, sub_matches)
-            }
-            _ => unreachable!(),
-        },
+        }
         #[cfg(feature = "ark")]
         Parameters(BackendParameter::Ark, _, SchemeParameter::MARLIN) => {
-            let setup_path = Path::new(sub_matches.value_of("universal-setup-path").unwrap());
+            let setup_path = Path::new(
+                sub_matches.value_of("universal-setup-path").unwrap(),
+            );
             let setup_file = File::open(setup_path)
                 .map_err(|why| format!("Couldn't open {}: {}\nExpected an universal setup, make sure `zokrates universal-setup` was run`", setup_path.display(), why))?;
 
@@ -162,16 +180,32 @@ pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
 
             match prog {
                 ProgEnum::Bn128Program(p) => {
-                    cli_setup_universal::<_, _, Marlin, Ark>(p, setup, sub_matches)
+                    cli_setup_universal::<_, _, Marlin, Ark>(
+                        p,
+                        setup,
+                        sub_matches,
+                    )
                 }
                 ProgEnum::Bls12_381Program(p) => {
-                    cli_setup_universal::<_, _, Marlin, Ark>(p, setup, sub_matches)
+                    cli_setup_universal::<_, _, Marlin, Ark>(
+                        p,
+                        setup,
+                        sub_matches,
+                    )
                 }
                 ProgEnum::Bls12_377Program(p) => {
-                    cli_setup_universal::<_, _, Marlin, Ark>(p, setup, sub_matches)
+                    cli_setup_universal::<_, _, Marlin, Ark>(
+                        p,
+                        setup,
+                        sub_matches,
+                    )
                 }
                 ProgEnum::Bw6_761Program(p) => {
-                    cli_setup_universal::<_, _, Marlin, Ark>(p, setup, sub_matches)
+                    cli_setup_universal::<_, _, Marlin, Ark>(
+                        p,
+                        setup,
+                        sub_matches,
+                    )
                 }
                 _ => unreachable!(),
             }
@@ -194,7 +228,8 @@ fn cli_setup_non_universal<
 
     // get paths for proving and verification keys
     let pk_path = Path::new(sub_matches.value_of("proving-key-path").unwrap());
-    let vk_path = Path::new(sub_matches.value_of("verification-key-path").unwrap());
+    let vk_path =
+        Path::new(sub_matches.value_of("verification-key-path").unwrap());
 
     let mut rng = sub_matches
         .value_of("entropy")
@@ -205,24 +240,30 @@ fn cli_setup_non_universal<
     let keypair = B::setup(program, &mut rng);
 
     // write verification key
-    let mut vk_file = File::create(vk_path)
-        .map_err(|why| format!("Could not create {}: {}", vk_path.display(), why))?;
+    let mut vk_file = File::create(vk_path).map_err(|why| {
+        format!("Could not create {}: {}", vk_path.display(), why)
+    })?;
     vk_file
         .write_all(
-            serde_json::to_string_pretty(&TaggedVerificationKey::<T, S>::new(keypair.vk))
-                .unwrap()
-                .as_bytes(),
+            serde_json::to_string_pretty(&TaggedVerificationKey::<T, S>::new(
+                keypair.vk,
+            ))
+            .unwrap()
+            .as_bytes(),
         )
-        .map_err(|why| format!("Could not write to {}: {}", vk_path.display(), why))?;
+        .map_err(|why| {
+            format!("Could not write to {}: {}", vk_path.display(), why)
+        })?;
 
     println!("Verification key written to '{}'", vk_path.display());
 
     // write proving key
-    let mut pk_file = File::create(pk_path)
-        .map_err(|why| format!("Could not create {}: {}", pk_path.display(), why))?;
-    pk_file
-        .write_all(keypair.pk.as_ref())
-        .map_err(|why| format!("Could not write to {}: {}", pk_path.display(), why))?;
+    let mut pk_file = File::create(pk_path).map_err(|why| {
+        format!("Could not create {}: {}", pk_path.display(), why)
+    })?;
+    pk_file.write_all(keypair.pk.as_ref()).map_err(|why| {
+        format!("Could not write to {}: {}", pk_path.display(), why)
+    })?;
 
     println!("Proving key written to '{}'", pk_path.display());
     println!("Setup completed");
@@ -245,30 +286,37 @@ fn cli_setup_universal<
 
     // get paths for proving and verification keys
     let pk_path = Path::new(sub_matches.value_of("proving-key-path").unwrap());
-    let vk_path = Path::new(sub_matches.value_of("verification-key-path").unwrap());
+    let vk_path =
+        Path::new(sub_matches.value_of("verification-key-path").unwrap());
 
     // run setup phase
     let keypair = B::setup(srs, program)?;
 
     // write verification key
-    let mut vk_file = File::create(vk_path)
-        .map_err(|why| format!("Could not create {}: {}", vk_path.display(), why))?;
+    let mut vk_file = File::create(vk_path).map_err(|why| {
+        format!("Could not create {}: {}", vk_path.display(), why)
+    })?;
     vk_file
         .write_all(
-            serde_json::to_string_pretty(&TaggedVerificationKey::<T, S>::new(keypair.vk))
-                .unwrap()
-                .as_bytes(),
+            serde_json::to_string_pretty(&TaggedVerificationKey::<T, S>::new(
+                keypair.vk,
+            ))
+            .unwrap()
+            .as_bytes(),
         )
-        .map_err(|why| format!("Could not write to {}: {}", vk_path.display(), why))?;
+        .map_err(|why| {
+            format!("Could not write to {}: {}", vk_path.display(), why)
+        })?;
 
     println!("Verification key written to '{}'", vk_path.display());
 
     // write proving key
-    let mut pk_file = File::create(pk_path)
-        .map_err(|why| format!("Could not create {}: {}", pk_path.display(), why))?;
-    pk_file
-        .write_all(keypair.pk.as_ref())
-        .map_err(|why| format!("Could not write to {}: {}", pk_path.display(), why))?;
+    let mut pk_file = File::create(pk_path).map_err(|why| {
+        format!("Could not create {}: {}", pk_path.display(), why)
+    })?;
+    pk_file.write_all(keypair.pk.as_ref()).map_err(|why| {
+        format!("Could not write to {}: {}", pk_path.display(), why)
+    })?;
 
     println!("Proving key written to '{}'", pk_path.display());
     println!("Setup completed");

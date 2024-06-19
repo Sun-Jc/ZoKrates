@@ -1,16 +1,21 @@
 use std::fmt;
 use zokrates_ast::common::FlatEmbed;
 use zokrates_ast::typed::result_folder::*;
-use zokrates_ast::typed::{result_folder::ResultFolder, Constant, EmbedCall, TypedStatement};
 use zokrates_ast::typed::{
-    DefinitionRhs, DefinitionStatement, TypedProgram, UBitwidth, UExpression, UExpressionInner,
+    result_folder::ResultFolder, Constant, EmbedCall, TypedStatement,
+};
+use zokrates_ast::typed::{
+    DefinitionRhs, DefinitionStatement, TypedProgram, UBitwidth, UExpression,
+    UExpressionInner,
 };
 use zokrates_field::Field;
 
 pub struct ConstantArgumentChecker;
 
 impl ConstantArgumentChecker {
-    pub fn check<T: Field>(p: TypedProgram<T>) -> Result<TypedProgram<T>, Error> {
+    pub fn check<T: Field>(
+        p: TypedProgram<T>,
+    ) -> Result<TypedProgram<T>, Error> {
         ConstantArgumentChecker.fold_program(p)
     }
 }

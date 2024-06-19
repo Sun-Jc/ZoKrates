@@ -56,13 +56,15 @@ mod integration {
             }
         }
 
-        pub fn parse_witness_json<T: Field, R: Read>(reader: R) -> std::io::Result<Witness<T>> {
+        pub fn parse_witness_json<T: Field, R: Read>(
+            reader: R,
+        ) -> std::io::Result<Witness<T>> {
             use std::io::{Error, ErrorKind};
 
             let json: serde_json::Value = serde_json::from_reader(reader)?;
-            let object = json
-                .as_object()
-                .ok_or_else(|| Error::new(ErrorKind::Other, "Witness must be an object"))?;
+            let object = json.as_object().ok_or_else(|| {
+                Error::new(ErrorKind::Other, "Witness must be an object")
+            })?;
 
             let mut witness = Witness::empty();
             for (k, v) in object {
@@ -75,10 +77,18 @@ mod integration {
 
                 let value = v
                     .as_str()
-                    .ok_or_else(|| Error::new(ErrorKind::Other, "Witness value must be a string"))
+                    .ok_or_else(|| {
+                        Error::new(
+                            ErrorKind::Other,
+                            "Witness value must be a string",
+                        )
+                    })
                     .and_then(|v| {
                         T::try_from_dec_str(v).map_err(|_| {
-                            Error::new(ErrorKind::Other, format!("Invalid value in witness: {}", v))
+                            Error::new(
+                                ErrorKind::Other,
+                                format!("Invalid value in witness: {}", v),
+                            )
                         })
                     })?;
 
@@ -159,13 +169,15 @@ mod integration {
             let entry = entry.unwrap();
             let path = entry.path();
             if path.extension().unwrap() == "witness" {
-                let program_name =
-                    Path::new(Path::new(path.file_stem().unwrap()).file_stem().unwrap());
+                let program_name = Path::new(
+                    Path::new(path.file_stem().unwrap()).file_stem().unwrap(),
+                );
                 let prog = dir.join(program_name).with_extension("zok");
                 let witness = dir
                     .join(program_name)
                     .with_extension("expected.witness.json");
-                let json_input = dir.join(program_name).with_extension("arguments.json");
+                let json_input =
+                    dir.join(program_name).with_extension("arguments.json");
 
                 test_compile_and_witness(
                     program_name.to_str().unwrap(),
@@ -202,7 +214,8 @@ mod integration {
         let flattened_path = tmp_base.join(program_name).join("out");
         let abi_spec_path = tmp_base.join(program_name).join("abi.json");
         let witness_path = tmp_base.join(program_name).join("witness");
-        let inline_witness_path = tmp_base.join(program_name).join("inline_witness");
+        let inline_witness_path =
+            tmp_base.join(program_name).join("inline_witness");
         let proof_path = tmp_base.join(program_name).join("proof.json");
         let universal_setup_path = global_path.join("universal_setup.dat");
         let verification_key_path = tmp_base
@@ -222,7 +235,8 @@ mod integration {
         // create a tmp folder to store artifacts
         fs::create_dir(test_case_path).unwrap();
 
-        let stdlib = std::fs::canonicalize("../zokrates_stdlib/stdlib").unwrap();
+        let stdlib =
+            std::fs::canonicalize("../zokrates_stdlib/stdlib").unwrap();
 
         // prepare compile arguments
         let compile = vec![
@@ -269,7 +283,9 @@ mod integration {
 
         // First we need to convert our test input into raw field elements. We need to ABI spec for that
         let file = File::open(&abi_spec_path)
-            .map_err(|why| format!("Could not open {}: {}", flattened_path.display(), why))
+            .map_err(|why| {
+                format!("Could not open {}: {}", flattened_path.display(), why)
+            })
             .unwrap();
 
         let mut reader = BufReader::new(file);
@@ -319,12 +335,14 @@ mod integration {
 
         // load the actual witness
         let witness_file = File::open(&witness_path).unwrap();
-        let witness = Witness::<zokrates_field::Bn128Field>::read(witness_file).unwrap();
+        let witness =
+            Witness::<zokrates_field::Bn128Field>::read(witness_file).unwrap();
 
         // load the actual inline witness
         let inline_witness_file = File::open(&inline_witness_path).unwrap();
         let inline_witness =
-            Witness::<zokrates_field::Bn128Field>::read(inline_witness_file).unwrap();
+            Witness::<zokrates_field::Bn128Field>::read(inline_witness_file)
+                .unwrap();
 
         assert_eq!(inline_witness, witness);
 
@@ -411,16 +429,19 @@ mod integration {
 
                     // TEST VERIFIER
                     // Get the contract
-                    let contract_str =
-                        std::fs::read_to_string(verification_contract_path.to_str().unwrap())
-                            .unwrap();
+                    let contract_str = std::fs::read_to_string(
+                        verification_contract_path.to_str().unwrap(),
+                    )
+                    .unwrap();
                     match *scheme {
                         "marlin" => {
                             // Get the proof
-                            let proof: Proof<Bn128Field, Marlin> = serde_json::from_reader(
-                                File::open(proof_path.to_str().unwrap()).unwrap(),
-                            )
-                            .unwrap();
+                            let proof: Proof<Bn128Field, Marlin> =
+                                serde_json::from_reader(
+                                    File::open(proof_path.to_str().unwrap())
+                                        .unwrap(),
+                                )
+                                .unwrap();
 
                             test_solidity_verifier(
                                 program_name,
@@ -433,10 +454,12 @@ mod integration {
                         }
                         "g16" => {
                             // Get the proof
-                            let proof: Proof<Bn128Field, G16> = serde_json::from_reader(
-                                File::open(proof_path.to_str().unwrap()).unwrap(),
-                            )
-                            .unwrap();
+                            let proof: Proof<Bn128Field, G16> =
+                                serde_json::from_reader(
+                                    File::open(proof_path.to_str().unwrap())
+                                        .unwrap(),
+                                )
+                                .unwrap();
 
                             test_solidity_verifier(
                                 program_name,
@@ -449,10 +472,12 @@ mod integration {
                         }
                         "gm17" => {
                             // Get the proof
-                            let proof: Proof<Bn128Field, GM17> = serde_json::from_reader(
-                                File::open(proof_path.to_str().unwrap()).unwrap(),
-                            )
-                            .unwrap();
+                            let proof: Proof<Bn128Field, GM17> =
+                                serde_json::from_reader(
+                                    File::open(proof_path.to_str().unwrap())
+                                        .unwrap(),
+                                )
+                                .unwrap();
 
                             test_solidity_verifier(
                                 program_name,
@@ -470,7 +495,9 @@ mod integration {
         }
     }
 
-    fn test_solidity_verifier<S: SolidityCompatibleScheme<Bn128Field> + ToToken<Bn128Field>>(
+    fn test_solidity_verifier<
+        S: SolidityCompatibleScheme<Bn128Field> + ToToken<Bn128Field>,
+    >(
         program_name: &str,
         backend: &str,
         scheme: &str,
@@ -489,7 +516,8 @@ mod integration {
                 .inputs
                 .iter()
                 .map(|s| {
-                    let bytes = hex::decode(s.trim_start_matches("0x")).unwrap();
+                    let bytes =
+                        hex::decode(s.trim_start_matches("0x")).unwrap();
                     debug_assert_eq!(bytes.len(), 32);
                     Token::Uint(U256::from(&bytes[..]))
                 })
@@ -503,9 +531,11 @@ mod integration {
 
         let modified_proof_token = S::to_token(modified_solidity_proof);
 
-        let modified_inputs = ethabi::encode(&[modified_proof_token, input_token]);
+        let modified_inputs =
+            ethabi::encode(&[modified_proof_token, input_token]);
 
-        let verifier_name = format!("Verifier_{}_{}_{}", program_name, scheme, backend);
+        let verifier_name =
+            format!("Verifier_{}_{}_{}", program_name, scheme, backend);
 
         let verifier_path = solidity_test_path
             .join("src")
@@ -603,7 +633,8 @@ mod integration {
         // create a tmp folder to store artifacts
         fs::create_dir(test_case_path).unwrap();
 
-        let stdlib = std::fs::canonicalize("../zokrates_stdlib/stdlib").unwrap();
+        let stdlib =
+            std::fs::canonicalize("../zokrates_stdlib/stdlib").unwrap();
 
         // prepare compile arguments
         let compile = vec![
@@ -638,7 +669,8 @@ mod integration {
             .unwrap();
 
         // load the expected smtlib2
-        let mut expected_smtlib2_file = File::open(expected_smtlib2_path).unwrap();
+        let mut expected_smtlib2_file =
+            File::open(expected_smtlib2_path).unwrap();
         let mut expected_smtlib2 = String::new();
         expected_smtlib2_file
             .read_to_string(&mut expected_smtlib2)
@@ -663,7 +695,11 @@ mod integration {
             if path.extension().unwrap() == "smt2" {
                 let program_name = Path::new(path.file_stem().unwrap());
                 let prog = dir.join(program_name).with_extension("zok");
-                test_compile_and_smtlib2(program_name.to_str().unwrap(), &prog, &path);
+                test_compile_and_smtlib2(
+                    program_name.to_str().unwrap(),
+                    &prog,
+                    &path,
+                );
             }
         }
     }
@@ -676,15 +712,22 @@ mod integration {
 
         let mut options = CopyOptions::new();
         options.copy_inside = true;
-        copy_items(&["examples/book/rng_tutorial"], tmp_base, &options).unwrap();
+        copy_items(&["examples/book/rng_tutorial"], tmp_base, &options)
+            .unwrap();
 
-        let stdlib = std::fs::canonicalize("../zokrates_stdlib/stdlib").unwrap();
+        let stdlib =
+            std::fs::canonicalize("../zokrates_stdlib/stdlib").unwrap();
         let binary_path = env!("CARGO_BIN_EXE_zokrates");
 
-        assert_cli::Assert::command(&["bash", "test.sh", binary_path, stdlib.to_str().unwrap()])
-            .current_dir(tmp_base.join("rng_tutorial"))
-            .succeeds()
-            .unwrap();
+        assert_cli::Assert::command(&[
+            "bash",
+            "test.sh",
+            binary_path,
+            stdlib.to_str().unwrap(),
+        ])
+        .current_dir(tmp_base.join("rng_tutorial"))
+        .succeeds()
+        .unwrap();
     }
 
     #[test]
@@ -695,15 +738,22 @@ mod integration {
 
         let mut options = CopyOptions::new();
         options.copy_inside = true;
-        copy_items(&["examples/book/sha256_tutorial"], tmp_base, &options).unwrap();
+        copy_items(&["examples/book/sha256_tutorial"], tmp_base, &options)
+            .unwrap();
 
-        let stdlib = std::fs::canonicalize("../zokrates_stdlib/stdlib").unwrap();
+        let stdlib =
+            std::fs::canonicalize("../zokrates_stdlib/stdlib").unwrap();
         let binary_path = env!("CARGO_BIN_EXE_zokrates");
 
-        assert_cli::Assert::command(&["bash", "test.sh", binary_path, stdlib.to_str().unwrap()])
-            .current_dir(tmp_base.join("sha256_tutorial"))
-            .succeeds()
-            .unwrap();
+        assert_cli::Assert::command(&[
+            "bash",
+            "test.sh",
+            binary_path,
+            stdlib.to_str().unwrap(),
+        ])
+        .current_dir(tmp_base.join("sha256_tutorial"))
+        .succeeds()
+        .unwrap();
     }
 
     #[test]
@@ -714,14 +764,21 @@ mod integration {
 
         let mut options = CopyOptions::new();
         options.copy_inside = true;
-        copy_items(&["examples/book/mpc_tutorial"], tmp_base, &options).unwrap();
+        copy_items(&["examples/book/mpc_tutorial"], tmp_base, &options)
+            .unwrap();
 
-        let stdlib = std::fs::canonicalize("../zokrates_stdlib/stdlib").unwrap();
+        let stdlib =
+            std::fs::canonicalize("../zokrates_stdlib/stdlib").unwrap();
         let binary_path = env!("CARGO_BIN_EXE_zokrates");
 
-        assert_cli::Assert::command(&["bash", "test.sh", binary_path, stdlib.to_str().unwrap()])
-            .current_dir(tmp_base.join("mpc_tutorial"))
-            .succeeds()
-            .unwrap();
+        assert_cli::Assert::command(&[
+            "bash",
+            "test.sh",
+            binary_path,
+            stdlib.to_str().unwrap(),
+        ])
+        .current_dir(tmp_base.join("mpc_tutorial"))
+        .succeeds()
+        .unwrap();
     }
 }

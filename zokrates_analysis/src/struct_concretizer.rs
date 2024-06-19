@@ -23,7 +23,8 @@ pub struct StructConcretizer<'ast, T> {
 
 impl<'ast, T: Field> StructConcretizer<'ast, T> {
     pub fn concretize(p: TypedProgram<'ast, T>) -> TypedProgram<'ast, T> {
-        StructConcretizer::with_generics(ConcreteGenericsAssignment::default()).fold_program(p)
+        StructConcretizer::with_generics(ConcreteGenericsAssignment::default())
+            .fold_program(p)
     }
 
     pub fn with_generics(generics: ConcreteGenericsAssignment<'ast>) -> Self {
@@ -46,13 +47,20 @@ impl<'ast, T: Field> Folder<'ast, T> for StructConcretizer<'ast, T> {
             .map(|g| g.unwrap().map_concrete(&self.generics).unwrap())
             .collect();
 
-        let concrete_generics_map: ConcreteGenericsAssignment = GGenericsAssignment(
-            concrete_generics
-                .iter()
-                .enumerate()
-                .map(|(index, g)| (GenericIdentifier::without_name().with_index(index), *g))
-                .collect(),
-        );
+        let concrete_generics_map: ConcreteGenericsAssignment =
+            GGenericsAssignment(
+                concrete_generics
+                    .iter()
+                    .enumerate()
+                    .map(|(index, g)| {
+                        (
+                            GenericIdentifier::without_name()
+                                .with_index(index),
+                            *g,
+                        )
+                    })
+                    .collect(),
+            );
 
         let mut internal_concretizer: StructConcretizer<'ast, T> =
             StructConcretizer::with_generics(concrete_generics_map);

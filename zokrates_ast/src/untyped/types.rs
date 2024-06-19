@@ -22,7 +22,9 @@ impl<'ast> fmt::Display for UnresolvedType<'ast> {
             UnresolvedType::FieldElement => write!(f, "field"),
             UnresolvedType::Boolean => write!(f, "bool"),
             UnresolvedType::Uint(bitwidth) => write!(f, "u{}", bitwidth),
-            UnresolvedType::Array(ref ty, ref size) => write!(f, "{}[{}]", ty, size),
+            UnresolvedType::Array(ref ty, ref size) => {
+                write!(f, "{}[{}]", ty, size)
+            }
             UnresolvedType::Tuple(ref elements) => {
                 write!(f, "(")?;
                 match elements.len() {
@@ -68,7 +70,10 @@ impl<'ast> fmt::Display for UnresolvedType<'ast> {
 }
 
 impl<'ast> UnresolvedType<'ast> {
-    pub fn array(ty: UnresolvedTypeNode<'ast>, size: ExpressionNode<'ast>) -> Self {
+    pub fn array(
+        ty: UnresolvedTypeNode<'ast>,
+        size: ExpressionNode<'ast>,
+    ) -> Self {
         UnresolvedType::Array(Box::new(ty), size)
     }
 }
@@ -119,12 +124,18 @@ mod signature {
             UnresolvedSignature::default()
         }
 
-        pub fn generics(mut self, generics: Vec<ConstantGenericNode<'ast>>) -> Self {
+        pub fn generics(
+            mut self,
+            generics: Vec<ConstantGenericNode<'ast>>,
+        ) -> Self {
             self.generics = generics;
             self
         }
 
-        pub fn inputs(mut self, inputs: Vec<UnresolvedTypeNode<'ast>>) -> Self {
+        pub fn inputs(
+            mut self,
+            inputs: Vec<UnresolvedTypeNode<'ast>>,
+        ) -> Self {
             self.inputs = inputs;
             self
         }

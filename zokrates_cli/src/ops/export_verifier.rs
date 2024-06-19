@@ -29,29 +29,38 @@ pub fn subcommand() -> App<'static, 'static> {
                 .value_name("FILE")
                 .takes_value(true)
                 .required(false)
-                .default_value(cli_constants::VERIFICATION_CONTRACT_DEFAULT_PATH),
+                .default_value(
+                    cli_constants::VERIFICATION_CONTRACT_DEFAULT_PATH,
+                ),
         )
 }
 
 pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     let vk_path = Path::new(sub_matches.value_of("input").unwrap());
-    let vk_file = File::open(vk_path)
-        .map_err(|why| format!("Could not open {}: {}", vk_path.display(), why))?;
+    let vk_file = File::open(vk_path).map_err(|why| {
+        format!("Could not open {}: {}", vk_path.display(), why)
+    })?;
 
     // deserialize vk to JSON
     let vk_reader = BufReader::new(vk_file);
-    let vk: serde_json::Value = serde_json::from_reader(vk_reader)
-        .map_err(|why| format!("Could not deserialize verification key: {}", why))?;
+    let vk: serde_json::Value =
+        serde_json::from_reader(vk_reader).map_err(|why| {
+            format!("Could not deserialize verification key: {}", why)
+        })?;
 
     // extract curve and scheme parameters
     let vk_curve = vk
         .get("curve")
-        .ok_or_else(|| "Field `curve` not found in verification key".to_string())?
+        .ok_or_else(|| {
+            "Field `curve` not found in verification key".to_string()
+        })?
         .as_str()
         .ok_or_else(|| "`curve` should be a string".to_string())?;
     let vk_scheme = vk
         .get("scheme")
-        .ok_or_else(|| "Field `scheme` not found in verification key".to_string())?
+        .ok_or_else(|| {
+            "Field `scheme` not found in verification key".to_string()
+        })?
         .as_str()
         .ok_or_else(|| "`scheme` should be a string".to_string())?;
 
@@ -72,7 +81,10 @@ pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     }
 }
 
-fn cli_export_verifier<T: SolidityCompatibleField, S: SolidityCompatibleScheme<T>>(
+fn cli_export_verifier<
+    T: SolidityCompatibleField,
+    S: SolidityCompatibleScheme<T>,
+>(
     sub_matches: &ArgMatches,
     vk: serde_json::Value,
 ) -> Result<(), String> {
@@ -84,8 +96,9 @@ fn cli_export_verifier<T: SolidityCompatibleField, S: SolidityCompatibleScheme<T
 
     //write output file
     let output_path = Path::new(sub_matches.value_of("output").unwrap());
-    let output_file = File::create(output_path)
-        .map_err(|why| format!("Could not create {}: {}", output_path.display(), why))?;
+    let output_file = File::create(output_path).map_err(|why| {
+        format!("Could not create {}: {}", output_path.display(), why)
+    })?;
 
     let mut writer = BufWriter::new(output_file);
 

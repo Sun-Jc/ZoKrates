@@ -9,7 +9,11 @@ use super::{Span, WithSpan};
 #[derivative(PartialOrd, PartialEq, Hash, Eq)]
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Parameter<V> {
-    #[derivative(PartialEq = "ignore", PartialOrd = "ignore", Hash = "ignore")]
+    #[derivative(
+        PartialEq = "ignore",
+        PartialOrd = "ignore",
+        Hash = "ignore"
+    )]
     pub span: Option<Span>,
     pub id: V,
     pub private: bool,

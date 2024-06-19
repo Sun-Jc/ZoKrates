@@ -1,5 +1,7 @@
 use crate::scheme::{Scheme, UniversalScheme};
-use crate::solidity::{solidity_pairing_lib, SolidityCompatibleField, SolidityCompatibleScheme};
+use crate::solidity::{
+    solidity_pairing_lib, SolidityCompatibleField, SolidityCompatibleScheme,
+};
 use crate::{Fr, G1Affine, G2Affine};
 use serde::{Deserialize, Serialize};
 use zokrates_field::Field;
@@ -30,13 +32,27 @@ pub struct SolidityProof<Fr, G1> {
     pub batch_lc_proof_2: G1,
 }
 
-impl<Fr: Clone, G1: Clone> From<ProofPoints<Fr, G1>> for SolidityProof<Fr, G1> {
+impl<Fr: Clone, G1: Clone> From<ProofPoints<Fr, G1>>
+    for SolidityProof<Fr, G1>
+{
     fn from(p: ProofPoints<Fr, G1>) -> Self {
         SolidityProof {
-            comms_1: p.commitments[0].clone().into_iter().map(|x| x.0).collect(),
-            comms_2: p.commitments[1].clone().into_iter().map(|x| x.0).collect(),
+            comms_1: p.commitments[0]
+                .clone()
+                .into_iter()
+                .map(|x| x.0)
+                .collect(),
+            comms_2: p.commitments[1]
+                .clone()
+                .into_iter()
+                .map(|x| x.0)
+                .collect(),
             degree_bound_comms_2_g1: p.commitments[1][1].1.clone().unwrap(),
-            comms_3: p.commitments[2].clone().into_iter().map(|x| x.0).collect(),
+            comms_3: p.commitments[2]
+                .clone()
+                .into_iter()
+                .map(|x| x.0)
+                .collect(),
             degree_bound_comms_3_g2: p.commitments[2][0].1.clone().unwrap(),
             evals: p.evaluations,
             batch_lc_proof_1: p.pc_lc_opening_1,
@@ -90,7 +106,9 @@ impl<T: Field> UniversalScheme<T> for Marlin {}
 impl<T: SolidityCompatibleField> SolidityCompatibleScheme<T> for Marlin {
     type Proof = SolidityProof<Fr, G1Affine>;
 
-    fn export_solidity_verifier(vk: <Marlin as Scheme<T>>::VerificationKey) -> String {
+    fn export_solidity_verifier(
+        vk: <Marlin as Scheme<T>>::VerificationKey,
+    ) -> String {
         use std::fmt::Write;
 
         let (template, solidity_pairing_lib) =

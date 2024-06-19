@@ -64,7 +64,9 @@ fn sha256_round<E: Engine, CS: ConstraintSystem<E>>(
         .collect::<Vec<_>>();
 
     // Apply the compression function, returning the 8 bytes of outputs
-    let res = sha256_compression_function::<E, _>(&mut cs, &input, &current_hash).unwrap();
+    let res =
+        sha256_compression_function::<E, _>(&mut cs, &input, &current_hash)
+            .unwrap();
 
     // Extract the 256 bits of output out of the 8 bytes
     let output_bits = res
@@ -91,7 +93,11 @@ fn sha256_round<E: Engine, CS: ConstraintSystem<E>>(
 impl<E: Engine> ConstraintSystem<E> for Witness<E::Fr> {
     type Root = Self;
 
-    fn alloc<F, A, AR>(&mut self, _: A, f: F) -> Result<Variable, SynthesisError>
+    fn alloc<F, A, AR>(
+        &mut self,
+        _: A,
+        f: F,
+    ) -> Result<Variable, SynthesisError>
     where
         F: FnOnce() -> Result<E::Fr, SynthesisError>,
         A: FnOnce() -> AR,
@@ -103,13 +109,19 @@ impl<E: Engine> ConstraintSystem<E> for Witness<E::Fr> {
         Ok(var)
     }
 
-    fn alloc_input<F, A, AR>(&mut self, _: A, _: F) -> Result<Variable, SynthesisError>
+    fn alloc_input<F, A, AR>(
+        &mut self,
+        _: A,
+        _: F,
+    ) -> Result<Variable, SynthesisError>
     where
         F: FnOnce() -> Result<E::Fr, SynthesisError>,
         A: FnOnce() -> AR,
         AR: Into<String>,
     {
-        unreachable!("Bellman helpers are not allowed to allocate public variables")
+        unreachable!(
+            "Bellman helpers are not allowed to allocate public variables"
+        )
     }
 
     fn enforce<A, AR, LA, LB, LC>(&mut self, _: A, _: LA, _: LB, _: LC)
@@ -143,7 +155,11 @@ impl<E: Engine> ConstraintSystem<E> for Witness<E::Fr> {
 impl<E: Engine> ConstraintSystem<E> for R1CS<E::Fr> {
     type Root = Self;
 
-    fn alloc<F, A, AR>(&mut self, _: A, _: F) -> Result<Variable, SynthesisError>
+    fn alloc<F, A, AR>(
+        &mut self,
+        _: A,
+        _: F,
+    ) -> Result<Variable, SynthesisError>
     where
         F: FnOnce() -> Result<E::Fr, SynthesisError>,
         A: FnOnce() -> AR,
@@ -156,13 +172,19 @@ impl<E: Engine> ConstraintSystem<E> for R1CS<E::Fr> {
         Ok(var)
     }
 
-    fn alloc_input<F, A, AR>(&mut self, _: A, _: F) -> Result<Variable, SynthesisError>
+    fn alloc_input<F, A, AR>(
+        &mut self,
+        _: A,
+        _: F,
+    ) -> Result<Variable, SynthesisError>
     where
         F: FnOnce() -> Result<E::Fr, SynthesisError>,
         A: FnOnce() -> AR,
         AR: Into<String>,
     {
-        unreachable!("Bellman helpers are not allowed to allocate public variables")
+        unreachable!(
+            "Bellman helpers are not allowed to allocate public variables"
+        )
     }
 
     fn enforce<A, AR, LA, LB, LC>(&mut self, _: A, a: LA, b: LB, c: LC)
@@ -180,17 +202,23 @@ impl<E: Engine> ConstraintSystem<E> for R1CS<E::Fr> {
         let a = a
             .as_ref()
             .iter()
-            .map(|(variable, coefficient)| (*coefficient, var_to_index(*variable)))
+            .map(|(variable, coefficient)| {
+                (*coefficient, var_to_index(*variable))
+            })
             .collect();
         let b = b
             .as_ref()
             .iter()
-            .map(|(variable, coefficient)| (*coefficient, var_to_index(*variable)))
+            .map(|(variable, coefficient)| {
+                (*coefficient, var_to_index(*variable))
+            })
             .collect();
         let c = c
             .as_ref()
             .iter()
-            .map(|(variable, coefficient)| (*coefficient, var_to_index(*variable)))
+            .map(|(variable, coefficient)| {
+                (*coefficient, var_to_index(*variable))
+            })
             .collect();
 
         self.constraints.push(Constraint { a, b, c });
@@ -253,7 +281,9 @@ fn var_to_index(v: Variable) -> usize {
     }
 }
 
-pub fn from_bellman<T: zokrates_field::Field, E: Engine>(c: Constraint<E::Fr>) -> Constraint<T> {
+pub fn from_bellman<T: zokrates_field::Field, E: Engine>(
+    c: Constraint<E::Fr>,
+) -> Constraint<T> {
     Constraint {
         a: c.a
             .into_iter()
@@ -289,7 +319,8 @@ mod tests {
 
     #[test]
     fn generate_constraints() {
-        let (_c, input, current_hash, output) = generate_sha256_round_constraints::<Bn256>();
+        let (_c, input, current_hash, output) =
+            generate_sha256_round_constraints::<Bn256>();
         assert_eq!(input.len(), 512);
         assert_eq!(current_hash.len(), 256);
         assert_eq!(output.len(), 256);
@@ -297,8 +328,10 @@ mod tests {
 
     #[test]
     fn generate_witness() {
-        let witness =
-            generate_sha256_round_witness::<Bn256>(&vec![Fr::one(); 512], &vec![Fr::zero(); 256]);
+        let witness = generate_sha256_round_witness::<Bn256>(
+            &vec![Fr::one(); 512],
+            &vec![Fr::zero(); 256],
+        );
         assert_eq!(witness.len(), 26935);
     }
 

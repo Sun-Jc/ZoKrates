@@ -32,16 +32,26 @@ pub trait NovaField:
 {
 }
 
-type T = zokrates_field::PallasField;
-pub type E1 = nova_snark::provider::PallasEngine;
-type E2 = nova_snark::provider::VestaEngine;
-pub type F1 = <E1 as nova_snark::traits::Engine>::Scalar;
-// pub type E2 = nova_snark::provider::VestaEngine;
-pub type C1<'ast> = NovaComputation<'ast>;
-// pub type C2 = TrivialCircuit<<<T as Cycle>::Point as Group>::Base>;
-pub type EE1 = nova_snark::provider::ipa_pc::EvaluationEngine<E1>;
+// type T = zokrates_field::PallasField;
+// pub type E1 = nova_snark::provider::PallasEngine;
+// type E2 = nova_snark::provider::VestaEngine;
+// pub type F1 = <E1 as nova_snark::traits::Engine>::Scalar;
+// // pub type E2 = nova_snark::provider::VestaEngine;
+// pub type C1<'ast> = NovaComputation<'ast>;
+// // pub type C2 = TrivialCircuit<<<T as Cycle>::Point as Group>::Base>;
+// pub type EE1 = nova_snark::provider::ipa_pc::EvaluationEngine<E1>;
 
+// pub type S1 = nova_snark::spartan::snark::RelaxedR1CSSNARK<E1, EE1>;
+
+// TODO: The other way around?
+type T = zokrates_field::GrumpkinField;
+pub type E1 = nova_snark::provider::hyperkzg::Bn256EngineKZG;
+pub type E2 = nova_snark::provider::GrumpkinEngine;
+pub type F1 = <E1 as nova_snark::traits::Engine>::Scalar;
+type EE1 = nova_snark::provider::hyperkzg::EvaluationEngine<E1>;
 pub type S1 = nova_snark::spartan::snark::RelaxedR1CSSNARK<E1, EE1>;
+
+pub type C1<'ast> = NovaComputation<'ast>;
 
 // pub type EE2 = nova_snark::provider::ipa_pc::EvaluationEngine<E2>;
 // pub type S2 = nova_snark::spartan::snark::RelaxedR1CSSNARK<E2, EE2>;
@@ -57,8 +67,10 @@ pub type S1 = nova_snark::spartan::snark::RelaxedR1CSSNARK<E1, EE1>;
 //     },
 // };
 
-pub type GPublicParams<'ast> = nova_snark::cyclefold::PublicParams<E1, E2, C1<'ast>>;
-pub type GRecursiveSNARK<'ast> = nova_snark::cyclefold::RecursiveSNARK<E1, E2, C1<'ast>>;
+pub type GPublicParams<'ast> =
+    nova_snark::cyclefold::PublicParams<E1, E2, C1<'ast>>;
+pub type GRecursiveSNARK<'ast> =
+    nova_snark::cyclefold::RecursiveSNARK<E1, E2, C1<'ast>>;
 
 impl<
         T: Field
@@ -163,9 +175,7 @@ pub fn verify<'ast>(
         .proof
         .verify(params, proof.steps, &z0_primary)
         .map_err(Error::Internal)
-        .map(|primary| {
-            primary.into_iter().map(T::from_bellpepper).collect()
-        })
+        .map(|primary| primary.into_iter().map(T::from_bellpepper).collect())
 }
 
 #[derive(Serialize, Debug, Deserialize)]
@@ -182,7 +192,8 @@ pub struct RecursiveSNARKWithStepCount<'ast> {
 
 pub type CompressedSNARK<'ast> =
     nova_snark::cyclefold::CompressedSNARK<E1, E2, C1<'ast>, S1>;
-pub type VerifierKey<'ast> = nova_snark::cyclefold::VerifierKey<E1, E2, C1<'ast>, S1>;
+pub type VerifierKey<'ast> =
+    nova_snark::cyclefold::VerifierKey<E1, E2, C1<'ast>, S1>;
 
 pub fn compress<'ast>(
     public_parameters: &GPublicParams<'ast>,

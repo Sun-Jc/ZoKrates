@@ -10,6 +10,8 @@ pub const BW6_761: &str = "bw6_761";
 pub const PALLAS: &str = "pallas";
 pub const VESTA: &str = "vesta";
 
+pub const BN254: &str = "bn254";
+
 pub const G16: &str = "g16";
 pub const GM17: &str = "gm17";
 pub const MARLIN: &str = "marlin";

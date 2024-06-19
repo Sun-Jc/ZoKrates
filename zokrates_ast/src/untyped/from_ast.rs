@@ -5,13 +5,17 @@ use zokrates_pest_ast as pest;
 
 impl<'ast> From<pest::File<'ast>> for untyped::Module<'ast> {
     fn from(file: pest::File<'ast>) -> untyped::Module<'ast> {
-        untyped::Module::with_symbols(file.declarations.into_iter().flat_map(|d| match d {
-            pest::SymbolDeclaration::Import(i) => import_directive_to_symbol_vec(i),
-            pest::SymbolDeclaration::Constant(c) => vec![c.into()],
-            pest::SymbolDeclaration::Struct(s) => vec![s.into()],
-            pest::SymbolDeclaration::Type(t) => vec![t.into()],
-            pest::SymbolDeclaration::Function(f) => vec![f.into()],
-        }))
+        untyped::Module::with_symbols(file.declarations.into_iter().flat_map(
+            |d| match d {
+                pest::SymbolDeclaration::Import(i) => {
+                    import_directive_to_symbol_vec(i)
+                }
+                pest::SymbolDeclaration::Constant(c) => vec![c.into()],
+                pest::SymbolDeclaration::Struct(s) => vec![s.into()],
+                pest::SymbolDeclaration::Type(t) => vec![t.into()],
+                pest::SymbolDeclaration::Function(f) => vec![f.into()],
+            },
+        ))
     }
 }
 
@@ -35,7 +39,9 @@ fn import_directive_to_symbol_vec(
 
             vec![untyped::SymbolDeclaration {
                 id: alias.unwrap_or(id),
-                symbol: untyped::Symbol::Here(untyped::SymbolDefinition::Import(import)),
+                symbol: untyped::Symbol::Here(
+                    untyped::SymbolDefinition::Import(import),
+                ),
             }
             .span(span)]
         }
@@ -54,14 +60,18 @@ fn import_directive_to_symbol_vec(
 
                     let import = untyped::CanonicalImport {
                         source,
-                        id: untyped::SymbolIdentifier::from(symbol.id.span.as_str())
-                            .alias(Some(alias)),
+                        id: untyped::SymbolIdentifier::from(
+                            symbol.id.span.as_str(),
+                        )
+                        .alias(Some(alias)),
                     }
                     .span(span);
 
                     untyped::SymbolDeclaration {
                         id: alias,
-                        symbol: untyped::Symbol::Here(untyped::SymbolDefinition::Import(import)),
+                        symbol: untyped::Symbol::Here(
+                            untyped::SymbolDefinition::Import(import),
+                        ),
                     }
                     .span(span)
                 })
@@ -70,8 +80,12 @@ fn import_directive_to_symbol_vec(
     }
 }
 
-impl<'ast> From<pest::StructDefinition<'ast>> for untyped::SymbolDeclarationNode<'ast> {
-    fn from(definition: pest::StructDefinition<'ast>) -> untyped::SymbolDeclarationNode<'ast> {
+impl<'ast> From<pest::StructDefinition<'ast>>
+    for untyped::SymbolDeclarationNode<'ast>
+{
+    fn from(
+        definition: pest::StructDefinition<'ast>,
+    ) -> untyped::SymbolDeclarationNode<'ast> {
         use crate::untyped::NodeValue;
 
         let span = definition.span;
@@ -94,14 +108,20 @@ impl<'ast> From<pest::StructDefinition<'ast>> for untyped::SymbolDeclarationNode
 
         untyped::SymbolDeclaration {
             id,
-            symbol: untyped::Symbol::Here(untyped::SymbolDefinition::Struct(ty)),
+            symbol: untyped::Symbol::Here(untyped::SymbolDefinition::Struct(
+                ty,
+            )),
         }
         .span(span)
     }
 }
 
-impl<'ast> From<pest::StructField<'ast>> for untyped::StructDefinitionFieldNode<'ast> {
-    fn from(field: pest::StructField<'ast>) -> untyped::StructDefinitionFieldNode<'ast> {
+impl<'ast> From<pest::StructField<'ast>>
+    for untyped::StructDefinitionFieldNode<'ast>
+{
+    fn from(
+        field: pest::StructField<'ast>,
+    ) -> untyped::StructDefinitionFieldNode<'ast> {
         use crate::untyped::NodeValue;
 
         let span = field.span;
@@ -114,8 +134,12 @@ impl<'ast> From<pest::StructField<'ast>> for untyped::StructDefinitionFieldNode<
     }
 }
 
-impl<'ast> From<pest::ConstantDefinition<'ast>> for untyped::SymbolDeclarationNode<'ast> {
-    fn from(definition: pest::ConstantDefinition<'ast>) -> untyped::SymbolDeclarationNode<'ast> {
+impl<'ast> From<pest::ConstantDefinition<'ast>>
+    for untyped::SymbolDeclarationNode<'ast>
+{
+    fn from(
+        definition: pest::ConstantDefinition<'ast>,
+    ) -> untyped::SymbolDeclarationNode<'ast> {
         use crate::untyped::NodeValue;
 
         let span = definition.span;
@@ -129,14 +153,20 @@ impl<'ast> From<pest::ConstantDefinition<'ast>> for untyped::SymbolDeclarationNo
 
         untyped::SymbolDeclaration {
             id,
-            symbol: untyped::Symbol::Here(untyped::SymbolDefinition::Constant(ty)),
+            symbol: untyped::Symbol::Here(
+                untyped::SymbolDefinition::Constant(ty),
+            ),
         }
         .span(span)
     }
 }
 
-impl<'ast> From<pest::TypeDefinition<'ast>> for untyped::SymbolDeclarationNode<'ast> {
-    fn from(definition: pest::TypeDefinition<'ast>) -> untyped::SymbolDeclarationNode<'ast> {
+impl<'ast> From<pest::TypeDefinition<'ast>>
+    for untyped::SymbolDeclarationNode<'ast>
+{
+    fn from(
+        definition: pest::TypeDefinition<'ast>,
+    ) -> untyped::SymbolDeclarationNode<'ast> {
         use crate::untyped::NodeValue;
 
         let span = definition.span;
@@ -160,8 +190,12 @@ impl<'ast> From<pest::TypeDefinition<'ast>> for untyped::SymbolDeclarationNode<'
     }
 }
 
-impl<'ast> From<pest::FunctionDefinition<'ast>> for untyped::SymbolDeclarationNode<'ast> {
-    fn from(function: pest::FunctionDefinition<'ast>) -> untyped::SymbolDeclarationNode<'ast> {
+impl<'ast> From<pest::FunctionDefinition<'ast>>
+    for untyped::SymbolDeclarationNode<'ast>
+{
+    fn from(
+        function: pest::FunctionDefinition<'ast>,
+    ) -> untyped::SymbolDeclarationNode<'ast> {
         use crate::untyped::NodeValue;
 
         let span = function.span;
@@ -184,7 +218,9 @@ impl<'ast> From<pest::FunctionDefinition<'ast>> for untyped::SymbolDeclarationNo
             );
 
         let signature = match function.return_type {
-            Some(ret_ty) => signature.output(untyped::UnresolvedTypeNode::from(ret_ty)),
+            Some(ret_ty) => {
+                signature.output(untyped::UnresolvedTypeNode::from(ret_ty))
+            }
             None => signature,
         };
 
@@ -196,21 +232,31 @@ impl<'ast> From<pest::FunctionDefinition<'ast>> for untyped::SymbolDeclarationNo
                 .into_iter()
                 .map(untyped::ParameterNode::from)
                 .collect(),
-            statements: function.statements.into_iter().map(|s| s.into()).collect(),
+            statements: function
+                .statements
+                .into_iter()
+                .map(|s| s.into())
+                .collect(),
             signature,
         }
         .span(span);
 
         untyped::SymbolDeclaration {
             id,
-            symbol: untyped::Symbol::Here(untyped::SymbolDefinition::Function(function)),
+            symbol: untyped::Symbol::Here(
+                untyped::SymbolDefinition::Function(function),
+            ),
         }
         .span(span)
     }
 }
 
-impl<'ast> From<pest::IdentifierExpression<'ast>> for untyped::ConstantGenericNode<'ast> {
-    fn from(g: pest::IdentifierExpression<'ast>) -> untyped::ConstantGenericNode<'ast> {
+impl<'ast> From<pest::IdentifierExpression<'ast>>
+    for untyped::ConstantGenericNode<'ast>
+{
+    fn from(
+        g: pest::IdentifierExpression<'ast>,
+    ) -> untyped::ConstantGenericNode<'ast> {
         use untyped::NodeValue;
 
         let name = g.span.as_str();
@@ -242,7 +288,9 @@ impl<'ast> From<pest::Parameter<'ast>> for untyped::ParameterNode<'ast> {
 }
 
 impl<'ast> From<pest::LogStatement<'ast>> for untyped::StatementNode<'ast> {
-    fn from(statement: pest::LogStatement<'ast>) -> untyped::StatementNode<'ast> {
+    fn from(
+        statement: pest::LogStatement<'ast>,
+    ) -> untyped::StatementNode<'ast> {
         use crate::untyped::NodeValue;
 
         let expressions = statement
@@ -251,8 +299,11 @@ impl<'ast> From<pest::LogStatement<'ast>> for untyped::StatementNode<'ast> {
             .map(untyped::ExpressionNode::from)
             .collect();
 
-        untyped::Statement::Log(statement.format_string.raw.span.as_str(), expressions)
-            .span(statement.span)
+        untyped::Statement::Log(
+            statement.format_string.raw.span.as_str(),
+            expressions,
+        )
+        .span(statement.span)
     }
 }
 
@@ -282,25 +333,33 @@ impl<'ast> From<pest::Statement<'ast>> for untyped::StatementNode<'ast> {
     }
 }
 
-impl<'ast> From<pest::DefinitionStatement<'ast>> for untyped::StatementNode<'ast> {
+impl<'ast> From<pest::DefinitionStatement<'ast>>
+    for untyped::StatementNode<'ast>
+{
     fn from(definition: pest::DefinitionStatement<'ast>) -> Self {
         use crate::untyped::NodeValue;
 
         let lhs = definition.lhs;
-        let e: untyped::ExpressionNode = untyped::ExpressionNode::from(definition.expression);
+        let e: untyped::ExpressionNode =
+            untyped::ExpressionNode::from(definition.expression);
 
         match lhs {
-            pest::TypedIdentifierOrAssignee::TypedIdentifier(i) => untyped::Statement::Definition(
-                untyped::Variable::new(
-                    i.identifier.span.as_str(),
-                    untyped::UnresolvedTypeNode::from(i.ty),
-                    i.mutable.is_some(),
+            pest::TypedIdentifierOrAssignee::TypedIdentifier(i) => {
+                untyped::Statement::Definition(
+                    untyped::Variable::new(
+                        i.identifier.span.as_str(),
+                        untyped::UnresolvedTypeNode::from(i.ty),
+                        i.mutable.is_some(),
+                    )
+                    .span(i.span),
+                    e,
                 )
-                .span(i.span),
-                e,
-            ),
+            }
             pest::TypedIdentifierOrAssignee::Assignee(a) => {
-                untyped::Statement::Assignment(untyped::AssigneeNode::from(a), e)
+                untyped::Statement::Assignment(
+                    untyped::AssigneeNode::from(a),
+                    e,
+                )
             }
         }
         .span(definition.span)
@@ -308,16 +367,24 @@ impl<'ast> From<pest::DefinitionStatement<'ast>> for untyped::StatementNode<'ast
 }
 
 impl<'ast> From<pest::ReturnStatement<'ast>> for untyped::StatementNode<'ast> {
-    fn from(statement: pest::ReturnStatement<'ast>) -> untyped::StatementNode<'ast> {
+    fn from(
+        statement: pest::ReturnStatement<'ast>,
+    ) -> untyped::StatementNode<'ast> {
         use crate::untyped::NodeValue;
 
-        untyped::Statement::Return(statement.expression.map(untyped::ExpressionNode::from))
-            .span(statement.span)
+        untyped::Statement::Return(
+            statement.expression.map(untyped::ExpressionNode::from),
+        )
+        .span(statement.span)
     }
 }
 
-impl<'ast> From<pest::AssertionStatement<'ast>> for untyped::StatementNode<'ast> {
-    fn from(statement: pest::AssertionStatement<'ast>) -> untyped::StatementNode<'ast> {
+impl<'ast> From<pest::AssertionStatement<'ast>>
+    for untyped::StatementNode<'ast>
+{
+    fn from(
+        statement: pest::AssertionStatement<'ast>,
+    ) -> untyped::StatementNode<'ast> {
         use crate::untyped::NodeValue;
 
         untyped::Statement::Assertion(
@@ -328,8 +395,12 @@ impl<'ast> From<pest::AssertionStatement<'ast>> for untyped::StatementNode<'ast>
     }
 }
 
-impl<'ast> From<pest::IterationStatement<'ast>> for untyped::StatementNode<'ast> {
-    fn from(statement: pest::IterationStatement<'ast>) -> untyped::StatementNode<'ast> {
+impl<'ast> From<pest::IterationStatement<'ast>>
+    for untyped::StatementNode<'ast>
+{
+    fn from(
+        statement: pest::IterationStatement<'ast>,
+    ) -> untyped::StatementNode<'ast> {
         use crate::untyped::NodeValue;
         let index = untyped::VariableNode::from(statement.index);
         let from = untyped::ExpressionNode::from(statement.from);
@@ -337,12 +408,17 @@ impl<'ast> From<pest::IterationStatement<'ast>> for untyped::StatementNode<'ast>
         let statements: Vec<untyped::StatementNode<'ast>> =
             statement.statements.into_iter().map(|s| s.into()).collect();
 
-        untyped::Statement::For(index, from, to, statements).span(statement.span)
+        untyped::Statement::For(index, from, to, statements)
+            .span(statement.span)
     }
 }
 
-impl<'ast> From<pest::AssemblyStatement<'ast>> for untyped::StatementNode<'ast> {
-    fn from(statement: pest::AssemblyStatement<'ast>) -> untyped::StatementNode<'ast> {
+impl<'ast> From<pest::AssemblyStatement<'ast>>
+    for untyped::StatementNode<'ast>
+{
+    fn from(
+        statement: pest::AssemblyStatement<'ast>,
+    ) -> untyped::StatementNode<'ast> {
         use crate::untyped::NodeValue;
 
         let statements = statement
@@ -353,12 +429,19 @@ impl<'ast> From<pest::AssemblyStatement<'ast>> for untyped::StatementNode<'ast> 
                     untyped::AssemblyStatement::Assignment(
                         a.assignee.into(),
                         a.expression.into(),
-                        matches!(a.operator, pest::AssignmentOperator::AssignConstrain(_)),
+                        matches!(
+                            a.operator,
+                            pest::AssignmentOperator::AssignConstrain(_)
+                        ),
                     )
                     .span(a.span)
                 }
                 pest::AssemblyStatementInner::Constraint(c) => {
-                    untyped::AssemblyStatement::Constraint(c.lhs.into(), c.rhs.into()).span(c.span)
+                    untyped::AssemblyStatement::Constraint(
+                        c.lhs.into(),
+                        c.rhs.into(),
+                    )
+                    .span(c.span)
                 }
             })
             .collect();
@@ -368,25 +451,41 @@ impl<'ast> From<pest::AssemblyStatement<'ast>> for untyped::StatementNode<'ast> 
 }
 
 impl<'ast> From<pest::Expression<'ast>> for untyped::ExpressionNode<'ast> {
-    fn from(expression: pest::Expression<'ast>) -> untyped::ExpressionNode<'ast> {
+    fn from(
+        expression: pest::Expression<'ast>,
+    ) -> untyped::ExpressionNode<'ast> {
         match expression {
             pest::Expression::Binary(e) => untyped::ExpressionNode::from(e),
             pest::Expression::Ternary(e) => untyped::ExpressionNode::from(e),
             pest::Expression::IfElse(e) => untyped::ExpressionNode::from(e),
             pest::Expression::Literal(e) => untyped::ExpressionNode::from(e),
-            pest::Expression::Identifier(e) => untyped::ExpressionNode::from(e),
+            pest::Expression::Identifier(e) => {
+                untyped::ExpressionNode::from(e)
+            }
             pest::Expression::Postfix(e) => untyped::ExpressionNode::from(e),
-            pest::Expression::InlineArray(e) => untyped::ExpressionNode::from(e),
-            pest::Expression::InlineTuple(e) => untyped::ExpressionNode::from(e),
-            pest::Expression::InlineStruct(e) => untyped::ExpressionNode::from(e),
-            pest::Expression::ArrayInitializer(e) => untyped::ExpressionNode::from(e),
+            pest::Expression::InlineArray(e) => {
+                untyped::ExpressionNode::from(e)
+            }
+            pest::Expression::InlineTuple(e) => {
+                untyped::ExpressionNode::from(e)
+            }
+            pest::Expression::InlineStruct(e) => {
+                untyped::ExpressionNode::from(e)
+            }
+            pest::Expression::ArrayInitializer(e) => {
+                untyped::ExpressionNode::from(e)
+            }
             pest::Expression::Unary(e) => untyped::ExpressionNode::from(e),
         }
     }
 }
 
-impl<'ast> From<pest::BinaryExpression<'ast>> for untyped::ExpressionNode<'ast> {
-    fn from(expression: pest::BinaryExpression<'ast>) -> untyped::ExpressionNode<'ast> {
+impl<'ast> From<pest::BinaryExpression<'ast>>
+    for untyped::ExpressionNode<'ast>
+{
+    fn from(
+        expression: pest::BinaryExpression<'ast>,
+    ) -> untyped::ExpressionNode<'ast> {
         use crate::untyped::NodeValue;
         match expression.op {
             pest::BinaryOperator::Add => untyped::Expression::Add(
@@ -449,10 +548,12 @@ impl<'ast> From<pest::BinaryExpression<'ast>> for untyped::ExpressionNode<'ast> 
                 Box::new(untyped::ExpressionNode::from(*expression.left)),
                 Box::new(untyped::ExpressionNode::from(*expression.right)),
             ),
-            pest::BinaryOperator::RightShift => untyped::Expression::RightShift(
-                Box::new(untyped::ExpressionNode::from(*expression.left)),
-                Box::new(untyped::ExpressionNode::from(*expression.right)),
-            ),
+            pest::BinaryOperator::RightShift => {
+                untyped::Expression::RightShift(
+                    Box::new(untyped::ExpressionNode::from(*expression.left)),
+                    Box::new(untyped::ExpressionNode::from(*expression.right)),
+                )
+            }
             pest::BinaryOperator::BitAnd => untyped::Expression::BitAnd(
                 Box::new(untyped::ExpressionNode::from(*expression.left)),
                 Box::new(untyped::ExpressionNode::from(*expression.right)),
@@ -474,38 +575,58 @@ impl<'ast> From<pest::BinaryExpression<'ast>> for untyped::ExpressionNode<'ast> 
     }
 }
 
-impl<'ast> From<pest::IfElseExpression<'ast>> for untyped::ExpressionNode<'ast> {
-    fn from(expression: pest::IfElseExpression<'ast>) -> untyped::ExpressionNode<'ast> {
+impl<'ast> From<pest::IfElseExpression<'ast>>
+    for untyped::ExpressionNode<'ast>
+{
+    fn from(
+        expression: pest::IfElseExpression<'ast>,
+    ) -> untyped::ExpressionNode<'ast> {
         use crate::untyped::NodeValue;
         untyped::Expression::Conditional(Box::new(ConditionalExpression {
-            condition: Box::new(untyped::ExpressionNode::from(*expression.condition)),
+            condition: Box::new(untyped::ExpressionNode::from(
+                *expression.condition,
+            )),
             consequence_statements: expression
                 .consequence_statements
                 .into_iter()
                 .map(untyped::StatementNode::from)
                 .collect(),
-            consequence: Box::new(untyped::ExpressionNode::from(*expression.consequence)),
+            consequence: Box::new(untyped::ExpressionNode::from(
+                *expression.consequence,
+            )),
             alternative_statements: expression
                 .alternative_statements
                 .into_iter()
                 .map(untyped::StatementNode::from)
                 .collect(),
-            alternative: Box::new(untyped::ExpressionNode::from(*expression.alternative)),
+            alternative: Box::new(untyped::ExpressionNode::from(
+                *expression.alternative,
+            )),
             kind: untyped::ConditionalKind::IfElse,
         }))
         .span(expression.span)
     }
 }
 
-impl<'ast> From<pest::TernaryExpression<'ast>> for untyped::ExpressionNode<'ast> {
-    fn from(expression: pest::TernaryExpression<'ast>) -> untyped::ExpressionNode<'ast> {
+impl<'ast> From<pest::TernaryExpression<'ast>>
+    for untyped::ExpressionNode<'ast>
+{
+    fn from(
+        expression: pest::TernaryExpression<'ast>,
+    ) -> untyped::ExpressionNode<'ast> {
         use crate::untyped::NodeValue;
         untyped::Expression::Conditional(Box::new(ConditionalExpression {
-            condition: Box::new(untyped::ExpressionNode::from(*expression.condition)),
+            condition: Box::new(untyped::ExpressionNode::from(
+                *expression.condition,
+            )),
             consequence_statements: vec![],
-            consequence: Box::new(untyped::ExpressionNode::from(*expression.consequence)),
+            consequence: Box::new(untyped::ExpressionNode::from(
+                *expression.consequence,
+            )),
             alternative_statements: vec![],
-            alternative: Box::new(untyped::ExpressionNode::from(*expression.alternative)),
+            alternative: Box::new(untyped::ExpressionNode::from(
+                *expression.alternative,
+            )),
             kind: untyped::ConditionalKind::Ternary,
         }))
         .span(expression.span)
@@ -534,13 +655,17 @@ impl<'ast> From<pest::Range<'ast>> for untyped::RangeNode<'ast> {
     }
 }
 
-impl<'ast> From<pest::RangeOrExpression<'ast>> for untyped::RangeOrExpression<'ast> {
+impl<'ast> From<pest::RangeOrExpression<'ast>>
+    for untyped::RangeOrExpression<'ast>
+{
     fn from(
         range_or_expression: pest::RangeOrExpression<'ast>,
     ) -> untyped::RangeOrExpression<'ast> {
         match range_or_expression {
             pest::RangeOrExpression::Expression(e) => {
-                untyped::RangeOrExpression::Expression(untyped::ExpressionNode::from(e))
+                untyped::RangeOrExpression::Expression(
+                    untyped::ExpressionNode::from(e),
+                )
             }
             pest::RangeOrExpression::Range(r) => {
                 untyped::RangeOrExpression::Range(untyped::RangeNode::from(r))
@@ -549,23 +674,33 @@ impl<'ast> From<pest::RangeOrExpression<'ast>> for untyped::RangeOrExpression<'a
     }
 }
 
-impl<'ast> From<pest::SpreadOrExpression<'ast>> for untyped::SpreadOrExpression<'ast> {
+impl<'ast> From<pest::SpreadOrExpression<'ast>>
+    for untyped::SpreadOrExpression<'ast>
+{
     fn from(
         spread_or_expression: pest::SpreadOrExpression<'ast>,
     ) -> untyped::SpreadOrExpression<'ast> {
         match spread_or_expression {
             pest::SpreadOrExpression::Expression(e) => {
-                untyped::SpreadOrExpression::Expression(untyped::ExpressionNode::from(e))
+                untyped::SpreadOrExpression::Expression(
+                    untyped::ExpressionNode::from(e),
+                )
             }
             pest::SpreadOrExpression::Spread(s) => {
-                untyped::SpreadOrExpression::Spread(untyped::SpreadNode::from(s))
+                untyped::SpreadOrExpression::Spread(untyped::SpreadNode::from(
+                    s,
+                ))
             }
         }
     }
 }
 
-impl<'ast> From<pest::InlineArrayExpression<'ast>> for untyped::ExpressionNode<'ast> {
-    fn from(array: pest::InlineArrayExpression<'ast>) -> untyped::ExpressionNode<'ast> {
+impl<'ast> From<pest::InlineArrayExpression<'ast>>
+    for untyped::ExpressionNode<'ast>
+{
+    fn from(
+        array: pest::InlineArrayExpression<'ast>,
+    ) -> untyped::ExpressionNode<'ast> {
         use crate::untyped::NodeValue;
         untyped::Expression::InlineArray(
             array
@@ -578,8 +713,12 @@ impl<'ast> From<pest::InlineArrayExpression<'ast>> for untyped::ExpressionNode<'
     }
 }
 
-impl<'ast> From<pest::InlineTupleExpression<'ast>> for untyped::ExpressionNode<'ast> {
-    fn from(tuple: pest::InlineTupleExpression<'ast>) -> untyped::ExpressionNode<'ast> {
+impl<'ast> From<pest::InlineTupleExpression<'ast>>
+    for untyped::ExpressionNode<'ast>
+{
+    fn from(
+        tuple: pest::InlineTupleExpression<'ast>,
+    ) -> untyped::ExpressionNode<'ast> {
         use crate::untyped::NodeValue;
         untyped::Expression::InlineTuple(
             tuple
@@ -592,8 +731,12 @@ impl<'ast> From<pest::InlineTupleExpression<'ast>> for untyped::ExpressionNode<'
     }
 }
 
-impl<'ast> From<pest::InlineStructExpression<'ast>> for untyped::ExpressionNode<'ast> {
-    fn from(s: pest::InlineStructExpression<'ast>) -> untyped::ExpressionNode<'ast> {
+impl<'ast> From<pest::InlineStructExpression<'ast>>
+    for untyped::ExpressionNode<'ast>
+{
+    fn from(
+        s: pest::InlineStructExpression<'ast>,
+    ) -> untyped::ExpressionNode<'ast> {
         use crate::untyped::NodeValue;
         untyped::Expression::InlineStruct(
             s.ty.span.as_str().to_string(),
@@ -611,8 +754,12 @@ impl<'ast> From<pest::InlineStructExpression<'ast>> for untyped::ExpressionNode<
     }
 }
 
-impl<'ast> From<pest::ArrayInitializerExpression<'ast>> for untyped::ExpressionNode<'ast> {
-    fn from(initializer: pest::ArrayInitializerExpression<'ast>) -> untyped::ExpressionNode<'ast> {
+impl<'ast> From<pest::ArrayInitializerExpression<'ast>>
+    for untyped::ExpressionNode<'ast>
+{
+    fn from(
+        initializer: pest::ArrayInitializerExpression<'ast>,
+    ) -> untyped::ExpressionNode<'ast> {
         use crate::untyped::NodeValue;
 
         let value = untyped::ExpressionNode::from(*initializer.value);
@@ -622,23 +769,38 @@ impl<'ast> From<pest::ArrayInitializerExpression<'ast>> for untyped::ExpressionN
     }
 }
 
-impl<'ast> From<pest::UnaryExpression<'ast>> for untyped::ExpressionNode<'ast> {
-    fn from(unary: pest::UnaryExpression<'ast>) -> untyped::ExpressionNode<'ast> {
+impl<'ast> From<pest::UnaryExpression<'ast>>
+    for untyped::ExpressionNode<'ast>
+{
+    fn from(
+        unary: pest::UnaryExpression<'ast>,
+    ) -> untyped::ExpressionNode<'ast> {
         use crate::untyped::NodeValue;
 
-        let expression = Box::new(untyped::ExpressionNode::from(*unary.expression));
+        let expression =
+            Box::new(untyped::ExpressionNode::from(*unary.expression));
 
         match unary.op {
-            pest::UnaryOperator::Not(..) => untyped::Expression::Not(expression),
-            pest::UnaryOperator::Neg(..) => untyped::Expression::Neg(expression),
-            pest::UnaryOperator::Pos(..) => untyped::Expression::Pos(expression),
+            pest::UnaryOperator::Not(..) => {
+                untyped::Expression::Not(expression)
+            }
+            pest::UnaryOperator::Neg(..) => {
+                untyped::Expression::Neg(expression)
+            }
+            pest::UnaryOperator::Pos(..) => {
+                untyped::Expression::Pos(expression)
+            }
         }
         .span(unary.span)
     }
 }
 
-impl<'ast> From<pest::PostfixExpression<'ast>> for untyped::ExpressionNode<'ast> {
-    fn from(expression: pest::PostfixExpression<'ast>) -> untyped::ExpressionNode<'ast> {
+impl<'ast> From<pest::PostfixExpression<'ast>>
+    for untyped::ExpressionNode<'ast>
+{
+    fn from(
+        expression: pest::PostfixExpression<'ast>,
+    ) -> untyped::ExpressionNode<'ast> {
         use crate::untyped::NodeValue;
 
         let base = untyped::ExpressionNode::from(*expression.base);
@@ -657,13 +819,20 @@ impl<'ast> From<pest::PostfixExpression<'ast>> for untyped::ExpressionNode<'ast>
                             .values
                             .into_iter()
                             .map(|i| match i {
-                                pest::ConstantGenericValue::Underscore(_) => None,
+                                pest::ConstantGenericValue::Underscore(_) => {
+                                    None
+                                }
                                 pest::ConstantGenericValue::Value(v) => {
                                     Some(untyped::ExpressionNode::from(v))
                                 }
-                                pest::ConstantGenericValue::Identifier(i) => Some(
-                                    untyped::Expression::Identifier(i.span.as_str()).span(i.span),
-                                ),
+                                pest::ConstantGenericValue::Identifier(i) => {
+                                    Some(
+                                        untyped::Expression::Identifier(
+                                            i.span.as_str(),
+                                        )
+                                        .span(i.span),
+                                    )
+                                }
                             })
                             .collect()
                     }),
@@ -681,98 +850,154 @@ impl<'ast> From<pest::PostfixExpression<'ast>> for untyped::ExpressionNode<'ast>
                 .span(a.span),
                 pest::Access::Dot(m) => match m.inner {
                     pest::IdentifierOrDecimal::Identifier(id) => {
-                        untyped::Expression::Member(Box::new(acc), Box::new(id.span.as_str()))
-                            .span(m.span)
+                        untyped::Expression::Member(
+                            Box::new(acc),
+                            Box::new(id.span.as_str()),
+                        )
+                        .span(m.span)
                     }
-                    pest::IdentifierOrDecimal::Decimal(id) => untyped::Expression::Element(
-                        Box::new(acc),
-                        id.span.as_str().parse().unwrap(),
-                    )
-                    .span(m.span),
+                    pest::IdentifierOrDecimal::Decimal(id) => {
+                        untyped::Expression::Element(
+                            Box::new(acc),
+                            id.span.as_str().parse().unwrap(),
+                        )
+                        .span(m.span)
+                    }
                 },
             })
     }
 }
 
-impl<'ast> From<pest::DecimalLiteralExpression<'ast>> for untyped::ExpressionNode<'ast> {
-    fn from(expression: pest::DecimalLiteralExpression<'ast>) -> untyped::ExpressionNode<'ast> {
+impl<'ast> From<pest::DecimalLiteralExpression<'ast>>
+    for untyped::ExpressionNode<'ast>
+{
+    fn from(
+        expression: pest::DecimalLiteralExpression<'ast>,
+    ) -> untyped::ExpressionNode<'ast> {
         use crate::untyped::NodeValue;
 
         match expression.suffix {
             Some(suffix) => match suffix {
-                pest::DecimalSuffix::Field(_) => untyped::Expression::FieldConstant(
-                    BigUint::parse_bytes(expression.value.span.as_str().as_bytes(), 10).unwrap(),
-                ),
-                pest::DecimalSuffix::U64(_) => untyped::Expression::U64Constant(
-                    expression.value.span.as_str().parse().unwrap(),
-                ),
-                pest::DecimalSuffix::U32(_) => untyped::Expression::U32Constant(
-                    expression.value.span.as_str().parse().unwrap(),
-                ),
-                pest::DecimalSuffix::U16(_) => untyped::Expression::U16Constant(
-                    expression.value.span.as_str().parse().unwrap(),
-                ),
-                pest::DecimalSuffix::U8(_) => {
-                    untyped::Expression::U8Constant(expression.value.span.as_str().parse().unwrap())
+                pest::DecimalSuffix::Field(_) => {
+                    untyped::Expression::FieldConstant(
+                        BigUint::parse_bytes(
+                            expression.value.span.as_str().as_bytes(),
+                            10,
+                        )
+                        .unwrap(),
+                    )
                 }
+                pest::DecimalSuffix::U64(_) => {
+                    untyped::Expression::U64Constant(
+                        expression.value.span.as_str().parse().unwrap(),
+                    )
+                }
+                pest::DecimalSuffix::U32(_) => {
+                    untyped::Expression::U32Constant(
+                        expression.value.span.as_str().parse().unwrap(),
+                    )
+                }
+                pest::DecimalSuffix::U16(_) => {
+                    untyped::Expression::U16Constant(
+                        expression.value.span.as_str().parse().unwrap(),
+                    )
+                }
+                pest::DecimalSuffix::U8(_) => untyped::Expression::U8Constant(
+                    expression.value.span.as_str().parse().unwrap(),
+                ),
             }
             .span(expression.span),
             None => untyped::Expression::IntConstant(
-                BigUint::parse_bytes(expression.value.span.as_str().as_bytes(), 10).unwrap(),
+                BigUint::parse_bytes(
+                    expression.value.span.as_str().as_bytes(),
+                    10,
+                )
+                .unwrap(),
             )
             .span(expression.span),
         }
     }
 }
 
-impl<'ast> From<pest::HexLiteralExpression<'ast>> for untyped::ExpressionNode<'ast> {
-    fn from(expression: pest::HexLiteralExpression<'ast>) -> untyped::ExpressionNode<'ast> {
+impl<'ast> From<pest::HexLiteralExpression<'ast>>
+    for untyped::ExpressionNode<'ast>
+{
+    fn from(
+        expression: pest::HexLiteralExpression<'ast>,
+    ) -> untyped::ExpressionNode<'ast> {
         use crate::untyped::NodeValue;
 
         match expression.value {
             pest::HexNumberExpression::U64(e) => {
-                untyped::Expression::U64Constant(u64::from_str_radix(e.span.as_str(), 16).unwrap())
+                untyped::Expression::U64Constant(
+                    u64::from_str_radix(e.span.as_str(), 16).unwrap(),
+                )
             }
             pest::HexNumberExpression::U32(e) => {
-                untyped::Expression::U32Constant(u32::from_str_radix(e.span.as_str(), 16).unwrap())
+                untyped::Expression::U32Constant(
+                    u32::from_str_radix(e.span.as_str(), 16).unwrap(),
+                )
             }
             pest::HexNumberExpression::U16(e) => {
-                untyped::Expression::U16Constant(u16::from_str_radix(e.span.as_str(), 16).unwrap())
+                untyped::Expression::U16Constant(
+                    u16::from_str_radix(e.span.as_str(), 16).unwrap(),
+                )
             }
             pest::HexNumberExpression::U8(e) => {
-                untyped::Expression::U8Constant(u8::from_str_radix(e.span.as_str(), 16).unwrap())
+                untyped::Expression::U8Constant(
+                    u8::from_str_radix(e.span.as_str(), 16).unwrap(),
+                )
             }
         }
         .span(expression.span)
     }
 }
 
-impl<'ast> From<pest::LiteralExpression<'ast>> for untyped::ExpressionNode<'ast> {
-    fn from(expression: pest::LiteralExpression<'ast>) -> untyped::ExpressionNode<'ast> {
+impl<'ast> From<pest::LiteralExpression<'ast>>
+    for untyped::ExpressionNode<'ast>
+{
+    fn from(
+        expression: pest::LiteralExpression<'ast>,
+    ) -> untyped::ExpressionNode<'ast> {
         use crate::untyped::NodeValue;
 
         match expression {
             pest::LiteralExpression::BooleanLiteral(c) => {
-                untyped::Expression::BooleanConstant(c.value.parse().unwrap()).span(c.span)
+                untyped::Expression::BooleanConstant(c.value.parse().unwrap())
+                    .span(c.span)
             }
-            pest::LiteralExpression::DecimalLiteral(n) => untyped::ExpressionNode::from(n),
-            pest::LiteralExpression::HexLiteral(n) => untyped::ExpressionNode::from(n),
+            pest::LiteralExpression::DecimalLiteral(n) => {
+                untyped::ExpressionNode::from(n)
+            }
+            pest::LiteralExpression::HexLiteral(n) => {
+                untyped::ExpressionNode::from(n)
+            }
         }
     }
 }
 
-impl<'ast> From<pest::IdentifierExpression<'ast>> for untyped::ExpressionNode<'ast> {
-    fn from(expression: pest::IdentifierExpression<'ast>) -> untyped::ExpressionNode<'ast> {
+impl<'ast> From<pest::IdentifierExpression<'ast>>
+    for untyped::ExpressionNode<'ast>
+{
+    fn from(
+        expression: pest::IdentifierExpression<'ast>,
+    ) -> untyped::ExpressionNode<'ast> {
         use crate::untyped::NodeValue;
-        untyped::Expression::Identifier(expression.span.as_str()).span(expression.span)
+        untyped::Expression::Identifier(expression.span.as_str())
+            .span(expression.span)
     }
 }
 
-impl<'ast> From<pest::IdentifierExpression<'ast>> for untyped::AssigneeNode<'ast> {
-    fn from(expression: pest::IdentifierExpression<'ast>) -> untyped::AssigneeNode<'ast> {
+impl<'ast> From<pest::IdentifierExpression<'ast>>
+    for untyped::AssigneeNode<'ast>
+{
+    fn from(
+        expression: pest::IdentifierExpression<'ast>,
+    ) -> untyped::AssigneeNode<'ast> {
         use crate::untyped::NodeValue;
 
-        untyped::Assignee::Identifier(expression.span.as_str()).span(expression.span)
+        untyped::Assignee::Identifier(expression.span.as_str())
+            .span(expression.span)
     }
 }
 
@@ -791,10 +1016,16 @@ impl<'ast> From<pest::Assignee<'ast>> for untyped::AssigneeNode<'ast> {
                 ),
                 pest::AssigneeAccess::Dot(a) => match a.inner {
                     pest::IdentifierOrDecimal::Identifier(id) => {
-                        untyped::Assignee::Member(Box::new(acc), Box::new(id.span.as_str()))
+                        untyped::Assignee::Member(
+                            Box::new(acc),
+                            Box::new(id.span.as_str()),
+                        )
                     }
                     pest::IdentifierOrDecimal::Decimal(id) => {
-                        untyped::Assignee::Element(Box::new(acc), id.span.as_str().parse().unwrap())
+                        untyped::Assignee::Element(
+                            Box::new(acc),
+                            id.span.as_str().parse().unwrap(),
+                        )
                     }
                 },
             }
@@ -810,12 +1041,22 @@ impl<'ast> From<pest::Type<'ast>> for untyped::UnresolvedTypeNode<'ast> {
 
         match t {
             pest::Type::Basic(t) => match t {
-                pest::BasicType::Field(t) => UnresolvedType::FieldElement.span(t.span),
-                pest::BasicType::Boolean(t) => UnresolvedType::Boolean.span(t.span),
+                pest::BasicType::Field(t) => {
+                    UnresolvedType::FieldElement.span(t.span)
+                }
+                pest::BasicType::Boolean(t) => {
+                    UnresolvedType::Boolean.span(t.span)
+                }
                 pest::BasicType::U8(t) => UnresolvedType::Uint(8).span(t.span),
-                pest::BasicType::U16(t) => UnresolvedType::Uint(16).span(t.span),
-                pest::BasicType::U32(t) => UnresolvedType::Uint(32).span(t.span),
-                pest::BasicType::U64(t) => UnresolvedType::Uint(64).span(t.span),
+                pest::BasicType::U16(t) => {
+                    UnresolvedType::Uint(16).span(t.span)
+                }
+                pest::BasicType::U32(t) => {
+                    UnresolvedType::Uint(32).span(t.span)
+                }
+                pest::BasicType::U64(t) => {
+                    UnresolvedType::Uint(64).span(t.span)
+                }
             },
             pest::Type::Array(t) => {
                 let inner_type = match t.ty {
@@ -863,8 +1104,12 @@ impl<'ast> From<pest::Type<'ast>> for untyped::UnresolvedTypeNode<'ast> {
                     .map(untyped::ExpressionNode::from)
                     .rev()
                     .fold(None, |acc, s| match acc {
-                        None => Some(UnresolvedType::array(inner_type.clone(), s)),
-                        Some(acc) => Some(UnresolvedType::array(acc.span(span), s)),
+                        None => {
+                            Some(UnresolvedType::array(inner_type.clone(), s))
+                        }
+                        Some(acc) => {
+                            Some(UnresolvedType::array(acc.span(span), s))
+                        }
                     })
                     .unwrap()
                     .span(span)
@@ -880,9 +1125,12 @@ impl<'ast> From<pest::Type<'ast>> for untyped::UnresolvedTypeNode<'ast> {
                             pest::ConstantGenericValue::Value(v) => {
                                 Some(untyped::ExpressionNode::from(v))
                             }
-                            pest::ConstantGenericValue::Identifier(i) => {
-                                Some(untyped::Expression::Identifier(i.span.as_str()).span(i.span))
-                            }
+                            pest::ConstantGenericValue::Identifier(i) => Some(
+                                untyped::Expression::Identifier(
+                                    i.span.as_str(),
+                                )
+                                .span(i.span),
+                            ),
                         })
                         .collect()
                 }),
@@ -912,19 +1160,26 @@ mod tests {
         let expected: untyped::Module = untyped::Module {
             symbols: vec![untyped::SymbolDeclaration {
                 id: &source[4..8],
-                symbol: untyped::Symbol::Here(untyped::SymbolDefinition::Function(
-                    untyped::Function {
-                        arguments: vec![],
-                        statements: vec![untyped::Statement::Return(Some(
-                            untyped::Expression::IntConstant(42usize.into()).into(),
-                        ))
-                        .into()],
-                        signature: UnresolvedSignature::new()
-                            .inputs(vec![])
-                            .output(UnresolvedType::FieldElement.mock()),
-                    }
-                    .into(),
-                )),
+                symbol: untyped::Symbol::Here(
+                    untyped::SymbolDefinition::Function(
+                        untyped::Function {
+                            arguments: vec![],
+                            statements: vec![untyped::Statement::Return(
+                                Some(
+                                    untyped::Expression::IntConstant(
+                                        42usize.into(),
+                                    )
+                                    .into(),
+                                ),
+                            )
+                            .into()],
+                            signature: UnresolvedSignature::new()
+                                .inputs(vec![])
+                                .output(UnresolvedType::FieldElement.mock()),
+                        }
+                        .into(),
+                    ),
+                ),
             }
             .into()],
         };
@@ -938,19 +1193,24 @@ mod tests {
         let expected: untyped::Module = untyped::Module {
             symbols: vec![untyped::SymbolDeclaration {
                 id: &source[4..8],
-                symbol: untyped::Symbol::Here(untyped::SymbolDefinition::Function(
-                    untyped::Function {
-                        arguments: vec![],
-                        statements: vec![untyped::Statement::Return(Some(
-                            untyped::Expression::BooleanConstant(true).into(),
-                        ))
-                        .into()],
-                        signature: UnresolvedSignature::new()
-                            .inputs(vec![])
-                            .output(UnresolvedType::Boolean.mock()),
-                    }
-                    .into(),
-                )),
+                symbol: untyped::Symbol::Here(
+                    untyped::SymbolDefinition::Function(
+                        untyped::Function {
+                            arguments: vec![],
+                            statements: vec![untyped::Statement::Return(
+                                Some(
+                                    untyped::Expression::BooleanConstant(true)
+                                        .into(),
+                                ),
+                            )
+                            .into()],
+                            signature: UnresolvedSignature::new()
+                                .inputs(vec![])
+                                .output(UnresolvedType::Boolean.mock()),
+                        }
+                        .into(),
+                    ),
+                ),
             }
             .into()],
         };
@@ -959,43 +1219,54 @@ mod tests {
 
     #[test]
     fn arguments() {
-        let source = "def main(private field a, bool mut b) -> field { return 42; }";
+        let source =
+            "def main(private field a, bool mut b) -> field { return 42; }";
         let ast = pest::generate_ast(source).unwrap();
 
         let expected: untyped::Module = untyped::Module {
             symbols: vec![untyped::SymbolDeclaration {
                 id: &source[4..8],
-                symbol: untyped::Symbol::Here(untyped::SymbolDefinition::Function(
-                    untyped::Function {
-                        arguments: vec![
-                            untyped::Parameter::private(
-                                untyped::Variable::immutable(
-                                    "a",
-                                    UnresolvedType::FieldElement.mock(),
+                symbol: untyped::Symbol::Here(
+                    untyped::SymbolDefinition::Function(
+                        untyped::Function {
+                            arguments: vec![
+                                untyped::Parameter::private(
+                                    untyped::Variable::immutable(
+                                        "a",
+                                        UnresolvedType::FieldElement.mock(),
+                                    )
+                                    .into(),
                                 )
                                 .into(),
-                            )
-                            .into(),
-                            untyped::Parameter::new(
-                                untyped::Variable::mutable("b", UnresolvedType::Boolean.mock())
+                                untyped::Parameter::new(
+                                    untyped::Variable::mutable(
+                                        "b",
+                                        UnresolvedType::Boolean.mock(),
+                                    )
                                     .mock(),
-                                None,
+                                    None,
+                                )
+                                .into(),
+                            ],
+                            statements: vec![untyped::Statement::Return(
+                                Some(
+                                    untyped::Expression::IntConstant(
+                                        42usize.into(),
+                                    )
+                                    .into(),
+                                ),
                             )
-                            .into(),
-                        ],
-                        statements: vec![untyped::Statement::Return(Some(
-                            untyped::Expression::IntConstant(42usize.into()).into(),
-                        ))
-                        .into()],
-                        signature: UnresolvedSignature::new()
-                            .inputs(vec![
-                                UnresolvedType::FieldElement.mock(),
-                                UnresolvedType::Boolean.mock(),
-                            ])
-                            .output(UnresolvedType::FieldElement.mock()),
-                    }
-                    .into(),
-                )),
+                            .into()],
+                            signature: UnresolvedSignature::new()
+                                .inputs(vec![
+                                    UnresolvedType::FieldElement.mock(),
+                                    UnresolvedType::Boolean.mock(),
+                                ])
+                                .output(UnresolvedType::FieldElement.mock()),
+                        }
+                        .into(),
+                    ),
+                ),
             }
             .into()],
         };
@@ -1011,17 +1282,28 @@ mod tests {
             untyped::Module {
                 symbols: vec![untyped::SymbolDeclaration {
                     id: "main",
-                    symbol: untyped::Symbol::Here(untyped::SymbolDefinition::Function(
-                        untyped::Function {
-                            arguments: vec![untyped::Parameter::private(
-                                untyped::Variable::new("a", ty.clone().mock(), false).into(),
-                            )
-                            .into()],
-                            statements: vec![untyped::Statement::Return(None).into()],
-                            signature: UnresolvedSignature::new().inputs(vec![ty.mock()]),
-                        }
-                        .into(),
-                    )),
+                    symbol: untyped::Symbol::Here(
+                        untyped::SymbolDefinition::Function(
+                            untyped::Function {
+                                arguments: vec![untyped::Parameter::private(
+                                    untyped::Variable::new(
+                                        "a",
+                                        ty.clone().mock(),
+                                        false,
+                                    )
+                                    .into(),
+                                )
+                                .into()],
+                                statements: vec![untyped::Statement::Return(
+                                    None,
+                                )
+                                .into()],
+                                signature: UnresolvedSignature::new()
+                                    .inputs(vec![ty.mock()]),
+                            }
+                            .into(),
+                        ),
+                    ),
                 }
                 .into()],
             }
@@ -1044,8 +1326,14 @@ mod tests {
                     untyped::UnresolvedType::Array(
                         Box::new(
                             untyped::UnresolvedType::Array(
-                                Box::new(untyped::UnresolvedType::FieldElement.mock()),
-                                untyped::Expression::IntConstant(3usize.into()).mock(),
+                                Box::new(
+                                    untyped::UnresolvedType::FieldElement
+                                        .mock(),
+                                ),
+                                untyped::Expression::IntConstant(
+                                    3usize.into(),
+                                )
+                                .mock(),
                             )
                             .mock(),
                         ),
@@ -1057,7 +1345,9 @@ mod tests {
                     untyped::UnresolvedType::Array(
                         Box::new(
                             untyped::UnresolvedType::Array(
-                                Box::new(untyped::UnresolvedType::Boolean.mock()),
+                                Box::new(
+                                    untyped::UnresolvedType::Boolean.mock(),
+                                ),
                                 untyped::Expression::U32Constant(3u32).mock(),
                             )
                             .mock(),
@@ -1068,7 +1358,8 @@ mod tests {
             ];
 
             for (ty, expected) in vectors {
-                let source = format!("def main(private {} a) {{ return; }}", ty);
+                let source =
+                    format!("def main(private {} a) {{ return; }}", ty);
                 let expected = wrap(expected);
                 let ast = pest::generate_ast(&source).unwrap();
                 assert_eq!(untyped::Module::from(ast), expected);
@@ -1082,16 +1373,19 @@ mod tests {
             untyped::Module {
                 symbols: vec![untyped::SymbolDeclaration {
                     id: "main",
-                    symbol: untyped::Symbol::Here(untyped::SymbolDefinition::Function(
-                        untyped::Function {
-                            arguments: vec![],
-                            statements: vec![
-                                untyped::Statement::Return(Some(expression.into())).into()
-                            ],
-                            signature: UnresolvedSignature::new(),
-                        }
-                        .into(),
-                    )),
+                    symbol: untyped::Symbol::Here(
+                        untyped::SymbolDefinition::Function(
+                            untyped::Function {
+                                arguments: vec![],
+                                statements: vec![untyped::Statement::Return(
+                                    Some(expression.into()),
+                                )
+                                .into()],
+                                signature: UnresolvedSignature::new(),
+                            }
+                            .into(),
+                        ),
+                    ),
                 }
                 .into()],
             }
@@ -1108,56 +1402,97 @@ mod tests {
                     untyped::Expression::Select(
                         Box::new(untyped::Expression::Identifier("a").into()),
                         Box::new(untyped::RangeOrExpression::Expression(
-                            untyped::Expression::IntConstant(3usize.into()).into(),
-                        ),
-                    )),
+                            untyped::Expression::IntConstant(3usize.into())
+                                .into(),
+                        )),
+                    ),
                 ),
                 (
                     "a[3][4]",
                     untyped::Expression::Select(
-                        Box::new(untyped::Expression::Select(
-                            Box::new(untyped::Expression::Identifier("a").into()),
-                            Box::new(untyped::RangeOrExpression::Expression(
-                                untyped::Expression::IntConstant(3usize.into()).into(),
-                            )),
-                        )
-                        .into()),
+                        Box::new(
+                            untyped::Expression::Select(
+                                Box::new(
+                                    untyped::Expression::Identifier("a")
+                                        .into(),
+                                ),
+                                Box::new(
+                                    untyped::RangeOrExpression::Expression(
+                                        untyped::Expression::IntConstant(
+                                            3usize.into(),
+                                        )
+                                        .into(),
+                                    ),
+                                ),
+                            )
+                            .into(),
+                        ),
                         Box::new(untyped::RangeOrExpression::Expression(
-                            untyped::Expression::IntConstant(4usize.into()).into(),
+                            untyped::Expression::IntConstant(4usize.into())
+                                .into(),
                         )),
                     ),
                 ),
                 (
                     "a(3)[4]",
                     untyped::Expression::Select(
-                        Box::new(untyped::Expression::FunctionCall(
-                            Box::new(untyped::Expression::Identifier("a").mock()),
-                            None,
-                            vec![untyped::Expression::IntConstant(3usize.into()).into()],
-                        )
-                        .into()),
+                        Box::new(
+                            untyped::Expression::FunctionCall(
+                                Box::new(
+                                    untyped::Expression::Identifier("a")
+                                        .mock(),
+                                ),
+                                None,
+                                vec![untyped::Expression::IntConstant(
+                                    3usize.into(),
+                                )
+                                .into()],
+                            )
+                            .into(),
+                        ),
                         Box::new(untyped::RangeOrExpression::Expression(
-                            untyped::Expression::IntConstant(4usize.into()).into(),
+                            untyped::Expression::IntConstant(4usize.into())
+                                .into(),
                         )),
                     ),
                 ),
                 (
                     "a(3)[4][5]",
                     untyped::Expression::Select(
-                        Box::new(untyped::Expression::Select(
-                            Box::new(untyped::Expression::FunctionCall(
-                                Box::new(untyped::Expression::Identifier("a").mock()),
-                                None,
-                                vec![untyped::Expression::IntConstant(3usize.into()).into()],
+                        Box::new(
+                            untyped::Expression::Select(
+                                Box::new(
+                                    untyped::Expression::FunctionCall(
+                                        Box::new(
+                                            untyped::Expression::Identifier(
+                                                "a",
+                                            )
+                                            .mock(),
+                                        ),
+                                        None,
+                                        vec![
+                                            untyped::Expression::IntConstant(
+                                                3usize.into(),
+                                            )
+                                            .into(),
+                                        ],
+                                    )
+                                    .into(),
+                                ),
+                                Box::new(
+                                    untyped::RangeOrExpression::Expression(
+                                        untyped::Expression::IntConstant(
+                                            4usize.into(),
+                                        )
+                                        .into(),
+                                    ),
+                                ),
                             )
-                            .into()),
-                            Box::new(untyped::RangeOrExpression::Expression(
-                                untyped::Expression::IntConstant(4usize.into()).into(),
-                            )),
-                        )
-                        .into()),
+                            .into(),
+                        ),
                         Box::new(untyped::RangeOrExpression::Expression(
-                            untyped::Expression::IntConstant(5usize.into()).into(),
+                            untyped::Expression::IntConstant(5usize.into())
+                                .into(),
                         )),
                     ),
                 ),
@@ -1181,9 +1516,12 @@ mod tests {
                 wrap(untyped::Expression::FunctionCall(
                     Box::new(
                         untyped::Expression::Select(
-                            Box::new(untyped::Expression::Identifier("a").mock()),
+                            Box::new(
+                                untyped::Expression::Identifier("a").mock()
+                            ),
                             Box::new(untyped::RangeOrExpression::Expression(
-                                untyped::Expression::IntConstant(2u32.into()).mock()
+                                untyped::Expression::IntConstant(2u32.into())
+                                    .mock()
                             ))
                         )
                         .mock()
@@ -1205,9 +1543,14 @@ mod tests {
                 wrap(untyped::Expression::FunctionCall(
                     Box::new(
                         untyped::Expression::FunctionCall(
-                            Box::new(untyped::Expression::Identifier("a").mock()),
+                            Box::new(
+                                untyped::Expression::Identifier("a").mock()
+                            ),
                             None,
-                            vec![untyped::Expression::IntConstant(2u32.into()).mock()]
+                            vec![untyped::Expression::IntConstant(
+                                2u32.into()
+                            )
+                            .mock()]
                         )
                         .mock()
                     ),
@@ -1235,15 +1578,17 @@ mod tests {
                 accesses: vec![],
                 span,
             }),
-            expression: pest::Expression::Literal(pest::LiteralExpression::DecimalLiteral(
-                pest::DecimalLiteralExpression {
-                    value: pest::DecimalNumber {
-                        span: Span::new("1", 0, 1).unwrap(),
+            expression: pest::Expression::Literal(
+                pest::LiteralExpression::DecimalLiteral(
+                    pest::DecimalLiteralExpression {
+                        value: pest::DecimalNumber {
+                            span: Span::new("1", 0, 1).unwrap(),
+                        },
+                        suffix: None,
+                        span,
                     },
-                    suffix: None,
-                    span,
-                },
-            )),
+                ),
+            ),
             span,
         };
 
@@ -1260,20 +1605,26 @@ mod tests {
         // A definition statement is generated
 
         let definition = pest::DefinitionStatement {
-            lhs: pest::TypedIdentifierOrAssignee::TypedIdentifier(pest::TypedIdentifier {
-                ty: pest::Type::Basic(pest::BasicType::Field(pest::FieldType { span })),
-                identifier: pest::IdentifierExpression {
-                    value: String::from("a"),
+            lhs: pest::TypedIdentifierOrAssignee::TypedIdentifier(
+                pest::TypedIdentifier {
+                    ty: pest::Type::Basic(pest::BasicType::Field(
+                        pest::FieldType { span },
+                    )),
+                    identifier: pest::IdentifierExpression {
+                        value: String::from("a"),
+                        span,
+                    },
+                    mutable: None,
                     span,
                 },
-                mutable: None,
-                span,
-            }),
+            ),
             expression: pest::Expression::Postfix(pest::PostfixExpression {
-                base: Box::new(pest::Expression::Identifier(pest::IdentifierExpression {
-                    value: String::from("foo"),
-                    span,
-                })),
+                base: Box::new(pest::Expression::Identifier(
+                    pest::IdentifierExpression {
+                        value: String::from("foo"),
+                        span,
+                    },
+                )),
                 accesses: vec![pest::Access::Call(pest::CallAccess {
                     explicit_generics: None,
                     arguments: pest::Arguments {

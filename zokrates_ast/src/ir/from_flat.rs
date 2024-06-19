@@ -1,24 +1,36 @@
 use crate::common::statements::LogStatement;
 use crate::common::WithSpan;
-use crate::flat::{FlatDirective, FlatExpression, FlatProgIterator, FlatStatement, Variable};
-use crate::ir::{DirectiveStatement, LinComb, ProgIterator, QuadComb, Statement};
+use crate::flat::{
+    FlatDirective, FlatExpression, FlatProgIterator, FlatStatement, Variable,
+};
+use crate::ir::{
+    DirectiveStatement, LinComb, ProgIterator, QuadComb, Statement,
+};
 use std::ops::*;
 use zokrates_field::Field;
 
 impl<T: Field> QuadComb<T> {
-    fn from_flat_expression<U: Into<FlatExpression<T>>>(flat_expression: U) -> QuadComb<T> {
+    fn from_flat_expression<U: Into<FlatExpression<T>>>(
+        flat_expression: U,
+    ) -> QuadComb<T> {
         let flat_expression = flat_expression.into();
         match flat_expression.is_linear() {
             true => LinComb::from(flat_expression).into(),
             false => match flat_expression {
-                FlatExpression::Mult(e) => QuadComb::new((*e.left).into(), (*e.right).into()),
+                FlatExpression::Mult(e) => {
+                    QuadComb::new((*e.left).into(), (*e.right).into())
+                }
                 e => unimplemented!("{}", e),
             },
         }
     }
 }
 
-pub fn from_flat<'ast, T: Field, I: IntoIterator<Item = FlatStatement<'ast, T>>>(
+pub fn from_flat<
+    'ast,
+    T: Field,
+    I: IntoIterator<Item = FlatStatement<'ast, T>>,
+>(
     flat_prog_iterator: FlatProgIterator<'ast, T, I>,
 ) -> ProgIterator<T, impl IntoIterator<Item = Statement<'ast, T>>> {
     ProgIterator {
@@ -35,20 +47,35 @@ impl<T: Field> From<FlatExpression<T>> for LinComb<T> {
         let span = flat_expression.get_span();
 
         match flat_expression {
-            FlatExpression::Value(ref n) if n.value == T::from(0) => LinComb::zero(),
-            FlatExpression::Value(n) => LinComb::summand(n.value, Variable::one()),
+            FlatExpression::Value(ref n) if n.value == T::from(0) => {
+                LinComb::zero()
+            }
+            FlatExpression::Value(n) => {
+                LinComb::summand(n.value, Variable::one())
+            }
             FlatExpression::Identifier(id) => LinComb::from(id.id),
-            FlatExpression::Add(e) => LinComb::from(*e.left) + LinComb::from(*e.right),
-            FlatExpression::Sub(e) => LinComb::from(*e.left) - LinComb::from(*e.right),
+            FlatExpression::Add(e) => {
+                LinComb::from(*e.left) + LinComb::from(*e.right)
+            }
+            FlatExpression::Sub(e) => {
+                LinComb::from(*e.left) - LinComb::from(*e.right)
+            }
             FlatExpression::Mult(e) => match (*e.left, *e.right) {
-                (FlatExpression::Value(n1), FlatExpression::Identifier(v1))
-                | (FlatExpression::Identifier(v1), FlatExpression::Value(n1)) => {
-                    LinComb::summand(n1.value, v1.id)
-                }
+                (
+                    FlatExpression::Value(n1),
+                    FlatExpression::Identifier(v1),
+                )
+                | (
+                    FlatExpression::Identifier(v1),
+                    FlatExpression::Value(n1),
+                ) => LinComb::summand(n1.value, v1.id),
                 (FlatExpression::Value(n1), FlatExpression::Value(n2)) => {
                     LinComb::summand(n1.value * n2.value, Variable::one())
                 }
-                (left, right) => unreachable!("{}", FlatExpression::mul(left, right).span(e.span)),
+                (left, right) => unreachable!(
+                    "{}",
+                    FlatExpression::mul(left, right).span(e.span)
+                ),
             },
         }
         .span(span)
@@ -62,18 +89,24 @@ impl<'ast, T: Field> From<FlatStatement<'ast, T>> for Statement<'ast, T> {
         match flat_statement {
             FlatStatement::Condition(s) => match s.quad {
                 FlatExpression::Mult(e) => Statement::constraint(
-                    QuadComb::new((*e.left).into(), (*e.right).into()).span(e.span),
+                    QuadComb::new((*e.left).into(), (*e.right).into())
+                        .span(e.span),
                     LinComb::from(s.lin),
                     Some(s.error),
                 ),
-                e => Statement::constraint(LinComb::from(e), s.lin, Some(s.error)),
+                e => Statement::constraint(
+                    LinComb::from(e),
+                    s.lin,
+                    Some(s.error),
+                ),
             },
-            FlatStatement::Block(statements) => {
-                Statement::block(statements.inner.into_iter().map(Statement::from).collect())
-            }
+            FlatStatement::Block(statements) => Statement::block(
+                statements.inner.into_iter().map(Statement::from).collect(),
+            ),
             FlatStatement::Definition(s) => match s.rhs {
                 FlatExpression::Mult(e) => Statement::constraint(
-                    QuadComb::new((*e.left).into(), (*e.right).into()).span(e.span),
+                    QuadComb::new((*e.left).into(), (*e.right).into())
+                        .span(e.span),
                     s.assignee,
                     None,
                 ),
@@ -84,7 +117,9 @@ impl<'ast, T: Field> From<FlatStatement<'ast, T>> for Statement<'ast, T> {
                 s.format_string,
                 s.expressions
                     .into_iter()
-                    .map(|(t, e)| (t, e.into_iter().map(LinComb::from).collect()))
+                    .map(|(t, e)| {
+                        (t, e.into_iter().map(LinComb::from).collect())
+                    })
                     .collect(),
             )),
         }
@@ -92,7 +127,9 @@ impl<'ast, T: Field> From<FlatStatement<'ast, T>> for Statement<'ast, T> {
     }
 }
 
-impl<'ast, T: Field> From<FlatDirective<'ast, T>> for DirectiveStatement<'ast, T> {
+impl<'ast, T: Field> From<FlatDirective<'ast, T>>
+    for DirectiveStatement<'ast, T>
+{
     fn from(ds: FlatDirective<T>) -> DirectiveStatement<T> {
         DirectiveStatement {
             inputs: ds
@@ -132,7 +169,8 @@ mod tests {
     fn forty_two() {
         // 42
         let one = FlatExpression::value(Bn128Field::from(42));
-        let expected: LinComb<Bn128Field> = LinComb::summand(42, Variable::one());
+        let expected: LinComb<Bn128Field> =
+            LinComb::summand(42, Variable::one());
         assert_eq!(LinComb::from(one), expected);
     }
 
@@ -144,7 +182,8 @@ mod tests {
             FlatExpression::identifier(Variable::new(21)),
         );
         let expected: LinComb<Bn128Field> =
-            LinComb::summand(1, Variable::new(42)) + LinComb::summand(1, Variable::new(21));
+            LinComb::summand(1, Variable::new(42))
+                + LinComb::summand(1, Variable::new(21));
         assert_eq!(LinComb::from(add), expected);
     }
 
@@ -162,7 +201,8 @@ mod tests {
             ),
         );
         let expected: LinComb<Bn128Field> =
-            LinComb::summand(42, Variable::new(42)) + LinComb::summand(21, Variable::new(21));
+            LinComb::summand(42, Variable::new(42))
+                + LinComb::summand(21, Variable::new(21));
         assert_eq!(LinComb::from(add), expected);
     }
 
@@ -180,7 +220,8 @@ mod tests {
             ),
         );
         let expected: LinComb<Bn128Field> =
-            LinComb::summand(42, Variable::new(42)) + LinComb::summand(21, Variable::new(21));
+            LinComb::summand(42, Variable::new(42))
+                + LinComb::summand(21, Variable::new(21));
         assert_eq!(LinComb::from(add), expected);
     }
 }

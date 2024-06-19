@@ -43,7 +43,9 @@ impl<'ast, T> fmt::Display for Solver<'ast, T> {
             #[cfg(feature = "bellman")]
             Solver::Sha256Round => write!(f, "Sha256Round"),
             #[cfg(feature = "ark")]
-            Solver::SnarkVerifyBls12377(n) => write!(f, "SnarkVerifyBls12377({})", n),
+            Solver::SnarkVerifyBls12377(n) => {
+                write!(f, "SnarkVerifyBls12377({})", n)
+            }
         }
     }
 }
@@ -59,7 +61,9 @@ impl<'ast, T> Solver<'ast, T> {
             Solver::ShaAndXorAndXorAnd => (3, 1),
             Solver::ShaCh => (3, 1),
             Solver::EuclideanDiv => (2, 2),
-            Solver::Zir(f) => (f.signature.inputs.len(), f.signature.outputs.len()),
+            Solver::Zir(f) => {
+                (f.signature.inputs.len(), f.signature.outputs.len())
+            }
             Solver::Ref(c) => c.signature,
             #[cfg(feature = "bellman")]
             Solver::Sha256Round => (768, 26935),

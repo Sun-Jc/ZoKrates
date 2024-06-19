@@ -39,7 +39,10 @@ fn generate_proof() {
         .unwrap();
 
     let rng = &mut StdRng::from_entropy();
-    let keypair = <Ark as NonUniversalBackend<Bn128Field, G16>>::setup(program.clone(), rng);
+    let keypair = <Ark as NonUniversalBackend<Bn128Field, G16>>::setup(
+        program.clone(),
+        rng,
+    );
     let _proof = <Ark as Backend<Bn128Field, G16>>::generate_proof(
         program,
         witness,

@@ -3881,6 +3881,7 @@ dependencies = [
  "bellperson",
  "bincode 0.8.0",
  "ff 0.13.0",
+ "halo2curves",
  "lazy_static",
  "nova-snark",
  "num-bigint 0.2.6",

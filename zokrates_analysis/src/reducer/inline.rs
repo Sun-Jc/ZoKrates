@@ -34,9 +34,10 @@ use zokrates_ast::typed::CoreIdentifier;
 use zokrates_ast::typed::TypedAssignee;
 use zokrates_ast::typed::UBitwidth;
 use zokrates_ast::typed::{
-    ConcreteFunctionKey, ConcreteSignature, ConcreteVariable, DeclarationFunctionKey, Expr,
-    Signature, Type, TypedExpression, TypedFunctionSymbol, TypedFunctionSymbolDeclaration,
-    TypedProgram, TypedStatement, UExpression, UExpressionInner, Variable,
+    ConcreteFunctionKey, ConcreteSignature, ConcreteVariable,
+    DeclarationFunctionKey, Expr, Signature, Type, TypedExpression,
+    TypedFunctionSymbol, TypedFunctionSymbolDeclaration, TypedProgram,
+    TypedStatement, UExpression, UExpressionInner, Variable,
 };
 use zokrates_field::Field;
 
@@ -59,7 +60,9 @@ fn get_canonical_function<'ast, T: Field>(
         .unwrap();
 
     match &s.symbol {
-        TypedFunctionSymbol::There(key) => get_canonical_function(key, program),
+        TypedFunctionSymbol::There(key) => {
+            get_canonical_function(key, program)
+        }
         _ => s.clone(),
     }
 }
@@ -73,7 +76,8 @@ pub struct InlineValue<'ast, T> {
     pub return_value: TypedExpression<'ast, T>,
 }
 
-type InlineResult<'ast, T> = Result<InlineValue<'ast, T>, InlineError<'ast, T>>;
+type InlineResult<'ast, T> =
+    Result<InlineValue<'ast, T>, InlineError<'ast, T>>;
 
 pub fn inline_call<'a, 'ast, T: Field, E: Expr<'ast, T>>(
     k: &DeclarationFunctionKey<'ast, T>,
@@ -106,12 +110,13 @@ pub fn inline_call<'a, 'ast, T: Field, E: Expr<'ast, T>>(
         .output(output_type.clone());
 
     // we try to get concrete values for the whole signature
-    let inferred_signature = match ConcreteSignature::try_from(inferred_signature) {
-        Ok(s) => s,
-        Err(_) => {
-            return Err(InlineError::NonConstant);
-        }
-    };
+    let inferred_signature =
+        match ConcreteSignature::try_from(inferred_signature) {
+            Ok(s) => s,
+            Err(_) => {
+                return Err(InlineError::NonConstant);
+            }
+        };
 
     let decl = get_canonical_function(k, program);
 
@@ -142,15 +147,16 @@ pub fn inline_call<'a, 'ast, T: Field, E: Expr<'ast, T>>(
 
     assert_eq!(f.arguments.len(), arguments.len());
 
-    let generic_bindings = assignment.0.into_iter().map(|(identifier, value)| {
-        TypedStatement::definition(
-            TypedAssignee::Identifier(Variable::uint(
-                CoreIdentifier::from(identifier),
-                UBitwidth::B32,
-            )),
-            TypedExpression::from(UExpression::from(value)),
-        )
-    });
+    let generic_bindings =
+        assignment.0.into_iter().map(|(identifier, value)| {
+            TypedStatement::definition(
+                TypedAssignee::Identifier(Variable::uint(
+                    CoreIdentifier::from(identifier),
+                    UBitwidth::B32,
+                )),
+                TypedExpression::from(UExpression::from(value)),
+            )
+        });
 
     let input_variables: Vec<Variable<'ast, T>> = f
         .arguments

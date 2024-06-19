@@ -5,8 +5,10 @@ use crate::typed::Identifier;
 use crate::typed::UExpression;
 use crate::typed::{TryFrom, TryInto};
 
-pub type GVariable<'ast, S> = crate::common::Variable<Identifier<'ast>, GType<S>>;
-pub type DeclarationVariable<'ast, T> = GVariable<'ast, DeclarationConstant<'ast, T>>;
+pub type GVariable<'ast, S> =
+    crate::common::Variable<Identifier<'ast>, GType<S>>;
+pub type DeclarationVariable<'ast, T> =
+    GVariable<'ast, DeclarationConstant<'ast, T>>;
 pub type ConcreteVariable<'ast> = GVariable<'ast, u32>;
 pub type Variable<'ast, T> = GVariable<'ast, UExpression<'ast, T>>;
 
@@ -51,15 +53,25 @@ impl<'ast, S: Clone> GVariable<'ast, S> {
         Self::new(id, GType::Boolean)
     }
 
-    pub fn uint<I: Into<Identifier<'ast>>, W: Into<UBitwidth>>(id: I, bitwidth: W) -> Self {
+    pub fn uint<I: Into<Identifier<'ast>>, W: Into<UBitwidth>>(
+        id: I,
+        bitwidth: W,
+    ) -> Self {
         Self::new(id, GType::uint(bitwidth))
     }
 
-    pub fn array<I: Into<Identifier<'ast>>, U: Into<S>>(id: I, ty: GType<S>, size: U) -> Self {
+    pub fn array<I: Into<Identifier<'ast>>, U: Into<S>>(
+        id: I,
+        ty: GType<S>,
+        size: U,
+    ) -> Self {
         Self::new(id, GType::array((ty, size.into())))
     }
 
-    pub fn struc<I: Into<Identifier<'ast>>>(id: I, ty: GStructType<S>) -> Self {
+    pub fn struc<I: Into<Identifier<'ast>>>(
+        id: I,
+        ty: GStructType<S>,
+    ) -> Self {
         Self::new(id, GType::Struct(ty))
     }
 

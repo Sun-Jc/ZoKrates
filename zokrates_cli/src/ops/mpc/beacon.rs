@@ -6,7 +6,9 @@ use std::io::{BufReader, BufWriter};
 use std::path::Path;
 use zokrates_bellman::Bellman;
 use zokrates_common::constants::{BLS12_381, BN128};
-use zokrates_field::{BellmanFieldExtensions, Bls12_381Field, Bn128Field, Field};
+use zokrates_field::{
+    BellmanFieldExtensions, Bls12_381Field, Bn128Field, Field,
+};
 use zokrates_proof_systems::{MpcBackend, MpcScheme, G16};
 
 pub fn subcommand() -> App<'static, 'static> {
@@ -63,25 +65,36 @@ pub fn subcommand() -> App<'static, 'static> {
 pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     match sub_matches.value_of("curve").unwrap() {
         BN128 => cli_mpc_beacon::<Bn128Field, G16, Bellman>(sub_matches),
-        BLS12_381 => cli_mpc_beacon::<Bls12_381Field, G16, Bellman>(sub_matches),
+        BLS12_381 => {
+            cli_mpc_beacon::<Bls12_381Field, G16, Bellman>(sub_matches)
+        }
         _ => unreachable!(),
     }
 }
 
-fn cli_mpc_beacon<T: Field + BellmanFieldExtensions, S: MpcScheme<T>, B: MpcBackend<T, S>>(
+fn cli_mpc_beacon<
+    T: Field + BellmanFieldExtensions,
+    S: MpcScheme<T>,
+    B: MpcBackend<T, S>,
+>(
     sub_matches: &ArgMatches,
 ) -> Result<(), String> {
     let path = Path::new(sub_matches.value_of("input").unwrap());
-    let file =
-        File::open(path).map_err(|why| format!("Could not open `{}`: {}", path.display(), why))?;
+    let file = File::open(path).map_err(|why| {
+        format!("Could not open `{}`: {}", path.display(), why)
+    })?;
 
     let mut reader = BufReader::new(file);
 
     let beacon_hash = sub_matches.value_of("hash").unwrap();
-    let num_iterations: usize = sub_matches.value_of("iterations").unwrap().parse().unwrap();
+    let num_iterations: usize =
+        sub_matches.value_of("iterations").unwrap().parse().unwrap();
 
     if !(10..=63).contains(&num_iterations) {
-        return Err("Number of hash iterations should be in the [10, 63] range".to_string());
+        return Err(
+            "Number of hash iterations should be in the [10, 63] range"
+                .to_string(),
+        );
     }
 
     println!("Creating a beacon RNG");
@@ -92,8 +105,9 @@ fn cli_mpc_beacon<T: Field + BellmanFieldExtensions, S: MpcScheme<T>, B: MpcBack
         use sha2::{Digest, Sha256};
 
         // The hash used for the beacon
-        let mut cur_hash = hex::decode(beacon_hash)
-            .map_err(|_| "Beacon hash should be in hexadecimal format".to_string())?;
+        let mut cur_hash = hex::decode(beacon_hash).map_err(|_| {
+            "Beacon hash should be in hexadecimal format".to_string()
+        })?;
 
         if cur_hash.len() != 32 {
             return Err("Beacon hash should be 32 bytes long".to_string());
@@ -134,8 +148,9 @@ fn cli_mpc_beacon<T: Field + BellmanFieldExtensions, S: MpcScheme<T>, B: MpcBack
     };
 
     let output_path = Path::new(sub_matches.value_of("output").unwrap());
-    let output_file = File::create(output_path)
-        .map_err(|why| format!("Could not create `{}`: {}", output_path.display(), why))?;
+    let output_file = File::create(output_path).map_err(|why| {
+        format!("Could not create `{}`: {}", output_path.display(), why)
+    })?;
 
     let mut writer = BufWriter::new(output_file);
 

@@ -2,7 +2,8 @@ use ethabi::Token;
 use primitive_types::U256;
 
 use super::{
-    Fr, G1Affine, G2Affine, Marlin, SolidityCompatibleField, SolidityCompatibleScheme, G16, GM17,
+    Fr, G1Affine, G2Affine, Marlin, SolidityCompatibleField,
+    SolidityCompatibleScheme, G16, GM17,
 };
 
 /// Helper methods for parsing group structure
@@ -17,12 +18,20 @@ pub fn encode_g2_element(g: &G2Affine) -> ((U256, U256), (U256, U256)) {
     match g {
         G2Affine::Fq2(g) => (
             (
-                U256::from(&hex::decode(g.0 .0.trim_start_matches("0x")).unwrap()[..]),
-                U256::from(&hex::decode(g.0 .1.trim_start_matches("0x")).unwrap()[..]),
+                U256::from(
+                    &hex::decode(g.0 .0.trim_start_matches("0x")).unwrap()[..],
+                ),
+                U256::from(
+                    &hex::decode(g.0 .1.trim_start_matches("0x")).unwrap()[..],
+                ),
             ),
             (
-                U256::from(&hex::decode(g.1 .0.trim_start_matches("0x")).unwrap()[..]),
-                U256::from(&hex::decode(g.1 .1.trim_start_matches("0x")).unwrap()[..]),
+                U256::from(
+                    &hex::decode(g.1 .0.trim_start_matches("0x")).unwrap()[..],
+                ),
+                U256::from(
+                    &hex::decode(g.1 .1.trim_start_matches("0x")).unwrap()[..],
+                ),
             ),
         ),
         _ => unreachable!(),
@@ -33,7 +42,9 @@ pub fn encode_fr_element(f: &Fr) -> U256 {
     U256::from(&hex::decode(f.trim_start_matches("0x")).unwrap()[..])
 }
 
-pub trait ToToken<T: SolidityCompatibleField>: SolidityCompatibleScheme<T> {
+pub trait ToToken<T: SolidityCompatibleField>:
+    SolidityCompatibleScheme<T>
+{
     fn to_token(proof: Self::Proof) -> ethabi::Token;
 
     fn modify(proof: Self::Proof) -> Self::Proof;
@@ -108,7 +119,9 @@ impl<T: SolidityCompatibleField> ToToken<T> for Marlin {
                 .comms_1
                 .iter()
                 .map(encode_g1_element)
-                .map(|(x, y)| Token::Tuple(vec![Token::Uint(x), Token::Uint(y)]))
+                .map(|(x, y)| {
+                    Token::Tuple(vec![Token::Uint(x), Token::Uint(y)])
+                })
                 .collect(),
         );
 
@@ -117,7 +130,9 @@ impl<T: SolidityCompatibleField> ToToken<T> for Marlin {
                 .comms_2
                 .iter()
                 .map(encode_g1_element)
-                .map(|(x, y)| Token::Tuple(vec![Token::Uint(x), Token::Uint(y)]))
+                .map(|(x, y)| {
+                    Token::Tuple(vec![Token::Uint(x), Token::Uint(y)])
+                })
                 .collect(),
         );
 
@@ -131,7 +146,9 @@ impl<T: SolidityCompatibleField> ToToken<T> for Marlin {
                 .comms_3
                 .iter()
                 .map(encode_g1_element)
-                .map(|(x, y)| Token::Tuple(vec![Token::Uint(x), Token::Uint(y)]))
+                .map(|(x, y)| {
+                    Token::Tuple(vec![Token::Uint(x), Token::Uint(y)])
+                })
                 .collect(),
         );
 

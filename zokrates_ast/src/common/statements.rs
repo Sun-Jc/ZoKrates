@@ -11,7 +11,11 @@ use std::fmt;
 #[derivative(PartialOrd, PartialEq, Eq, Hash, Ord)]
 #[derive(Clone, Debug)]
 pub struct DefinitionStatement<A, E> {
-    #[derivative(PartialEq = "ignore", PartialOrd = "ignore", Hash = "ignore")]
+    #[derivative(
+        PartialEq = "ignore",
+        PartialOrd = "ignore",
+        Hash = "ignore"
+    )]
     pub span: Option<Span>,
     pub assignee: A,
     pub rhs: E,
@@ -37,7 +41,9 @@ impl<A, E> WithSpan for DefinitionStatement<A, E> {
     }
 }
 
-impl<A: fmt::Display, E: fmt::Display> fmt::Display for DefinitionStatement<A, E> {
+impl<A: fmt::Display, E: fmt::Display> fmt::Display
+    for DefinitionStatement<A, E>
+{
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} = {};", self.assignee, self.rhs,)
     }
@@ -47,7 +53,11 @@ impl<A: fmt::Display, E: fmt::Display> fmt::Display for DefinitionStatement<A, E
 #[derivative(PartialOrd, PartialEq, Eq, Hash, Ord)]
 #[derive(Clone, Debug)]
 pub struct AssertionStatement<B, E> {
-    #[derivative(PartialEq = "ignore", PartialOrd = "ignore", Hash = "ignore")]
+    #[derivative(
+        PartialEq = "ignore",
+        PartialOrd = "ignore",
+        Hash = "ignore"
+    )]
     pub span: Option<Span>,
     pub expression: B,
     pub error: E,
@@ -77,7 +87,11 @@ impl<B, E> WithSpan for AssertionStatement<B, E> {
 #[derivative(PartialOrd, PartialEq, Eq, Hash, Ord)]
 #[derive(Clone, Debug)]
 pub struct ReturnStatement<E> {
-    #[derivative(PartialEq = "ignore", PartialOrd = "ignore", Hash = "ignore")]
+    #[derivative(
+        PartialEq = "ignore",
+        PartialOrd = "ignore",
+        Hash = "ignore"
+    )]
     pub span: Option<Span>,
     pub inner: E,
 }
@@ -111,7 +125,11 @@ impl<E: fmt::Display> fmt::Display for ReturnStatement<E> {
 #[derivative(PartialOrd, PartialEq, Eq, Hash, Ord)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LogStatement<E> {
-    #[derivative(PartialEq = "ignore", PartialOrd = "ignore", Hash = "ignore")]
+    #[derivative(
+        PartialEq = "ignore",
+        PartialOrd = "ignore",
+        Hash = "ignore"
+    )]
     pub span: Option<Span>,
     pub format_string: FormatString,
     pub expressions: Vec<E>,
@@ -163,7 +181,11 @@ pub struct DirectiveStatement<I, O, S> {
 }
 
 impl<'ast, T, I, O> DirectiveStatement<I, O, Solver<'ast, T>> {
-    pub fn new(outputs: Vec<O>, solver: Solver<'ast, T>, inputs: Vec<I>) -> Self {
+    pub fn new(
+        outputs: Vec<O>,
+        solver: Solver<'ast, T>,
+        inputs: Vec<I>,
+    ) -> Self {
         let (in_len, out_len) = solver.get_signature();
         assert_eq!(in_len, inputs.len());
         assert_eq!(out_len, outputs.len());
@@ -213,7 +235,11 @@ impl<I: fmt::Display, O: fmt::Display, S: fmt::Display> fmt::Display
 #[derivative(PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AssemblyAssignment<A, E> {
-    #[derivative(PartialEq = "ignore", PartialOrd = "ignore", Hash = "ignore")]
+    #[derivative(
+        PartialEq = "ignore",
+        PartialOrd = "ignore",
+        Hash = "ignore"
+    )]
     pub span: Option<Span>,
     pub assignee: A,
     pub expression: E,
@@ -243,7 +269,11 @@ impl<A, E> WithSpan for AssemblyAssignment<A, E> {
 #[derivative(PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AssemblyConstraint<E> {
-    #[derivative(PartialEq = "ignore", PartialOrd = "ignore", Hash = "ignore")]
+    #[derivative(
+        PartialEq = "ignore",
+        PartialOrd = "ignore",
+        Hash = "ignore"
+    )]
     pub span: Option<Span>,
     pub left: E,
     pub right: E,

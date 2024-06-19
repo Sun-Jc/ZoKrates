@@ -81,15 +81,26 @@ impl<T: Field> RedefinitionOptimizer<T> {
                     return vec![Statement::constraint(quad, lin, s.error)];
                 }
 
-                let (constraint, to_insert, to_ignore) = match self.ignore.contains(&lin.value[0].0)
+                let (constraint, to_insert, to_ignore) = match self
+                    .ignore
+                    .contains(&lin.value[0].0)
                     || self.substitution.contains_key(&lin.value[0].0)
                 {
-                    true => (Some(Statement::constraint(quad, lin, s.error)), None, None),
+                    true => (
+                        Some(Statement::constraint(quad, lin, s.error)),
+                        None,
+                        None,
+                    ),
                     false => match lin.try_summand() {
                         // if the right side is a single variable
-                        Ok((variable, coefficient)) => match quad.try_linear() {
+                        Ok((variable, coefficient)) => match quad.try_linear()
+                        {
                             // if the left side is linear
-                            Ok(l) => (None, Some((variable, l / &coefficient)), None),
+                            Ok(l) => (
+                                None,
+                                Some((variable, l / &coefficient)),
+                                None,
+                            ),
                             // if the left side isn't linear
                             Err(quad) => (
                                 Some(Statement::constraint(
@@ -101,7 +112,11 @@ impl<T: Field> RedefinitionOptimizer<T> {
                                 Some(variable),
                             ),
                         },
-                        Err(l) => (Some(Statement::constraint(quad, l, s.error)), None, None),
+                        Err(l) => (
+                            Some(Statement::constraint(quad, l, s.error)),
+                            None,
+                            None,
+                        ),
                     },
                 };
 
@@ -156,15 +171,25 @@ impl<T: Field> RedefinitionOptimizer<T> {
                 match inputs.iter().all(|i| i.is_ok()) {
                     true => {
                         // unwrap inputs to their constant value
-                        let inputs: Vec<_> = inputs.into_iter().map(|i| i.unwrap()).collect();
+                        let inputs: Vec<_> =
+                            inputs.into_iter().map(|i| i.unwrap()).collect();
                         // run the solver
-                        let outputs = Interpreter::execute_solver(&d.solver, &inputs, &[]).unwrap();
+                        let outputs = Interpreter::execute_solver(
+                            &d.solver,
+                            &inputs,
+                            &[],
+                        )
+                        .unwrap();
                         assert_eq!(outputs.len(), d.outputs.len());
 
                         // insert the results in the substitution
-                        for (output, value) in d.outputs.into_iter().zip(outputs.into_iter()) {
-                            self.substitution
-                                .insert(output, LinComb::from(value).into_canonical());
+                        for (output, value) in
+                            d.outputs.into_iter().zip(outputs.into_iter())
+                        {
+                            self.substitution.insert(
+                                output,
+                                LinComb::from(value).into_canonical(),
+                            );
                         }
                         vec![]
                     }
@@ -173,8 +198,10 @@ impl<T: Field> RedefinitionOptimizer<T> {
                         let inputs: Vec<_> = inputs
                             .into_iter()
                             .map(|i| {
-                                i.map(|v| LinComb::summand(v, Variable::one()).into())
-                                    .unwrap_or_else(|q| q)
+                                i.map(|v| {
+                                    LinComb::summand(v, Variable::one()).into()
+                                })
+                                .unwrap_or_else(|q| q)
                             })
                             .collect();
                         if !aggressive {
@@ -193,7 +220,10 @@ impl<T: Field> RedefinitionOptimizer<T> {
 }
 
 impl<'ast, T: Field> Folder<'ast, T> for RedefinitionOptimizer<T> {
-    fn fold_statement_cases(&mut self, s: Statement<'ast, T>) -> Vec<Statement<'ast, T>> {
+    fn fold_statement_cases(
+        &mut self,
+        s: Statement<'ast, T>,
+    ) -> Vec<Statement<'ast, T>> {
         match s {
             Statement::Block(statements) => {
                 #[allow(clippy::needless_collect)]
@@ -215,7 +245,10 @@ impl<'ast, T: Field> Folder<'ast, T> for RedefinitionOptimizer<T> {
                     .filter(|s| match s {
                         // we remove a directive iff it has a single output and this output is in the substitution map, meaning it was propagated
                         Statement::Directive(d) => {
-                            d.outputs.len() > 1 || !self.substitution.contains_key(&d.outputs[0])
+                            d.outputs.len() > 1
+                                || !self
+                                    .substitution
+                                    .contains_key(&d.outputs[0])
                         }
                         _ => true,
                     })
@@ -242,7 +275,9 @@ impl<'ast, T: Field> Folder<'ast, T> for RedefinitionOptimizer<T> {
                         self.substitution
                             .get(&variable)
                             .map(|l| LinComb::from(l.clone()) * &coefficient)
-                            .unwrap_or_else(|| LinComb::summand(coefficient, variable))
+                            .unwrap_or_else(|| {
+                                LinComb::summand(coefficient, variable)
+                            })
                     })
                     .fold(LinComb::zero(), |acc, x| acc + x)
             }
@@ -440,21 +475,31 @@ mod tests {
             module_map: Default::default(),
             arguments: vec![x, y],
             statements: vec![
-                Statement::definition(a, LinComb::from(x.id) + LinComb::from(y.id)),
+                Statement::definition(
+                    a,
+                    LinComb::from(x.id) + LinComb::from(y.id),
+                ),
                 Statement::definition(
                     b,
-                    LinComb::from(a) + LinComb::from(x.id) + LinComb::from(y.id),
+                    LinComb::from(a)
+                        + LinComb::from(x.id)
+                        + LinComb::from(y.id),
                 ),
                 Statement::definition(
                     c,
-                    LinComb::from(b) + LinComb::from(x.id) + LinComb::from(y.id),
+                    LinComb::from(b)
+                        + LinComb::from(x.id)
+                        + LinComb::from(y.id),
                 ),
                 Statement::constraint(
                     LinComb::summand(2, c),
                     LinComb::summand(6, x.id) + LinComb::summand(6, y.id),
                     None,
                 ),
-                Statement::definition(r, LinComb::from(a) + LinComb::from(b) + LinComb::from(c)),
+                Statement::definition(
+                    r,
+                    LinComb::from(a) + LinComb::from(b) + LinComb::from(c),
+                ),
             ],
             return_count: 1,
             solvers: vec![],
@@ -512,7 +557,10 @@ mod tests {
             module_map: Default::default(),
             arguments: vec![x, y],
             statements: vec![
-                Statement::definition(z, QuadComb::new(LinComb::from(x.id), LinComb::from(y.id))),
+                Statement::definition(
+                    z,
+                    QuadComb::new(LinComb::from(x.id), LinComb::from(y.id)),
+                ),
                 Statement::definition(z, LinComb::from(x.id)),
             ],
             return_count: 0,

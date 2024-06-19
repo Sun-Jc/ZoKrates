@@ -24,12 +24,18 @@ use zokrates_field::Field;
 use zokrates_pest_ast as pest;
 
 #[derive(Debug)]
-pub struct CompilationArtifacts<'ast, T, I: IntoIterator<Item = ir::Statement<'ast, T>>> {
+pub struct CompilationArtifacts<
+    'ast,
+    T,
+    I: IntoIterator<Item = ir::Statement<'ast, T>>,
+> {
     prog: ir::ProgIterator<'ast, T, I>,
     abi: Abi,
 }
 
-impl<'ast, T, I: IntoIterator<Item = ir::Statement<'ast, T>>> CompilationArtifacts<'ast, T, I> {
+impl<'ast, T, I: IntoIterator<Item = ir::Statement<'ast, T>>>
+    CompilationArtifacts<'ast, T, I>
+{
     pub fn prog(self) -> ir::ProgIterator<'ast, T, I> {
         self.prog
     }
@@ -42,7 +48,9 @@ impl<'ast, T, I: IntoIterator<Item = ir::Statement<'ast, T>>> CompilationArtifac
         (self.prog, self.abi)
     }
 
-    pub fn collect(self) -> CompilationArtifacts<'ast, T, Vec<ir::Statement<'ast, T>>> {
+    pub fn collect(
+        self,
+    ) -> CompilationArtifacts<'ast, T, Vec<ir::Statement<'ast, T>>> {
         CompilationArtifacts {
             prog: self.prog.collect(),
             abi: self.abi,
@@ -153,12 +161,16 @@ impl fmt::Display for CompileErrorInner {
             CompileErrorInner::ParserError(ref e) => write!(f, "\n\t{}", e),
             CompileErrorInner::MacroError(ref e) => write!(f, "\n\t{}", e),
             CompileErrorInner::SemanticError(ref e) => {
-                let location = e.pos().map(|p| format!("{}", p.from)).unwrap_or_default();
+                let location =
+                    e.pos().map(|p| format!("{}", p.from)).unwrap_or_default();
                 write!(f, "{}\n\t{}", location, e.message())
             }
             CompileErrorInner::ReadError(ref e) => write!(f, "\n\t{}", e),
             CompileErrorInner::ImportError(ref e) => {
-                let location = e.span().map(|p| format!("{}", p.from)).unwrap_or_default();
+                let location = e
+                    .span()
+                    .map(|p| format!("{}", p.from))
+                    .unwrap_or_default();
                 write!(f, "{}\n\t{}", location, e.message())
             }
             CompileErrorInner::AnalysisError(ref e) => write!(f, "\n\t{}", e),
@@ -175,7 +187,11 @@ pub fn compile<'ast, T: Field, E: Into<imports::Error>>(
     config: CompileConfig,
     arena: &'ast Arena<String>,
 ) -> Result<
-    CompilationArtifacts<'ast, T, impl IntoIterator<Item = ir::Statement<'ast, T>> + 'ast>,
+    CompilationArtifacts<
+        'ast,
+        T,
+        impl IntoIterator<Item = ir::Statement<'ast, T>> + 'ast,
+    >,
     CompileErrors,
 > {
     let (typed_ast, abi): (zokrates_ast::zir::ZirProgram<'_, T>, _) =
@@ -210,7 +226,8 @@ pub fn check<T: Field, E: Into<imports::Error>>(
 ) -> Result<(), CompileErrors> {
     let arena = Arena::new();
 
-    check_with_arena::<T, _>(source, location, resolver, config, &arena).map(|_| ())
+    check_with_arena::<T, _>(source, location, resolver, config, &arena)
+        .map(|_| ())
 }
 
 fn check_with_arena<'ast, T: Field, E: Into<imports::Error>>(
@@ -229,8 +246,9 @@ fn check_with_arena<'ast, T: Field, E: Into<imports::Error>>(
     log::debug!("Check semantics");
 
     // check semantics
-    let typed_ast = Checker::check(compiled)
-        .map_err(|errors| CompileErrors(errors.into_iter().map(CompileError::from).collect()))?;
+    let typed_ast = Checker::check(compiled).map_err(|errors| {
+        CompileErrors(errors.into_iter().map(CompileError::from).collect())
+    })?;
 
     log::trace!("\n{}", typed_ast);
 
@@ -239,8 +257,9 @@ fn check_with_arena<'ast, T: Field, E: Into<imports::Error>>(
     log::debug!("Run static analysis");
 
     // analyse (unroll and constant propagation)
-    analyse(typed_ast, config)
-        .map_err(|e| CompileErrors(vec![CompileErrorInner::from(e).in_file(&main_module)]))
+    analyse(typed_ast, config).map_err(|e| {
+        CompileErrors(vec![CompileErrorInner::from(e).in_file(&main_module)])
+    })
 }
 
 pub fn parse_program<'ast, T: Field, E: Into<imports::Error>>(
@@ -251,7 +270,13 @@ pub fn parse_program<'ast, T: Field, E: Into<imports::Error>>(
 ) -> Result<Program<'ast>, CompileErrors> {
     let mut modules = HashMap::new();
 
-    let main = parse_module::<T, E>(source, location.clone(), resolver, &mut modules, arena)?;
+    let main = parse_module::<T, E>(
+        source,
+        location.clone(),
+        resolver,
+        &mut modules,
+        arena,
+    )?;
 
     modules.insert(location.clone(), main);
 
@@ -270,13 +295,15 @@ pub fn parse_module<'ast, T: Field, E: Into<imports::Error>>(
 ) -> Result<Module<'ast>, CompileErrors> {
     log::debug!("Generate pest AST for {}", location.display());
 
-    let ast = pest::generate_ast(source)
-        .map_err(|e| CompileErrors::from(CompileErrorInner::from(e).in_file(&location)))?;
+    let ast = pest::generate_ast(source).map_err(|e| {
+        CompileErrors::from(CompileErrorInner::from(e).in_file(&location))
+    })?;
 
     log::debug!("Process macros for {}", location.display());
 
-    let ast = process_macros::<T>(ast)
-        .map_err(|e| CompileErrors::from(CompileErrorInner::from(e).in_file(&location)))?;
+    let ast = process_macros::<T>(ast).map_err(|e| {
+        CompileErrors::from(CompileErrorInner::from(e).in_file(&location))
+    })?;
 
     log::debug!("Generate absy for {}", location.display());
 
@@ -308,14 +335,15 @@ mod test {
         "#
         .to_string();
         let arena = Arena::new();
-        let res: Result<CompilationArtifacts<Bn128Field, _>, CompileErrors> = compile(
-            source,
-            "./path/to/file".into(),
-            None::<&dyn Resolver<io::Error>>,
-            CompileConfig::default(),
-            &arena,
-        )
-        .map(|res| res.collect());
+        let res: Result<CompilationArtifacts<Bn128Field, _>, CompileErrors> =
+            compile(
+                source,
+                "./path/to/file".into(),
+                None::<&dyn Resolver<io::Error>>,
+                CompileConfig::default(),
+                &arena,
+            )
+            .map(|res| res.collect());
 
         let e = res.unwrap_err();
         assert!(e.0[0]
@@ -335,13 +363,14 @@ mod test {
 
         let arena = Arena::new();
 
-        let res: Result<CompilationArtifacts<Bn128Field, _>, CompileErrors> = compile(
-            source,
-            "./path/to/file".into(),
-            None::<&dyn Resolver<io::Error>>,
-            CompileConfig::default(),
-            &arena,
-        );
+        let res: Result<CompilationArtifacts<Bn128Field, _>, CompileErrors> =
+            compile(
+                source,
+                "./path/to/file".into(),
+                None::<&dyn Resolver<io::Error>>,
+                CompileConfig::default(),
+                &arena,
+            );
         assert!(res.is_ok());
     }
 
@@ -442,15 +471,17 @@ struct Bar { field a; }
                             vec![],
                             vec![ConcreteStructMember {
                                 id: "b".into(),
-                                ty: Box::new(ConcreteType::Struct(ConcreteStructType::new(
-                                    "bar".into(),
-                                    "Bar".into(),
-                                    vec![],
-                                    vec![ConcreteStructMember::new(
-                                        "a".into(),
-                                        ConcreteType::FieldElement
-                                    )]
-                                )))
+                                ty: Box::new(ConcreteType::Struct(
+                                    ConcreteStructType::new(
+                                        "bar".into(),
+                                        "Bar".into(),
+                                        vec![],
+                                        vec![ConcreteStructMember::new(
+                                            "a".into(),
+                                            ConcreteType::FieldElement
+                                        )]
+                                    )
+                                ))
                             }]
                         ))
                     }],

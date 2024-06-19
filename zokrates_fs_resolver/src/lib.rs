@@ -33,7 +33,10 @@ impl<'a> Resolver<io::Error> for FileSystemResolver<'a> {
                 if !current_location.is_file() {
                     return Err(io::Error::new(
                         io::ErrorKind::Other,
-                        format!("{} was expected to be a file", current_location.display()),
+                        format!(
+                            "{} was expected to be a file",
+                            current_location.display()
+                        ),
                     ));
                 }
                 current_location.parent().unwrap().into()
@@ -41,7 +44,8 @@ impl<'a> Resolver<io::Error> for FileSystemResolver<'a> {
             _ => PathBuf::from(self.stdlib_root_path.unwrap_or("")),
         };
 
-        let path_owned = base.join(import_location.clone()).with_extension("zok");
+        let path_owned =
+            base.join(import_location.clone()).with_extension("zok");
 
         if !path_owned.is_file() {
             return Err(io::Error::new(
@@ -77,7 +81,8 @@ mod tests {
     #[test]
     fn non_existing_file() {
         let fs_resolver = FileSystemResolver::default();
-        let res = fs_resolver.resolve("./source.zok".into(), "./rubbish".into());
+        let res =
+            fs_resolver.resolve("./source.zok".into(), "./rubbish".into());
         assert!(res.is_err());
     }
 
@@ -128,7 +133,9 @@ mod tests {
         writeln!(file, "<user code>").unwrap();
 
         let stdlib_root_path = temp_dir.path().to_owned();
-        let fs_resolver = FileSystemResolver::with_stdlib_root(stdlib_root_path.to_str().unwrap());
+        let fs_resolver = FileSystemResolver::with_stdlib_root(
+            stdlib_root_path.to_str().unwrap(),
+        );
         let result = fs_resolver.resolve(file_path, "./bar.zok".into());
         assert!(result.is_ok());
         // the imported file should be the user's
@@ -151,7 +158,9 @@ mod tests {
         writeln!(file, "<user code>").unwrap();
 
         let stdlib_root_path = temp_dir.path().to_owned();
-        let fs_resolver = FileSystemResolver::with_stdlib_root(stdlib_root_path.to_str().unwrap());
+        let fs_resolver = FileSystemResolver::with_stdlib_root(
+            stdlib_root_path.to_str().unwrap(),
+        );
         let result = fs_resolver.resolve(file_path, "bar.zok".into());
         assert!(result.is_ok());
         // the imported file should be the user's
@@ -191,15 +200,19 @@ mod tests {
         writeln!(file, "<stdlib code>").unwrap();
 
         let stdlib_root_path = temp_dir.path().to_owned();
-        let fs_resolver = FileSystemResolver::with_stdlib_root(stdlib_root_path.to_str().unwrap());
-        let result = fs_resolver.resolve("/path/to/source.zok".into(), "./bar.zok".into());
+        let fs_resolver = FileSystemResolver::with_stdlib_root(
+            stdlib_root_path.to_str().unwrap(),
+        );
+        let result = fs_resolver
+            .resolve("/path/to/source.zok".into(), "./bar.zok".into());
         assert!(result.is_err());
     }
 
     #[test]
     fn fail_if_not_found_in_std() {
         let fs_resolver = FileSystemResolver::default();
-        let result = fs_resolver.resolve("/path/to/source.zok".into(), "bar.zok".into());
+        let result = fs_resolver
+            .resolve("/path/to/source.zok".into(), "bar.zok".into());
         assert!(result.is_err());
     }
 }

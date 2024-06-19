@@ -2,7 +2,18 @@ use crate::untyped::Position;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-#[derive(Clone, Debug, PartialEq, Hash, Eq, Default, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Hash,
+    Eq,
+    Default,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+)]
 pub struct SourceMetadata {
     pub file: String,
     pub position: Position,

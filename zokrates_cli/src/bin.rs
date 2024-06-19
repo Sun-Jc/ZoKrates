@@ -66,19 +66,29 @@ fn cli() -> Result<(), String> {
         ("compile", Some(sub_matches)) => compile::exec(sub_matches),
         ("inspect", Some(sub_matches)) => inspect::exec(sub_matches),
         ("check", Some(sub_matches)) => check::exec(sub_matches),
-        ("compute-witness", Some(sub_matches)) => compute_witness::exec(sub_matches),
+        ("compute-witness", Some(sub_matches)) => {
+            compute_witness::exec(sub_matches)
+        }
         #[cfg(feature = "ark")]
-        ("universal-setup", Some(sub_matches)) => universal_setup::exec(sub_matches),
+        ("universal-setup", Some(sub_matches)) => {
+            universal_setup::exec(sub_matches)
+        }
         #[cfg(feature = "bellman")]
         ("mpc", Some(sub_matches)) => mpc::exec(sub_matches),
         #[cfg(feature = "bellpepper")]
         ("nova", Some(sub_matches)) => nova::exec(sub_matches),
         #[cfg(any(feature = "bellman", feature = "ark"))]
         ("setup", Some(sub_matches)) => setup::exec(sub_matches),
-        ("export-verifier", Some(sub_matches)) => export_verifier::exec(sub_matches),
+        ("export-verifier", Some(sub_matches)) => {
+            export_verifier::exec(sub_matches)
+        }
         #[cfg(any(feature = "bellman", feature = "ark"))]
-        ("generate-proof", Some(sub_matches)) => generate_proof::exec(sub_matches),
-        ("generate-smtlib2", Some(sub_matches)) => generate_smtlib2::exec(sub_matches),
+        ("generate-proof", Some(sub_matches)) => {
+            generate_proof::exec(sub_matches)
+        }
+        ("generate-smtlib2", Some(sub_matches)) => {
+            generate_smtlib2::exec(sub_matches)
+        }
         ("print-proof", Some(sub_matches)) => print_proof::exec(sub_matches),
         #[cfg(any(feature = "bellman", feature = "ark"))]
         ("verify", Some(sub_matches)) => verify::exec(sub_matches),
@@ -124,7 +134,9 @@ mod tests {
 
         builder
             .spawn(|| {
-                for p in glob("./examples/**/*").expect("Failed to read glob pattern") {
+                for p in glob("./examples/**/*")
+                    .expect("Failed to read glob pattern")
+                {
                     let path = match p {
                         Ok(x) => x,
                         Err(why) => panic!("Error: {:?}", why),
@@ -146,9 +158,13 @@ mod tests {
                     }
 
                     println!("Testing {:?}", path);
-                    assert_eq!(path.extension().expect("extension expected"), "zok");
+                    assert_eq!(
+                        path.extension().expect("extension expected"),
+                        "zok"
+                    );
 
-                    let should_error = path.to_str().unwrap().contains("compile_errors");
+                    let should_error =
+                        path.to_str().unwrap().contains("compile_errors");
 
                     let file = File::open(path.clone()).unwrap();
 
@@ -157,8 +173,12 @@ mod tests {
                     let mut source = String::new();
                     reader.read_to_string(&mut source).unwrap();
 
-                    let stdlib = std::fs::canonicalize("../zokrates_stdlib/stdlib").unwrap();
-                    let resolver = FileSystemResolver::with_stdlib_root(stdlib.to_str().unwrap());
+                    let stdlib =
+                        std::fs::canonicalize("../zokrates_stdlib/stdlib")
+                            .unwrap();
+                    let resolver = FileSystemResolver::with_stdlib_root(
+                        stdlib.to_str().unwrap(),
+                    );
 
                     let arena = Arena::new();
 
@@ -180,7 +200,8 @@ mod tests {
     #[test]
     fn execute_examples_ok() {
         //these examples should compile and run
-        for p in glob("./examples/test*").expect("Failed to read glob pattern") {
+        for p in glob("./examples/test*").expect("Failed to read glob pattern")
+        {
             let path = match p {
                 Ok(x) => x,
                 Err(why) => panic!("Error: {:?}", why),
@@ -195,8 +216,10 @@ mod tests {
             let mut source = String::new();
             reader.read_to_string(&mut source).unwrap();
 
-            let stdlib = std::fs::canonicalize("../zokrates_stdlib/stdlib").unwrap();
-            let resolver = FileSystemResolver::with_stdlib_root(stdlib.to_str().unwrap());
+            let stdlib =
+                std::fs::canonicalize("../zokrates_stdlib/stdlib").unwrap();
+            let resolver =
+                FileSystemResolver::with_stdlib_root(stdlib.to_str().unwrap());
 
             let arena = Arena::new();
 
@@ -226,7 +249,9 @@ mod tests {
     #[test]
     fn execute_examples_err() {
         //these examples should compile but not run
-        for p in glob("./examples/runtime_errors/*").expect("Failed to read glob pattern") {
+        for p in glob("./examples/runtime_errors/*")
+            .expect("Failed to read glob pattern")
+        {
             let path = match p {
                 Ok(x) => x,
                 Err(why) => panic!("Error: {:?}", why),
@@ -241,8 +266,10 @@ mod tests {
             let mut source = String::new();
             reader.read_to_string(&mut source).unwrap();
 
-            let stdlib = std::fs::canonicalize("../zokrates_stdlib/stdlib").unwrap();
-            let resolver = FileSystemResolver::with_stdlib_root(stdlib.to_str().unwrap());
+            let stdlib =
+                std::fs::canonicalize("../zokrates_stdlib/stdlib").unwrap();
+            let resolver =
+                FileSystemResolver::with_stdlib_root(stdlib.to_str().unwrap());
 
             let arena = Arena::new();
 

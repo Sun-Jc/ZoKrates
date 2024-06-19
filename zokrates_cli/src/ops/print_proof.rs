@@ -7,7 +7,8 @@ use std::path::Path;
 use zokrates_common::helpers::{CurveParameter, SchemeParameter};
 use zokrates_field::Bn128Field;
 use zokrates_proof_systems::{
-    Marlin, Proof, SolidityCompatibleField, SolidityCompatibleScheme, G16, GM17,
+    Marlin, Proof, SolidityCompatibleField, SolidityCompatibleScheme, G16,
+    GM17,
 };
 
 pub fn subcommand() -> App<'static, 'static> {
@@ -38,8 +39,9 @@ pub fn subcommand() -> App<'static, 'static> {
 
 pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     let proof_path = Path::new(sub_matches.value_of("proof-path").unwrap());
-    let proof_file = File::open(proof_path)
-        .map_err(|why| format!("Could not open {}: {}", proof_path.display(), why))?;
+    let proof_file = File::open(proof_path).map_err(|why| {
+        format!("Could not open {}: {}", proof_path.display(), why)
+    })?;
 
     // deserialize proof to JSON
     let proof_reader = BufReader::new(proof_file);
@@ -75,13 +77,17 @@ pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     }
 }
 
-fn cli_print_proof<T: SolidityCompatibleField, S: SolidityCompatibleScheme<T>>(
+fn cli_print_proof<
+    T: SolidityCompatibleField,
+    S: SolidityCompatibleScheme<T>,
+>(
     sub_matches: &ArgMatches,
     proof: serde_json::Value,
 ) -> Result<(), String> {
     let format = sub_matches.value_of("format").unwrap();
 
-    let proof: Proof<T, S> = serde_json::from_value(proof).map_err(|why| format!("{:?}", why))?;
+    let proof: Proof<T, S> =
+        serde_json::from_value(proof).map_err(|why| format!("{:?}", why))?;
 
     let inputs = serde_json::to_value(&proof.inputs).unwrap();
 

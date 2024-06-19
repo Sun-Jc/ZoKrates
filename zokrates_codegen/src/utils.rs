@@ -2,7 +2,9 @@ use std::ops::*;
 use zokrates_ast::flat::*;
 use zokrates_field::Field;
 
-pub fn flat_expression_from_bits<T: Field>(v: Vec<FlatExpression<T>>) -> FlatExpression<T> {
+pub fn flat_expression_from_bits<T: Field>(
+    v: Vec<FlatExpression<T>>,
+) -> FlatExpression<T> {
     fn flat_expression_from_bits_aux<T: Field>(
         v: Vec<(T, FlatExpression<T>)>,
     ) -> FlatExpression<T> {

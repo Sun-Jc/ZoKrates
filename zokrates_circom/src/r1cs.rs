@@ -38,7 +38,10 @@ fn write_header<W: Write>(writer: &mut W, header: Header) -> Result<()> {
 ///
 /// * `variables` - A mutual map that maps all existing variables to their index.
 /// * `var` - Variable to be searched for.
-pub fn provide_variable_idx(variables: &mut HashMap<Variable, usize>, var: &Variable) -> usize {
+pub fn provide_variable_idx(
+    variables: &mut HashMap<Variable, usize>,
+    var: &Variable,
+) -> usize {
     let index = variables.len();
     *variables.entry(*var).or_insert(index)
 }
@@ -50,7 +53,9 @@ pub fn provide_variable_idx(variables: &mut HashMap<Variable, usize>, var: &Vari
 /// # Arguments
 ///
 /// * `prog` - The program the representation is calculated for.
-pub fn r1cs_program<T: Field>(prog: Prog<T>) -> (Vec<Variable>, usize, Vec<Constraint<T>>) {
+pub fn r1cs_program<T: Field>(
+    prog: Prog<T>,
+) -> (Vec<Variable>, usize, Vec<Constraint<T>>) {
     let mut variables: HashMap<Variable, usize> = HashMap::new();
     provide_variable_idx(&mut variables, &Variable::one());
 
@@ -127,8 +132,12 @@ pub fn r1cs_program<T: Field>(prog: Prog<T>) -> (Vec<Variable>, usize, Vec<Const
     (variables_list, private_inputs_offset, constraints)
 }
 
-pub fn write_r1cs<T: Field, W: Write>(writer: &mut W, p: Prog<T>) -> Result<()> {
-    let modulo_byte_count = T::max_value().to_biguint().add(1u32).to_bytes_le().len() as u32;
+pub fn write_r1cs<T: Field, W: Write>(
+    writer: &mut W,
+    p: Prog<T>,
+) -> Result<()> {
+    let modulo_byte_count =
+        T::max_value().to_biguint().add(1u32).to_bytes_le().len() as u32;
 
     let n_pub_out = p.return_count as u32;
     let n_pub_in = p.arguments.iter().filter(|a| !a.private).count() as u32;
@@ -205,12 +214,17 @@ fn write_constraints<T: Field, W: Write>(
     Ok(())
 }
 
-fn write_lincomb<T: Field, W: Write>(writer: &mut W, l: LinComb<T>) -> Result<()> {
+fn write_lincomb<T: Field, W: Write>(
+    writer: &mut W,
+    l: LinComb<T>,
+) -> Result<()> {
     writer.write_u32::<LittleEndian>(l.len() as u32)?;
     for (var, coeff) in l {
         writer.write_u32::<LittleEndian>(var as u32)?;
         let mut res = vec![0u8; 32];
-        for (value, padded) in coeff.to_biguint().to_bytes_le().iter().zip(res.iter_mut()) {
+        for (value, padded) in
+            coeff.to_biguint().to_bytes_le().iter().zip(res.iter_mut())
+        {
             *padded = *value;
         }
         writer.write_all(&res)?;
@@ -363,7 +377,8 @@ mod tests {
                     None,
                 ),
                 Statement::constraint(
-                    LinComb::from(Variable::new(0)) + LinComb::from(Variable::new(1)),
+                    LinComb::from(Variable::new(0))
+                        + LinComb::from(Variable::new(1)),
                     Variable::public(0),
                     None,
                 ),
